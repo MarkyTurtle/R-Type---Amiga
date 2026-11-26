@@ -39,7 +39,7 @@ LevelInterface:
                 dc.l    $0
                 dc.l    LevelFrame
                 dc.l    LevelInit
-                dc.l    $634D0
+                dc.l    $634D0               ; LvMusic: player in level B; samples $65A8E (8), data $65B24, periods $65ACE
 ScrollScript:
                 dc.w    $0009,$0000,$014A,$0008,$FFF7,$0054,$0008,$0000
                 dc.w    $0064,$0008,$0007,$0064,$0000,$0000,$000F,$0008

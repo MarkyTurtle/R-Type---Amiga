@@ -32,7 +32,7 @@ The same simple four-channel sequencer is used three times:
 
 - **The jingle player** in the shared title file (`src/shared.s`, `$4A300`) plays the title and high-score jingles.
 - **Each level's music player** sits in its level B file (`LV_Music`, e.g. `$5CA38` in level 1). These are variants of the same code with different data; credited as game music by Darius Zendeh.
-- **Level 8** has a second music entry for the ending (`LV_EndMusic`, `$5F244`), not yet examined.
+- **Level 8** has a second player for the ending (`LV_EndMusic`, `$5F244`), with 32-row patterns.
 
 The engine calls it from the VBL (`UpdateJingle` / `UpdateMusic`) with a command in d0/d4. It plays one row on every second call, i.e. 25 rows a second.
 
@@ -58,6 +58,30 @@ Rows of `pattern.b, transpose.b` for each channel (8 bytes per row for 4 channel
 - Samples: raw signed 8-bit.
 
 Compared with a module, there are no song name, sample names or effect commands, and no pattern grid of 64 × 4 notes. Patterns here are short per-channel phrases with their own volume per row, and the song transposes them.
+
+### Where each player's data is
+
+Found by `tools/music_tables.py`, which also writes every instrument sample to `music/` as WAV (73 samples):
+
+| Player | Code | Sample table (entries) | Sample data | Period table | Pattern size |
+|---|---|---|---|---|---|
+| shared | `$4A300` | `$4B430` (10) | `$4B4D6` | `$4B480` | `$62` |
+| level1 | `$5CA38` | `$604F8` (9) | `$60594` | `$60540` | `$62` |
+| level2 | `$5E948` | `$608D6` (8) | `$6096A` | `$60916` | `$62` |
+| level3 | `$634D0` | `$65A8E` (8) | `$65B24` | `$65ACE` | `$62` |
+| level4 | `$52078` | `$53FB6` (8) | `$5404C` | `$53FF6` | `$62` |
+| level5 | `$51A54` | `$53A46` (8) | `$53ADC` | `$53A86` | `$42`/`$62` |
+| level6 | `$5C9A8` | `$5F0EE` (8) | `$5F184` | `$5F12E` | `$42`/`$62` |
+| level7 | `$582A4` | `$5A914` (8) | `$5A9AA` | `$5A954` | `$42`/`$62` |
+| level8 | `$5C1FE` | `$5DE82` (8) | `$5DF18` | `$5DEC2` | `$62` |
+| level8end | `$5F244` | `$60376` (8) | `$6040C` | `$603B6` | `$62` |
+
+There are three variants of the player:
+- **Shared and levels 1–4:** fixed 98-byte (`$62`) patterns.
+- **Levels 5–8:** the pattern size and pattern table are variables set per song (`$42` = 16 rows or `$62` = 24 rows), and the multiply reads the variable.
+- **Level 8's ending tune:** 130-byte (`$82`) patterns of 32 rows.
+
+Each player has several songs, selected by the command in d4 (the `lea`s before `move.l a0,d0` in the command handler).
 
 ## Sound effects
 

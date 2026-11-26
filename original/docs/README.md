@@ -6,6 +6,7 @@
 | [GAME.md](GAME.md) | How the program is organised: files, start-up, level interface, the frame, interrupts, objects, the Force, the hidden trainer, level code layout |
 | [DATA_FORMATS.md](DATA_FORMATS.md) | ST program headers, level table and interface, checkpoints, wave lists, scroll script, map patches, objects and object definitions |
 | [GRAPHICS.md](GRAPHICS.md) | Interleaved playfield and double buffering, HUD, tiles, map cells, BOBs and masks, hardware sprites, the `$6000` block, the title picture |
+| [OBJECTS.md](OBJECTS.md) | Gallery of every object definition in the levels, with frames, stats and routines |
 | [TODO.md](TODO.md) | What's left to do on the disassembly and exploration |
 | [MUSIC.md](MUSIC.md) | TFMX title music (player, smpl, mdat), the in-game sample sequencer's song/pattern/sample format, sound effects |
 

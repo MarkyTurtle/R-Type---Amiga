@@ -39,7 +39,8 @@ Stage 1's full map and the R-9's tilt frames, rendered straight from the disk da
 - [x] Graphics extracted to PNG: all level maps, tile sets, enemy frames and the player sprites ([`original/gfx/`](original/gfx/))
 - [x] Sound effects decoded and extracted to WAV ([`original/sfx/`](original/sfx/)); `$6000` block mapped
 - [x] Object definitions labelled in all sources (`Def_`/`Upd_`/`Spawn_`)
-- [ ] Still open: R-Type names for the level objects, line-by-line comments, in-game music data, level 8 ending music
+- [x] In-game music tables located for all 9 players, samples extracted ([`original/music/`](original/music/)); object gallery ([OBJECTS.md](original/docs/OBJECTS.md))
+- [ ] Still open: see [TODO.md](original/docs/TODO.md) (object names, line-by-line comments, song tables, disk rebuild…)
 
 ## Game data
 

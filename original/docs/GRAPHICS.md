@@ -121,7 +121,7 @@ Each decrunched level B file (`$4D300` on) holds, in this order: the tiles, the 
 | 7 | `$4D300`–`$56FFF` (314) | `$57300` 154×13 | `$582A4` | `$5BCD6`–`$7108E` |
 | 8 | `$4D300`–`$5AAFF` (432) | `$5AF00` 187×13 | `$5C1FE` | `$61738`–`$682B7` |
 
-Level 1's tiles end exactly where its map starts, and level 4's where its stored map starts, which confirms the 128-byte tile size. Level 3 has `$5AF80`–`$626FF` (about 30 KB) between its tiles and its map that isn't identified yet. The BOB ranges start at the lowest definition graphics found, so the gap between music player and BOBs holds the music data plus anything not yet mapped.
+Level 1's tiles end exactly where its map starts, and level 4's where its stored map starts, which confirms the 128-byte tile size. Level 3's tile set continues past what its map uses: `$5AF80`–`$626FF` is 239 more tiles (numbers 441–679: engine flames, explosions and battleship parts) that the stored map never places. They're presumably written into the map or drawn by the level code as the battleship animates and breaks up; how isn't confirmed yet. The BOB ranges start at the lowest definition graphics found, so the gap between music player and BOBs holds the music data plus anything not yet mapped.
 
 ## Rendered images (`gfx/`)
 

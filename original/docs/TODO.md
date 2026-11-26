@@ -19,7 +19,7 @@ State on 26 Nov 2026. All 12 sources reassemble byte-identical (`tools/verify.py
 ## 2. Level code (`src/levels/level1-8.s`)
 
 - [ ] **Name the objects**: the 73 `Def_xxxxx` definitions and their `Upd_`/`Spawn_` routines have structural names only. Give them their R-Type names (Patapata, Bink, Cancer, Pow Armor, Gains, Dobkeratops…) by matching against `gfx/levelN_bobs.png`, ideally with an object gallery (one image per definition, see below) to check each name.
-- [ ] **Object gallery** (`docs/OBJECTS.md`): one picture per definition with its stats and routines, to name and describe them.
+- [x] **Object gallery** (`docs/OBJECTS.md`): one picture per definition with its stats and routines. Fill in the Name column (`NAMES` in `tools/object_gallery.py`).
 - [ ] **Comment the enemy and boss behaviours**: movement, firing, hit boxes, the bosses' multi-part structure (e.g. level 4's 96×81 / 112×58 / 96×68 pieces).
 - [ ] **Level start / per-frame routines** (`LevelInit`, `LevelFrame`) for each level.
 - [ ] **Wave lists**: decode the per-wave parameters (`$06`–`$0D`), which differ per spawn routine.
@@ -29,8 +29,9 @@ State on 26 Nov 2026. All 12 sources reassemble byte-identical (`tools/verify.py
 
 ## 3. Data and assets
 
-- [ ] **Level 3's unidentified 30 KB** (`$5AF80`–`$626FF` between its tiles and its map).
-- [ ] **Level B layout**: the area between each level's music player and its first BOB graphics (music data and anything else) still needs mapping.
+- [x] **Level 3's 30 KB**: 239 more tiles (441–679: flames, explosions, battleship parts) not placed in the stored map.
+- [ ] **How level 3 uses tiles 441–679** (written into the map or drawn by its code).
+- [ ] **Level B layout**: between each music player and its first BOB graphics lie the songs, patterns, sample and period tables and samples (located per player in `MUSIC.md`); check nothing else is there.
 - [ ] **HUD**: the score/lives/beam-meter layout in the 3-plane HUD and the font used (`DigitFont`, `DrawChar`, `$2CEB8`).
 - [ ] **Extract the HUD and the title-screen graphics** to PNG.
 - [ ] **Map editor-style export**: per-level maps with solid, destructible and animated cells marked (overlay on `levelN_map.png`).
@@ -39,9 +40,10 @@ State on 26 Nov 2026. All 12 sources reassemble byte-identical (`tools/verify.py
 
 ## 4. Music
 
-- [ ] **In-game music data**: find each level's song, pattern, sample and period tables in level B, and extract the samples to WAV.
+- [x] **In-game music data**: sample, period and data tables located for all 9 players; 73 samples extracted to `music/`.
+- [ ] **Song and pattern tables per player**: list each player's songs (d4 command) and pattern table addresses.
 - [ ] **Convert the in-game songs** to something playable (e.g. MIDI or a ProTracker module) as a check on the format.
-- [ ] **Level 8's ending music** (`LV_EndMusic`, `$5F244`).
+- [x] **Level 8's ending music**: a third player variant with 32-row (`$82`) patterns.
 - [ ] **The music players' command interface** (d0/d4 commands, fades) as used by `UpdateMusic` / `UpdateJingle`.
 - [ ] **Disassemble the TFMX replay** (`files/tfmx_player_52300.exe`) or confirm it matches a known TFMX version.
 - [ ] **Test** `mdat.rtypetitle` + `smpl.rtypetitle` in a TFMX player (UADE / DeliTracker).

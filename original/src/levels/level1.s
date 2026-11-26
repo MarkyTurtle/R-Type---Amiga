@@ -37,7 +37,7 @@ LevelInterface:
                 dc.l    MapPatches
                 dc.l    LevelFrame
                 dc.l    LevelInit
-                dc.l    $5CA38
+                dc.l    $5CA38               ; LvMusic: player in level B; samples $604F8 (9), data $60594, periods $60540
 ScrollScript:
                 dc.w    $000B,$0000,$0064,$0000,$0000,$FFFF
 WaveList:

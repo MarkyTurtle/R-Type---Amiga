@@ -37,8 +37,8 @@ LevelInterface:
                 dc.l    $0
                 dc.l    LevelFrame
                 dc.l    LevelInit
-                dc.l    $5C1FE
-                dc.l    $5F244
+                dc.l    $5C1FE               ; LvMusic: player in level B; samples $5DE82 (8), data $5DF18, periods $5DEC2
+                dc.l    $5F244               ; LvEndMusic: ending tune player, 32-row ($82) patterns; samples $60376, data $6040C
 ScrollScript:
                 dc.w    $000B,$0000,$0064,$0000,$0000,$FFFF
 WaveList:

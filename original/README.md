@@ -33,6 +33,7 @@ docs/GRAPHICS.md       playfield, HUD, tiles, map, BOBs, sprites, $6000 block
 docs/MUSIC.md          TFMX title music, in-game sequencer format, effects
 gfx/                   rendered maps, tile sets, enemy frames and sprites (PNG)
 sfx/                   the 14 sound effects as WAV
+music/                 the in-game music's instrument samples as WAV (73)
 tools/
   ipf2mfm.py           IPF -> raw MFM bitstreams per track
   mfmlib.py            MFM helpers + AmigaDOS sector decoder
@@ -43,6 +44,8 @@ tools/
   render_gfx.py        render maps, tiles, BOBs and sprites to gfx/
   extract_sounds.py    write the sound effects to sfx/
   add_labels.py        insert labels at addresses in a source (keeps it identical)
+  music_tables.py      locate each music player's tables, write its samples to music/
+  object_gallery.py    build docs/OBJECTS.md and gfx/objects/
   dis68k.py            quick capstone listing of any region
   bootstrap_source.py  one-off first-pass source generator (not part of the build)
   trace68k.py          recursive-descent code/data separation
