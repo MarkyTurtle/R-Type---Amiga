@@ -10,8 +10,10 @@
 ; $4C394 on: unused track padding (only $4A2E4-$4CAFF survives the load
 ; of part B to $4CB00)
 ;
-; First pass: code and data separated, entry points from the level table
-; named.  L_xxxxx = code, D_xxxxx = data, still to be named.
+; Stage 3, the Mega Battleship: the level is the ship itself.  Parts: gun
+; towers, cannon pods, the main engine, the laser tower, hull parts that
+; shoot (Def_ShipPart), the rear tower, and the Main Core in the engine
+; room.  Names follow the arcade where the behaviour matches.
 ;==============================================================================
                 include "engine.i"
 
@@ -33,7 +35,7 @@ LevelInterface:
                 dc.l    WaveList
                 dc.l    LevelPalette
                 dc.l    $62700
-                dc.l    D_4D300
+                dc.l    $4D300                  ; tiles: the start of level B
                 dc.l    ScrollScript
                 dc.l    $0
                 dc.l    $0
@@ -85,91 +87,101 @@ WaveList:
 ; for the spawn routine, definition (-1 = POW Armor, the default).
 Waves:
                 dc.w    $002D,$0170,$0066
-                dc.l    $00000000,$00000000,Def_4BB74
+                dc.l    $00000000,$00000000,Def_MainEngine
                 dc.w    $009C,$016F,$0036
-                dc.l    $00000008,$00000000,Def_4B85A
+                dc.l    $00000008,$00000000,Def_GunTower
                 dc.w    $00EB,$0170,$0028
                 dc.l    $0002FFFC,$00000000,$FFFFFFFF ; POW Armor
                 dc.w    $010F,$015F,$002E
-                dc.l    $00000008,$00000000,Def_4B85A
+                dc.l    $00000008,$00000000,Def_GunTower
                 dc.w    $012C,$0170,$00A9
-                dc.l    $00010008,$00000000,Def_4B85A
+                dc.l    $00010008,$00000000,Def_GunTower
                 dc.w    $0163,$015D,$003C
-                dc.l    $00000008,$00000000,Def_4B85A
+                dc.l    $00000008,$00000000,Def_GunTower
                 dc.w    $01BD,$015D,$003B
-                dc.l    $00000008,$00000000,Def_4B85A
+                dc.l    $00000008,$00000000,Def_GunTower
                 dc.w    $01E0,$015E,$001E
                 dc.l    $0002FFFC,$00000000,$FFFFFFFF ; POW Armor
                 dc.w    $02D2,$0170,$00D3
-                dc.l    $0001001E,$00000000,Def_4B85A
+                dc.l    $0001001E,$00000000,Def_GunTower
                 dc.w    $032F,$00F8,$00DF
-                dc.l    $0001001E,$00000000,Def_4B85A
+                dc.l    $0001001E,$00000000,Def_GunTower
                 dc.w    $0514,$013A,$0088
-                dc.l    $00000000,$00000000,D_4BD38
+                dc.l    $00000000,$00000000,Def_LaserTower
                 dc.w    $055A,$0154,$0091
                 dc.l    $0001FFFC,$00000000,$FFFFFFFF ; POW Armor
                 dc.w    $07D0,$015B,$008C
-                dc.l    $00010032,$00000000,Def_4B85A
+                dc.l    $00010032,$00000000,Def_GunTower
                 dc.w    $085B,$010C,$0009
-                dc.l    $00000003,$00000000,Def_4B85A
+                dc.l    $00000003,$00000000,Def_GunTower
                 dc.w    $0870,$0159,$009A
-                dc.l    $00000008,$0004B962,Def_4B902
+                dc.l    $00000008,$0004B962,Def_CannonPod
                 dc.w    $0898,$016E,$0018
-                dc.l    $00000006,$00000000,Def_4B85A
+                dc.l    $00000006,$00000000,Def_GunTower
                 dc.w    $08CB,$015D,$00AE
-                dc.l    $00000004,$0004B972,Def_4B902
+                dc.l    $00000004,$0004B972,Def_CannonPod
                 dc.w    $08D4,$0164,$00A0
-                dc.l    $00000004,$0004B972,Def_4B902
+                dc.l    $00000004,$0004B972,Def_CannonPod
                 dc.w    $094C,$0162,$0046
-                dc.l    $00000004,$0004B9A2,Def_4B902
+                dc.l    $00000004,$0004B9A2,Def_CannonPod
                 dc.w    $094D,$015F,$006A
-                dc.l    $00000004,$0004B982,Def_4B902
+                dc.l    $00000004,$0004B982,Def_CannonPod
                 dc.w    $094E,$0167,$0058
-                dc.l    $00000004,$0004B992,Def_4B902
+                dc.l    $00000004,$0004B992,Def_CannonPod
                 dc.w    $0993,$0168,$0082
                 dc.l    $0000FFFC,$00000000,$FFFFFFFF ; POW Armor
                 dc.w    $FFFF   ; end: never reached
 LevelPalette:
                 dc.w    $0565,$0BBB,$0777,$0500,$005F,$0343,$0DB0,$0955
                 dc.w    $0B00,$09BF,$000B,$0F77,$0D70,$0FF0,$0FFF
+; Level 3, the battleship: the ship is a 26-row map that the scroll script
+; moves past in x and y (ScrollY starts at $78), and its parts are map
+; cells plus invisible targets.  Waves are triggered by a frame counter.
+; LevelInit: ScrollY, the part list, the 10 initial map blocks (gun
+; mounts etc., PatchMap), the engine room's state, ShipTimer = 5575
+; frames (when it runs out the level ends: the battleship has gone by),
+; and the rear tower.
 LevelInit:
                 move.w  #$78,(ScrollY).w
-                move.l  #D_4B3DC,(D_4B46A).l
-                clr.w   (D_4B472).l
-                lea.l   (D_4B590).l,a4
+                move.l  #ShipParts,(NextShipPart).l
+                clr.w   (FrameCount).l
+                lea.l   (InitialBlocks).l,a4
                 moveq   #9,d7
 .4A71E:
                 movea.l (a4)+,a0
-                bsr.w   L_4A7E2
+                bsr.w   PatchMap
                 dbra    d7,.4A71E
-                move.l  #L_4A91A,(D_4B61E).l
-                move.l  #D_4B62E,(D_4B622).l
-                clr.b   (D_4B62D).l
-                clr.w   (D_4B628).l
-                clr.w   (D_4B626).l
-                clr.b   (D_4B62C).l
-                move.w  #$15C7,(D_4B62A).l
-                bra.w   L_4B1B6
+                move.l  #EngineRoom,(EngineRoomState).l
+                move.l  #CoreIdleFrames,(CoreFramePtr).l
+                clr.b   (OrbTimer).l
+                clr.w   (CoreSteps).l
+                clr.w   (CoreTimer).l
+                clr.b   (BossDead).l
+                move.w  #$15C7,(ShipTimer).l
+                bra.w   InitRearTower
+; LevelFrame: counts frames; when the next entry of ShipParts is due its
+; invisible target (Def_ShipPart) is created.  Then the boss phase and the
+; rear tower.
 LevelFrame:
-                addq.w  #$1,(D_4B472).l
-                movea.l (D_4B46A).l,a1
-                move.w  (D_4B472).l,d0
+                addq.w  #$1,(FrameCount).l
+                movea.l (NextShipPart).l,a1
+                move.w  (FrameCount).l,d0
                 cmp.w   (a1)+,d0
                 bcs.b   .4A784
                 bsr.w   .4A79E
-                addi.l  #$14,(D_4B46A).l
+                addi.l  #$14,(NextShipPart).l
 .4A784:
-                subq.w  #$1,(D_4B62A).l
+                subq.w  #$1,(ShipTimer).l
                 bpl.b   .4A796
-                st.b    (D_4B62C).l
+                st.b    (BossDead).l
                 st.b    (LevelComplete).w
 .4A796:
-                bsr.w   L_4A8B8
-                bra.w   L_4B20E
+                bsr.w   BossPhase
+                bra.w   UpdateRearTower
 .4A79E:
                 movem.w (a1)+,d0-d1
                 move.w  #$3E8,d2
-                lea.l   (D_4B5B8).l,a2
+                lea.l   (Def_ShipPart).l,a2
                 jsr     (jt_ObjCreate).w
                 clr.b   $22(a0)
                 move.w  (a1)+,d0
@@ -184,7 +196,10 @@ LevelFrame:
                 move.w  (ScrollY).w,$3A(a0)
                 jsr     (jt_ObjInsert).w
                 movea.l (a1),a0
-L_4A7E2:
+; PatchMap: a0 = block: map address.l, width-1.b, height-1.b, then the
+; cells row by row - written straight into the map (parts appear, open,
+; burn or are destroyed this way).
+PatchMap:
                 moveq   #0,d0
                 moveq   #0,d1
                 movea.l (a0)+,a1
@@ -199,8 +214,12 @@ L_4A7E2:
                 adda.l  (MapRowBytes).w,a1
                 dbra    d1,.4A7EC
                 rts
-L_4A800:
-                bsr.w   L_4A892
+; Upd_ShipPart: a gun or panel of the hull.  It moves with the map
+; (FollowScroll), fires a bullet every 30-80 frames from its gun offset
+; (PartGunOffsets), and after its number of hits leaves a trail of
+; explosions and patches the map with its wrecked cells.
+Upd_ShipPart:
+                bsr.w   FollowScroll
                 subq.b  #$1,$37(a0)
                 bpl.b   .4A838
                 moveq   #50,d0
@@ -211,7 +230,7 @@ L_4A800:
                 moveq   #0,d2
                 move.b  $3D(a0),d2
                 lsl.w   #$2,d2
-                lea.l   (D_4B5FA).l,a1
+                lea.l   (PartGunOffsets).l,a1
                 add.w   (a1,d2.w),d0
                 add.w   $2(a1,d2.w),d1
                 jsr     (jt_FireEnemyBullet).w
@@ -224,7 +243,7 @@ L_4A800:
                 bne.b   .4A860
                 movea.l a0,a3
                 movea.l $32(a0),a0
-                bsr.b   L_4A7E2
+                bsr.b   PatchMap
                 movea.l a3,a0
                 move.b  #$1,$5(a0)
                 clr.l   $6(a0)
@@ -245,7 +264,8 @@ L_4A800:
                 jsr     (jt_ObjInsert).w
                 movea.l (a7)+,a0
                 rts
-L_4A892:
+; FollowScroll: keeps an object fixed to the map as ScrollX/ScrollY change.
+FollowScroll:
                 move.w  (ScrollX).w,d0
                 move.w  d0,d1
                 sub.w   $38(a0),d0
@@ -257,14 +277,14 @@ L_4A892:
                 move.w  d1,$3A(a0)
                 sub.w   d0,$C(a0)
                 rts
-L_4A8B8:
-                tst.b   (D_4B62C).l
+BossPhase:
+                tst.b   (BossDead).l
                 beq.b   .4A912
 .4A8C0:
                 move.w  #$96,d0
                 jsr     (jt_Random).w
                 sub.w   #$50,d0
-                add.w   (D_4B470).l,d0
+                add.w   (CoreY).l,d0
                 move.w  d0,d1
                 bmi.b   .4A8C0
                 cmp.w   #$E0,d1
@@ -272,100 +292,108 @@ L_4A8B8:
 .4A8DC:
                 move.w  #$A0,d0
                 jsr     (jt_Random).w
-                add.w   (D_4B46E).l,d0
+                add.w   (CoreX).l,d0
                 bmi.b   .4A8DC
                 cmp.w   #$15E,d0
                 bhi.b   .4A8DC
                 moveq   #-1,d2
-                lea.l   (D_4B7DC).l,a2
+                lea.l   (Def_BattleshipCore).l,a2
                 jsr     (jt_ObjCreate).w
                 clr.l   $6(a0)
                 move.b  #$1,$5(a0)
                 move.b  #$A,$4(a0)
                 jmp     (jt_ObjInsert).w
 .4A912:
-                movea.l (D_4B61E).l,a1
+                movea.l (EngineRoomState).l,a1
                 jmp     (a1)
-L_4A91A:
-                cmpi.w  #$5F0,(D_4B472).l
+; EngineRoom (the boss, from frame $5F0): the core's chamber animates in the
+; map (CoreIdleFrames) and between frames $5F0 and $AF0 it sends out a
+; CoreOrb every 10 frames; at frame $A8C the core target is created (and
+; the music fades), then the core opens (CoreOpenFrames) and closes in a
+; cycle.
+EngineRoom:
+                cmpi.w  #$5F0,(FrameCount).l
                 bcs.b   .4A972
-                cmpi.w  #$AF0,(D_4B472).l
+                cmpi.w  #$AF0,(FrameCount).l
                 bcs.b   .4A942
-                subq.b  #$1,(D_4B62D).l
+                subq.b  #$1,(OrbTimer).l
                 bpl.b   .4A942
-                move.b  #$A,(D_4B62D).l
-                bsr.w   Spawn_4AA96
+                move.b  #$A,(OrbTimer).l
+                bsr.w   Spawn_CoreOrb
 .4A942:
-                subq.w  #$1,(D_4B626).l
+                subq.w  #$1,(CoreTimer).l
                 bpl.b   .4A972
-                move.w  #$3,(D_4B626).l
-                movea.l (D_4B622).l,a1
-                cmpa.l  #D_4B63E,a1
+                move.w  #$3,(CoreTimer).l
+                movea.l (CoreFramePtr).l,a1
+                cmpa.l  #CoreOpenFrames,a1
                 bcs.b   .4A966
-                lea.l   (D_4B62E).l,a1
+                lea.l   (CoreIdleFrames).l,a1
 .4A966:
                 movea.l (a1)+,a0
-                move.l  a1,(D_4B622).l
-                bsr.w   L_4A7E2
+                move.l  a1,(CoreFramePtr).l
+                bsr.w   PatchMap
 .4A972:
-                cmpi.w  #$A8C,(D_4B472).l
+                cmpi.w  #$A8C,(FrameCount).l
                 bne.b   .4A998
                 moveq   #122,d0
                 moveq   #98,d1
                 moveq   #-1,d2
-                lea.l   (D_4B7DC).l,a2
+                lea.l   (Def_BattleshipCore).l,a2
                 jsr     (jt_ObjCreate).w
                 clr.w   $32(a0)
                 jsr     (jt_ObjInsert).w
                 st.b    (MusicFadeReq).w
 .4A998:
                 bcs.b   .4A9C4
-                subq.w  #$1,(D_4B628).l
+                subq.w  #$1,(CoreSteps).l
                 bpl.b   .4A9C4
-                move.l  #.4A9C6,(D_4B61E).l
-                move.l  #D_4B63E,(D_4B622).l
-                clr.w   (D_4B626).l
-                move.w  #$B,(D_4B628).l
+                move.l  #.4A9C6,(EngineRoomState).l
+                move.l  #CoreOpenFrames,(CoreFramePtr).l
+                clr.w   (CoreTimer).l
+                move.w  #$B,(CoreSteps).l
 .4A9C4:
                 rts
 .4A9C6:
-                subq.w  #$1,(D_4B626).l
+                subq.w  #$1,(CoreTimer).l
                 bpl.b   .4A9C4
                 bsr.w   .4AA36
                 bne.b   .4A9C4
-                move.w  #$19,(D_4B626).l
-                move.l  #.4A9E8,(D_4B61E).l
+                move.w  #$19,(CoreTimer).l
+                move.l  #.4A9E8,(EngineRoomState).l
                 rts
 .4A9E8:
-                subq.w  #$1,(D_4B626).l
+                subq.w  #$1,(CoreTimer).l
                 bpl.b   .4AA02
-                move.w  #$B,(D_4B628).l
-                move.l  #.4AA04,(D_4B61E).l
+                move.w  #$B,(CoreSteps).l
+                move.l  #.4AA04,(EngineRoomState).l
 .4AA02:
                 rts
 .4AA04:
-                subq.w  #$1,(D_4B626).l
+                subq.w  #$1,(CoreTimer).l
                 bpl.b   .4AA02
                 bsr.w   .4AA36
                 bne.b   .4AA02
-                move.l  #L_4A91A,(D_4B61E).l
-                clr.w   (D_4B626).l
-                move.l  #D_4B62E,(D_4B622).l
-                move.w  #$7D,(D_4B628).l
+                move.l  #EngineRoom,(EngineRoomState).l
+                clr.w   (CoreTimer).l
+                move.l  #CoreIdleFrames,(CoreFramePtr).l
+                move.w  #$7D,(CoreSteps).l
                 rts
 .4AA36:
-                move.w  #$2,(D_4B626).l
-                movea.l (D_4B622).l,a1
+                move.w  #$2,(CoreTimer).l
+                movea.l (CoreFramePtr).l,a1
                 movea.l (a1)+,a0
-                move.l  a1,(D_4B622).l
-                bsr.w   L_4A7E2
-                subq.w  #$1,(D_4B628).l
+                move.l  a1,(CoreFramePtr).l
+                bsr.w   PatchMap
+                subq.w  #$1,(CoreSteps).l
                 rts
-L_4AA58:
+; Upd_BattleshipCore: the Main Core, the battleship's weak point.  Moves
+; with the map, flashes when hit; 10 hits destroy it (BossDead,
+; LevelComplete), then BossPhase keeps setting off explosions round it.
+Upd_BattleshipCore:
                 movem.w $A(a0),d0-d1
                 jsr     (jt_AdjustForScroll).w
                 movem.w d0-d1,$A(a0)
-                movem.w d0-d1,(D_4B46E).l
+                movem.w d0-d1,(CoreX).l
                 move.w  $26(a0),d0
                 cmp.w   $32(a0),d0
                 beq.b   .4AA94
@@ -373,17 +401,17 @@ L_4AA58:
                 move.b  #$3,$28(a0)
                 cmp.w   #$A,d0
                 bcs.b   .4AA94
-                st.b    (D_4B62C).l
+                st.b    (BossDead).l
                 st.b    (LevelComplete).w
 .4AA94:
                 rts
-Spawn_4AA96:
+Spawn_CoreOrb:
                 movea.l a0,a4
-                movem.w (D_4B46E).l,d0-d1
+                movem.w (CoreX).l,d0-d1
                 sub.w   #$23,d0
                 sub.w   #$14,d1
                 moveq   #1,d2
-                lea.l   (Def_4B80C).l,a2
+                lea.l   (Def_CoreOrb).l,a2
                 jsr     (jt_ObjCreate).w
                 moveq   #7,d0
                 jsr     (jt_Random).w
@@ -399,7 +427,7 @@ Spawn_4AA96:
                 jsr     (jt_ObjInsert).w
                 movea.l a4,a0
                 rts
-Upd_4AADC:
+Upd_CoreOrb:
                 movem.w $A(a0),d0-d1
                 addq.w  #$8,d0
                 addq.w  #$8,d1
@@ -432,7 +460,7 @@ Upd_4AADC:
                 rts
 .4AB3C:
                 jmp     (jt_ObjKillSelf).w
-Spawn_4AB40:
+Spawn_GunTower:
                 movem.w $2(a1),d0-d1
                 moveq   #-1,d2
                 jsr     (jt_ObjCreate).w
@@ -444,10 +472,10 @@ Spawn_4AB40:
                 clr.w   $32(a0)
                 tst.w   $6(a1)
                 beq.b   .4AB78
-                move.l  #D_4B892,$2A(a0)
+                move.l  #GunTowerAnimFlipped,$2A(a0)
 .4AB78:
                 jmp     (jt_ObjInsert).w
-Spawn_4AB7C:
+Spawn_CannonPod:
                 movem.w $2(a1),d0-d1
                 move.w  #$1F40,d2
                 jsr     (jt_ObjCreate).w
@@ -460,8 +488,8 @@ Spawn_4AB7C:
                 move.b  #$1,$37(a0)
                 clr.b   $22(a0)
                 jmp     (jt_ObjInsert).w
-Upd_4ABBC:
-                bsr.w   L_4A892
+Upd_GunTower:
+                bsr.w   FollowScroll
                 movem.w $A(a0),d0-d1
                 cmp.w   #$10,d0
                 bcs.b   .4ABDE
@@ -487,16 +515,16 @@ Upd_4ABBC:
                 move.w  $1E(a0),d2
                 movea.l $2A(a0),a1
                 move.b  (a1,d2.w),d2
-                lea.l   (D_4B8E2).l,a1
+                lea.l   (GunTowerMuzzles).l,a1
                 lsl.w   #$2,d2
                 add.w   (a1,d2.w),d0
                 add.w   $2(a1,d2.w),d1
                 jsr     (jt_FireEnemyBullet).w
 .4AC2A:
                 rts
-Upd_4AC2C:
+Upd_CannonPod:
                 move.l  $32(a0),$A(a0)
-                bsr.w   L_4A892
+                bsr.w   FollowScroll
                 movem.w $A(a0),d0-d1
                 movem.w d0-d1,$32(a0)
                 tst.b   $37(a0)
@@ -519,7 +547,7 @@ Upd_4AC2C:
                 movea.l a0,a3
                 movem.w $A(a0),d0-d1
                 moveq   #-1,d2
-                lea.l   (Def_4B902).l,a2
+                lea.l   (Def_CannonPod).l,a2
                 jsr     (jt_ObjCreate).w
                 move.b  #$14,$4(a0)
                 move.b  #$1,$5(a0)
@@ -537,7 +565,7 @@ Upd_4AC2C:
                 movea.l $2A(a0),a1
                 move.b  (a1,d0.w),d0
                 and.w   #$7,d0
-                lea.l   (D_4B9B2).l,a1
+                lea.l   (CannonPodSteps).l,a1
                 move.w  d0,d7
                 lsl.w   #$2,d0
                 movem.w (a1,d0.w),d0-d1
@@ -554,12 +582,12 @@ Upd_4AC2C:
                 bcs.b   .4AD48
                 cmp.w   #$DF,d1
                 bhi.b   .4AD48
-                lea.l   (Def_4B9CE).l,a2
+                lea.l   (Def_Fireball).l,a2
                 jsr     (jt_ObjCreate).w
                 move.b  #$1,$4(a0)
                 move.w  #$3,$1E(a0)
                 move.b  d7,$3C(a0)
-                lea.l   (D_4BAB0).l,a3
+                lea.l   (FireballLaunches).l,a3
                 lsl.w   #$3,d7
                 move.l  $4(a3,d7.w),$2A(a0)
                 move.l  (a3,d7.w),$32(a0)
@@ -576,7 +604,7 @@ Upd_4AC2C:
 .4AD56:
                 rts
 .4AD58:
-                btst.b  #$0,(D_4B473).l
+                btst.b  #$0,(FrameCountLo).l
                 bne.b   .4AD7C
                 subq.b  #$1,$36(a0)
                 bne.b   .4AD7C
@@ -604,7 +632,7 @@ Upd_4AC2C:
                 movem.w $32(a0),d0-d1
                 movem.w d0-d1,$A(a0)
                 bra.w   .4ACB0
-Upd_4ADC2:
+Upd_Fireball:
                 tst.b   $3A(a0)
                 beq.b   .4ADEC
                 subq.b  #$1,$3A(a0)
@@ -621,7 +649,7 @@ Upd_4ADC2:
                 moveq   #0,d0
                 move.b  $3C(a0),d0
                 lsl.w   #$2,d0
-                lea.l   (D_4BB58).l,a1
+                lea.l   (FireballSteps).l,a1
                 movem.w (a1,d0.w),d0-d1
                 add.w   d0,$A(a0)
                 add.w   d1,$C(a0)
@@ -635,10 +663,10 @@ Upd_4ADC2:
                 jmp     (jt_ObjKillSelf).w
 .4AE24:
                 rts
-Spawn_4AE26:
-                clr.w   (D_4BC9A).l
-                move.l  #L_4AFD0,(D_4BC92).l
-                move.w  #$64,(D_4BC90).l
+Spawn_MainEngine:
+                clr.w   (FlameToggle).l
+                move.l  #Flame_Wait,(FlameState).l
+                move.w  #$64,(FlameTimer).l
                 movem.w $2(a1),d0-d1
                 move.w  #$BB8,d2
                 jsr     (jt_ObjCreate).w
@@ -650,7 +678,7 @@ Spawn_4AE26:
                 clr.w   $34(a0)
                 move.w  #$3E8,$36(a0)
                 jmp     (jt_ObjInsert).w
-Upd_4AE78:
+Upd_MainEngine:
                 cmpi.w  #$1E,$26(a0)
                 bcc.w   .4AF2A
                 cmpi.w  #$14,$26(a0)
@@ -658,8 +686,8 @@ Upd_4AE78:
                 subq.w  #$1,$36(a0)
                 bpl.b   .4AEDE
 .4AE90:
-                st.b    (D_4BC9B).l
-                clr.w   (D_4BC90).l
+                st.b    (EngineDead).l
+                clr.w   (FlameTimer).l
                 lea.l   ($6FAD0).l,a1
                 move.w  $34(a0),d2
                 cmpi.w  #$EA,$34(a0)
@@ -680,20 +708,20 @@ Upd_4AE78:
                 addq.w  #$1,$34(a0)
                 bra.w   .4AF9C
 .4AEDE:
-                bsr.w   L_4A892
+                bsr.w   FollowScroll
                 bsr.w   .4AF9C
                 subq.b  #$1,$32(a0)
                 bpl.b   .4AF28
                 move.b  #$23,$32(a0)
                 movea.l a0,a4
-                lea.l   (D_4BC9C).l,a3
+                lea.l   (EngineShotDirs).l,a3
                 moveq   #2,d7
 .4AEFC:
                 movem.w $A(a4),d0-d1
                 add.w   #$10,d0
                 add.w   (a3)+,d1
                 moveq   #-1,d2
-                lea.l   (Def_4BCAE).l,a2
+                lea.l   (Def_EngineShot).l,a2
                 jsr     (jt_ObjCreate).w
                 move.b  #$14,$4(a0)
                 move.l  (a3)+,$32(a0)
@@ -703,8 +731,8 @@ Upd_4AE78:
 .4AF28:
                 rts
 .4AF2A:
-                st.b    (D_4BC9B).l
-                clr.w   (D_4BC90).l
+                st.b    (EngineDead).l
+                clr.w   (FlameTimer).l
                 subq.b  #$1,$3D(a0)
                 bmi.b   .4AF88
                 move.w  #$FFFF,$24(a0)
@@ -719,7 +747,7 @@ Upd_4AE78:
                 add.w   $A(a0),d0
                 sub.w   #$F,d0
                 moveq   #-1,d2
-                lea.l   (Def_4BB74).l,a2
+                lea.l   (Def_MainEngine).l,a2
                 jsr     (jt_ObjCreate).w
                 clr.l   $6(a0)
                 move.b  #$1,$5(a0)
@@ -734,56 +762,56 @@ Upd_4AE78:
                 jmp     (jt_AddScore).w
 .4AF9C:
                 move.l  a0,-(a7)
-                movea.l (D_4BC92).l,a1
+                movea.l (FlameState).l,a1
                 jsr     (a1)
-                tst.b   (D_4BC9B).l
+                tst.b   (EngineDead).l
                 beq.b   .4AFCC
-                move.l  #L_4AFEC,(D_4BC92).l
-                lea.l   (D_4BBCC).l,a0
-                bsr.w   L_4A7E2
-                lea.l   (D_4BC4A).l,a0
-                bsr.w   L_4A7E2
+                move.l  #FlameRts,(FlameState).l
+                lea.l   (EngineGoneCells1).l,a0
+                bsr.w   PatchMap
+                lea.l   (EngineGoneCells2).l,a0
+                bsr.w   PatchMap
 .4AFCC:
                 movea.l (a7)+,a0
                 rts
-L_4AFD0:
-                subq.w  #$1,(D_4BC90).l
-                bpl.b   L_4AFEC
-                move.l  #L_4AFEE,(D_4BC92).l
-                move.l  #D_4BC68,(D_4BC96).l
-L_4AFEC:
+Flame_Wait:
+                subq.w  #$1,(FlameTimer).l
+                bpl.b   FlameRts
+                move.l  #Flame_Start,(FlameState).l
+                move.l  #FlameStartCells,(FlamePtr).l
+FlameRts:
                 rts
-L_4AFEE:
-                movea.l (D_4BC96).l,a4
+Flame_Start:
+                movea.l (FlamePtr).l,a4
                 move.l  (a4)+,d0
                 beq.b   .4AFFE
                 movea.l d0,a0
-                bsr.w   L_4A7E2
+                bsr.w   PatchMap
 .4AFFE:
                 move.l  (a4)+,d0
                 bmi.b   .4B010
                 movea.l d0,a0
-                bsr.w   L_4A7E2
-                move.l  a4,(D_4BC96).l
+                bsr.w   PatchMap
+                move.l  a4,(FlamePtr).l
                 rts
 .4B010:
-                move.w  #$4B,(D_4BC90).l
-                move.l  #.4B022,(D_4BC92).l
+                move.w  #$4B,(FlameTimer).l
+                move.l  #.4B022,(FlameState).l
 .4B022:
-                subq.w  #$1,(D_4BC90).l
+                subq.w  #$1,(FlameTimer).l
                 bpl.b   .4B046
-                move.w  #$4B,(D_4BC90).l
-                move.l  #L_4AFD0,(D_4BC92).l
-                lea.l   (D_4BC4A).l,a0
-                bra.w   L_4A7E2
+                move.w  #$4B,(FlameTimer).l
+                move.l  #Flame_Wait,(FlameState).l
+                lea.l   (EngineGoneCells2).l,a0
+                bra.w   PatchMap
 .4B046:
-                lea.l   (D_4BC0E).l,a0
-                eori.b  #$FF,(D_4BC9A).l
+                lea.l   (FlameCellsA).l,a0
+                eori.b  #$FF,(FlameToggle).l
                 beq.b   .4B05C
-                lea.l   (D_4BC2C).l,a0
+                lea.l   (FlameCellsB).l,a0
 .4B05C:
-                bra.w   L_4A7E2
-Upd_4B060:
+                bra.w   PatchMap
+Upd_EngineShot:
                 movem.w $32(a0),d0-d1
                 add.w   d0,$A(a0)
                 add.w   d1,$C(a0)
@@ -797,7 +825,7 @@ Upd_4B060:
                 jmp     (jt_ObjKillSelf).w
 .4B08A:
                 rts
-L_4B08C:
+Spawn_LaserTower:
                 movem.w $2(a1),d0-d1
                 move.w  #$7D0,d2
                 jsr     (jt_ObjCreate).w
@@ -809,8 +837,8 @@ L_4B08C:
                 move.b  #$19,$32(a0)
                 st.b    $33(a0)
                 jmp     (jt_ObjInsert).w
-L_4B0C6:
-                bsr.w   L_4A892
+Upd_LaserTower:
+                bsr.w   FollowScroll
                 cmpi.w  #$37,$26(a0)
                 bcc.b   .4B0F4
                 bsr.w   .4B15A
@@ -840,7 +868,7 @@ L_4B0C6:
                 add.w   $A(a0),d0
                 sub.w   #$F,d0
                 moveq   #-1,d2
-                lea.l   (D_4BD38).l,a2
+                lea.l   (Def_LaserTower).l,a2
                 jsr     (jt_ObjCreate).w
                 clr.l   $6(a0)
                 move.b  #$1,$5(a0)
@@ -869,7 +897,7 @@ L_4B0C6:
                 movem.w $A(a4),d0-d1
                 add.w   d7,d1
                 moveq   #-1,d2
-                lea.l   (Def_4BCEA).l,a2
+                lea.l   (Def_TowerLaser).l,a2
                 jsr     (jt_ObjCreate).w
                 bset.b  #$2,$23(a0)
                 move.b  #$A,$4(a0)
@@ -877,111 +905,111 @@ L_4B0C6:
                 movea.l a4,a0
 .4B1A2:
                 rts
-Upd_4B1A4:
+Upd_TowerLaser:
                 subq.w  #$7,$A(a0)
                 cmpi.w  #$10,$A(a0)
                 bhi.b   .4B1B4
                 jmp     (jt_ObjKillSelf).w
 .4B1B4:
                 rts
-L_4B1B6:
-                lea.l   (D_4C012).l,a0
-                bsr.w   L_4A7E2
-                clr.w   (D_4C320).l
-                clr.w   (D_4C322).l
-                move.b  #$1,(D_4C338).l
-                move.l  #D_4BE0A,(D_4C326).l
-                move.l  #D_4BD6A,(D_4C32A).l
-                clr.b   (D_4C339).l
-                move.w  #$FFFE,(D_4C336).l
-                clr.w   (D_4C332).l
-                clr.b   (D_4C33A).l
-                move.l  #D_4BDBE,(D_4C32E).l
+InitRearTower:
+                lea.l   (RearTowerBase).l,a0
+                bsr.w   PatchMap
+                clr.w   (BuildTimer).l
+                clr.w   (RearAnimTimer).l
+                move.b  #$1,(RearTowerState).l
+                move.l  #RearTowerBuild,(BuildPtr).l
+                move.l  #RearTowerStages,(StagePtr).l
+                clr.b   (RearAnim).l
+                move.w  #$FFFE,(RearTowerFrame).l
+                clr.w   (RearTowerDamage).l
+                clr.b   (ExplosionsLeft).l
+                move.l  #RearTowerXOffsets,(XOffsetPtr).l
                 rts
-L_4B20E:
-                tst.b   (D_4C338).l
+UpdateRearTower:
+                tst.b   (RearTowerState).l
                 beq.b   .4B256
                 bmi.w   .4B2F2
-                cmpi.w  #$578,(D_4B472).l
+                cmpi.w  #$578,(FrameCount).l
                 bcs.b   .4B254
                 move.l  a0,-(a7)
                 move.w  #$139,d0
                 move.w  #$8A,d1
                 move.w  #$FA0,d2
-                lea.l   (D_4C33C).l,a2
+                lea.l   (Def_RearTower).l,a2
                 jsr     (jt_ObjCreate).w
                 move.w  (ScrollX).w,$38(a0)
                 move.w  (ScrollY).w,$3A(a0)
                 jsr     (jt_ObjInsert).w
                 movea.l (a7)+,a0
-                clr.b   (D_4C338).l
+                clr.b   (RearTowerState).l
 .4B254:
                 rts
 .4B256:
-                cmpi.w  #$50,(D_4C332).l
+                cmpi.w  #$50,(RearTowerDamage).l
                 bcc.b   .4B28E
-                subq.w  #$1,(D_4C320).l
+                subq.w  #$1,(BuildTimer).l
                 bpl.b   .4B254
-                movea.l (D_4C326).l,a4
+                movea.l (BuildPtr).l,a4
                 movea.l (a4)+,a0
                 move.l  (a4)+,d0
-                move.w  d0,(D_4C320).l
+                move.w  d0,(BuildTimer).l
                 bmi.b   .4B286
-                bsr.w   L_4A7E2
-                move.l  a4,(D_4C326).l
+                bsr.w   PatchMap
+                move.l  a4,(BuildPtr).l
                 rts
 .4B286:
-                st.b    (D_4C338).l
+                st.b    (RearTowerState).l
                 rts
 .4B28E:
-                move.b  (D_4C339).l,d7
+                move.b  (RearAnim).l,d7
                 bne.w   .4B35C
 .4B298:
-                movea.l (D_4C32A).l,a4
+                movea.l (StagePtr).l,a4
                 move.l  (a4)+,d0
                 bmi.b   .4B286
-                cmp.w   (D_4C332).l,d0
+                cmp.w   (RearTowerDamage).l,d0
                 bhi.b   .4B2F2
                 move.w  (a4)+,d0
-                move.b  d0,(D_4C33A).l
+                move.b  d0,(ExplosionsLeft).l
                 move.w  (a4)+,d0
-                move.w  d0,(D_4C324).l
-                addq.l  #$2,(D_4C32E).l
+                move.w  d0,(ExplosionWidth).l
+                addq.l  #$2,(XOffsetPtr).l
                 move.l  (a4)+,d6
                 bpl.b   .4B2CC
-                move.b  d6,(D_4C339).l
+                move.b  d6,(RearAnim).l
                 bra.b   .4B2D8
 .4B2CC:
                 movea.l d6,a0
-                bsr.w   L_4A7E2
-                clr.b   (D_4C339).l
+                bsr.w   PatchMap
+                clr.b   (RearAnim).l
 .4B2D8:
-                move.l  a4,(D_4C32A).l
-                addq.w  #$1,(D_4C336).l
-                clr.w   (D_4C334).l
-                clr.w   (D_4C322).l
+                move.l  a4,(StagePtr).l
+                addq.w  #$1,(RearTowerFrame).l
+                clr.w   (RearAnimStep).l
+                clr.w   (RearAnimTimer).l
                 bra.b   .4B28E
 .4B2F2:
-                tst.b   (D_4C33A).l
+                tst.b   (ExplosionsLeft).l
                 beq.b   .4B35A
                 movea.l a0,a3
-                subq.b  #$1,(D_4C33A).l
+                subq.b  #$1,(ExplosionsLeft).l
                 bne.b   .4B30E
                 move.l  #$600,d0
                 jsr     (jt_AddScore).w
 .4B30E:
                 moveq   #30,d0
                 jsr     (jt_Random).w
-                add.w   (D_4C31E).l,d0
+                add.w   (RearTowerY).l,d0
                 move.w  d0,d1
                 sub.w   #$1B,d1
-                move.w  (D_4C324).l,d0
+                move.w  (ExplosionWidth).l,d0
                 jsr     (jt_Random).w
-                add.w   (D_4C31C).l,d0
-                movea.l (D_4C32E).l,a2
+                add.w   (RearTowerX).l,d0
+                movea.l (XOffsetPtr).l,a2
                 add.w   (a2),d0
                 moveq   #-1,d2
-                lea.l   (D_4C33C).l,a2
+                lea.l   (Def_RearTower).l,a2
                 jsr     (jt_ObjCreate).w
                 move.b  #$1,$5(a0)
                 clr.l   $6(a0)
@@ -991,39 +1019,39 @@ L_4B20E:
 .4B35A:
                 rts
 .4B35C:
-                lea.l   (D_4BDCE).l,a1
+                lea.l   (RearTowerAnimA).l,a1
                 neg.b   d7
                 subq.b  #$1,d7
                 beq.b   .4B36E
-                lea.l   (D_4BDEC).l,a1
+                lea.l   (RearTowerAnimB).l,a1
 .4B36E:
-                subq.w  #$1,(D_4C322).l
+                subq.w  #$1,(RearAnimTimer).l
                 bpl.w   .4B298
-                move.w  (D_4C334).l,d7
-                move.w  $4(a1,d7.w),(D_4C322).l
+                move.w  (RearAnimStep).l,d7
+                move.w  $4(a1,d7.w),(RearAnimTimer).l
                 movea.l (a1,d7.w),a0
-                bsr.w   L_4A7E2
+                bsr.w   PatchMap
                 cmp.w   #$18,d7
                 bcs.b   .4B39E
-                clr.w   (D_4C334).l
+                clr.w   (RearAnimStep).l
                 bra.w   .4B298
 .4B39E:
-                addq.w  #$6,(D_4C334).l
+                addq.w  #$6,(RearAnimStep).l
                 bra.w   .4B298
-L_4B3A8:
-                bsr.w   L_4A892
+Upd_RearTower:
+                bsr.w   FollowScroll
                 movem.w $A(a0),d0-d1
-                movem.w d0-d1,(D_4C31C).l
-                move.w  $26(a0),(D_4C332).l
-                move.w  (D_4C336).l,d0
+                movem.w d0-d1,(RearTowerX).l
+                move.w  $26(a0),(RearTowerDamage).l
+                move.w  (RearTowerFrame).l,d0
                 bmi.b   .4B3DA
                 move.w  d0,$1E(a0)
-                tst.b   (D_4C338).l
+                tst.b   (RearTowerState).l
                 bpl.b   .4B3DA
                 jmp     (jt_ObjKillSelf).w
 .4B3DA:
                 rts
-D_4B3DC:
+ShipParts:
                 dc.w    $00FA,$015C,$0066,$0012,$0005,$0000,$0004,$B474
                 dc.w    $0004,$B486,$00FB,$015C,$0076,$0012,$0005,$0001
                 dc.w    $0004,$B498,$0004,$B4A4,$0100,$015B,$0095,$0019
@@ -1033,15 +1061,15 @@ D_4B3DC:
                 dc.w    $0004,$B566,$0B83,$0064,$006E,$0002,$0000,$0005
                 dc.w    $0004,$B53C,$0004,$B54A,$0BCF,$0035,$007D,$0002
                 dc.w    $0000,$0006,$0004,$B520,$0004,$B52E,$FFFF
-D_4B46A:
+NextShipPart:
                 dc.w    $0000,$0000
-D_4B46E:
+CoreX:
                 dc.w    $0000
-D_4B470:
+CoreY:
                 dc.w    $0000
-D_4B472:
+FrameCount:
                 dc.b    $00
-D_4B473:
+FrameCountLo:
                 dc.b    $00,$00,$06,$2D,$08,$02,$01,$00,$64,$00,$65,$00,$66,$00,$78,$00
                 dc.b    $79,$00,$7A,$00,$06,$2D,$08,$02,$01,$00,$01,$00,$02,$00,$03,$00
                 dc.b    $00,$00,$00,$00,$00,$00,$06,$2E,$18,$02,$00,$00,$8C,$00,$8D,$00
@@ -1060,38 +1088,38 @@ D_4B473:
                 dc.b    $F5,$00,$F6,$00,$06,$2A,$0A,$01,$01,$00,$00,$00,$00,$80,$C8,$80
                 dc.b    $C9,$00,$06,$2A,$0E,$01,$01,$00,$00,$00,$E4,$00,$F7,$00,$F8,$00
                 dc.b    $06,$2A,$0E,$01,$01,$00,$00,$00,$00,$00,$00,$00,$00
-D_4B590:
+InitialBlocks:
                 dc.w    $0004,$B4CC,$0004,$B4E8,$0004,$B504,$0004,$B520
                 dc.w    $0004,$B53C,$0004,$B558,$0004,$B574,$0004,$BC4A
                 dc.w    $0004,$BBCC,$0004,$B696
-D_4B5B8:
+Def_ShipPart:
                 dc.w    $0101,$0032,$0000,$0000,$0000,$0000,$0004,$B5EA
                 dc.w    $0000,$0000,$0004,$B5E0,$0004,$B5E2
-                dc.l    L_4A800
+                dc.l    Upd_ShipPart
                 dc.w    $0000,$0000,$0000,$0400,$00FF,$0000,$0000,$0017
                 dc.w    $000D,$0000,$0000,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000
-D_4B5FA:
+PartGunOffsets:
                 dc.w    $0000,$0002,$0000,$FFFF,$0000,$0006,$0008,$FFF9
                 dc.w    $0008,$FFF7,$0000,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000
-D_4B61E:
+EngineRoomState:
                 dc.w    $0000,$0000
-D_4B622:
+CoreFramePtr:
                 dc.w    $0000,$0000
-D_4B626:
+CoreTimer:
                 dc.w    $0000
-D_4B628:
+CoreSteps:
                 dc.w    $0000
-D_4B62A:
+ShipTimer:
                 dc.w    $0000
-D_4B62C:
+BossDead:
                 dc.b    $00
-D_4B62D:
+OrbTimer:
                 dc.b    $00
-D_4B62E:
+CoreIdleFrames:
                 dc.w    $0004,$B7A4,$0004,$B7B2,$0004,$B7C0,$0004,$B7CE
-D_4B63E:
+CoreOpenFrames:
                 dc.w    $0004,$B6B4,$0004,$B6D2,$0004,$B6F0,$0004,$B70E
                 dc.w    $0004,$B72C,$0004,$B744,$0004,$B75C,$0004,$B774
                 dc.w    $0004,$B77E,$0004,$B788,$0004,$B796,$0004,$B788
@@ -1118,44 +1146,52 @@ D_4B63E:
                 dc.w    $8154,$8155,$0006,$2CA8,$0101,$80DC,$80DD,$80F0
                 dc.w    $80F1,$0006,$2CA8,$0101,$80DE,$80DF,$80F2,$80F3
                 dc.w    $0006,$2CA8,$0101,$80CC,$80E3,$80E0,$8104
-D_4B7DC:
+Def_BattleshipCore:
                 dc.w    $0101,$0032,$0000,$0000,$0000,$0000,$0004,$B5EA
                 dc.w    $0000,$0000,$0004,$B5E0,$0004,$B804
-                dc.l    L_4AA58
+                dc.l    Upd_BattleshipCore
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$001E,$0012
-; object definition: 16x10, 4 frames, gfx $6F850, update Upd_4AADC, spawn Spawn_4AA96
-Def_4B80C:
+; CoreOrb: blue orbs sent out of the core chamber, bouncing on a wave
+; table ($6FCA6) to the left or right; they burst on the map.
+; (16x10, 4 frames, gfx $6F850, update Upd_CoreOrb, spawn Spawn_CoreOrb)
+Def_CoreOrb:
                 dc.w    $0A02,$0030,$00A0,$0003,$0000,$0000,$0006,$F850
                 dc.w    $0000,$0050,$0004,$B834,$0004,$B83A
-                dc.l    Upd_4AADC
-                dc.l    Spawn_4AA96
+                dc.l    Upd_CoreOrb
+                dc.l    Spawn_CoreOrb
                 dc.w    $0000,$0000,$0001,$0203,$FF00,$0001,$0001,$0008
                 dc.w    $0008,$0001,$0001,$0008,$0008,$0001,$0001,$0008
                 dc.w    $0008,$0001,$0001,$0008,$0008
-; object definition: 32x23, 8 frames, gfx $66FD0, score 200, update Upd_4ABBC, spawn Spawn_4AB40
-Def_4B85A:
+; GunTower: the standard gun tower on the hull (entry $08 = hit points,
+; $06 non-zero = upside down).  Moves with the map, turns towards the
+; ship and fires every 30-80 frames from the muzzle of its current frame.
+; (32x23, 8 frames, gfx $66FD0, score 200, update Upd_GunTower, spawn Spawn_GunTower)
+Def_GunTower:
                 dc.w    $1703,$002E,$02E0
                 dc.w    $0000,$0000,$0000,$0006,$6FD0,$0000,$0170,$0004
                 dc.w    $B882,$0004,$B8A2
-                dc.l    Upd_4ABBC
-                dc.l    Spawn_4AB40
+                dc.l    Upd_GunTower
+                dc.l    Spawn_GunTower
                 dc.w    $0000,$0200,$0303,$0303,$0202,$0101,$0000,$0000
                 dc.w    $0000,$0102
-D_4B892:
+GunTowerAnimFlipped:
                 dc.w    $0707,$0707,$0707,$0707,$0606,$0605,$0504,$0404
                 dc.w    $0015,$000B,$0016,$000B,$000A,$0009,$000E,$000D
                 dc.w    $000B,$0002,$000C,$0014,$0009,$0008,$000D,$000E
                 dc.w    $0004,$0001,$0013,$000B,$000A,$0001,$000D,$000D
                 dc.w    $000B,$0001,$000C,$0014,$0008,$0001,$000E,$000D
-D_4B8E2:
+GunTowerMuzzles:
                 dc.w    $FFFA,$0007,$0000,$0000,$000A,$FFF9,$0010,$FFFE
                 dc.w    $FFF7,$0003,$0003,$000B,$000A,$000F,$0010,$000B
-; object definition: 32x28, 6 frames, gfx $686D0, score 200, update Upd_4AC2C, spawn Spawn_4AB7C
-Def_4B902:
+; CannonPod: a cannon that hides in the hull and comes out (blinking) to
+; fire Fireballs along one of 8 directions, sliding on its mount
+; (CannonPodSteps); entry $09 = hits to destroy it, $0A = animation.
+; (32x28, 6 frames, gfx $686D0, score 200, update Upd_CannonPod, spawn Spawn_CannonPod)
+Def_CannonPod:
                 dc.w    $1C03,$002E,$0380,$0000,$0000,$0000,$0006,$86D0
                 dc.w    $0000,$01C0,$0004,$B962,$0004,$B92A
-                dc.l    Upd_4AC2C
-                dc.l    Spawn_4AB7C
+                dc.l    Upd_CannonPod
+                dc.l    Spawn_CannonPod
                 dc.w    $0000,$0200,$0007,$0001,$0012,$0013,$0009,$0001
                 dc.w    $000E,$0019,$0007,$0001,$0014,$0014,$0002,$0007
                 dc.w    $0018,$000E,$0007,$0006,$0013,$0015,$0009,$0002
@@ -1165,14 +1201,16 @@ Def_4B902:
                 dc.w    $0302,$0201,$0101,$0101,$0104,$0404,$0505,$0404
                 dc.w    $0303,$0202,$0101,$0101,$0105,$0505,$0505,$0404
                 dc.w    $0303,$0202,$0202,$0202,$0606,$0605
-D_4B9B2:
+CannonPodSteps:
                 dc.w    $0000,$0000,$0004,$FFFF,$0007,$0001,$000D,$FFF9
                 dc.w    $0008,$FFF2,$0004,$FFF2,$0000,$FFF3
-; object definition: 32x26, 5 frames, gfx $6C110, update Upd_4ADC2
-Def_4B9CE:
+; Fireball: the CannonPod's shot - a short launch path (FireballLaunches),
+; then straight on (FireballSteps).
+; (32x26, 5 frames, gfx $6C110, update Upd_Fireball)
+Def_Fireball:
                 dc.w    $1A03,$002E,$0340,$0000,$0000,$0000,$0006,$C110
                 dc.w    $0000,$01A0,$0004,$BA7E,$0004,$B9F6
-                dc.l    Upd_4ADC2
+                dc.l    Upd_Fireball
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0009,$0007,$0008
                 dc.w    $0000,$0006,$000F,$000E,$0000,$0004,$0012,$0012
                 dc.w    $0005,$000B,$000F,$000D,$0003,$0008,$0012,$0011
@@ -1186,7 +1224,7 @@ Def_4B9CE:
                 dc.w    $FF00,$0102,$FF09,$0AFF,$0001,$02FF,$0B0C,$FF00
                 dc.w    $0102,$FF0D,$0EFF,$0001,$02FF,$0F10,$FF00,$0102
                 dc.w    $FF00
-D_4BAB0:
+FireballLaunches:
                 dc.w    $0004,$BAE8,$0004,$BA7E,$0004,$BAF8,$0004,$BA85
                 dc.w    $0004,$BB08,$0004,$BA8C,$0004,$BB18,$0004,$BA93
                 dc.w    $0004,$BB28,$0004,$BA9A,$0004,$BB38,$0004,$BAA1
@@ -1198,88 +1236,95 @@ D_4BAB0:
                 dc.w    $0017,$FFF2,$0018,$FFEF,$000D,$FFF0,$0009,$FFED
                 dc.w    $0006,$FFEA,$0000,$FFE9,$FFFF,$FFF6,$FFF9,$FFF4
                 dc.w    $FFF6,$FFF1,$FFEB,$FFF1
-D_4BB58:
+FireballSteps:
                 dc.w    $FFFE,$0002,$0000,$0002,$0002,$0002,$0002,$0000
                 dc.w    $0002,$FFFE,$0000,$FFFE,$FFFE,$FFFE
-; object definition: 96x32, 1 frame, gfx $69F50, score 1000, update Upd_4AE78, spawn Spawn_4AE26
-Def_4BB74:
+; MainEngine: the big thruster (96x32), fires three EngineShots every 35
+; frames (EngineShotDirs).  Its exhaust flame is animated in the map
+; (FlameState).  After 20 hits it breaks away on a path ($6FAD0); after 30
+; it explodes (25 explosions) for 800 points, and the map shows it gone.
+; (96x32, 1 frame, gfx $69F50, score 1000, update Upd_MainEngine, spawn Spawn_MainEngine)
+Def_MainEngine:
                 dc.w    $2007,$0026,$0C00,$0000,$0000,$0000,$0006,$9F50
                 dc.w    $0000,$0600,$0004,$BB9C,$0004,$BB9E
-                dc.l    Upd_4AE78
-                dc.l    Spawn_4AE26
+                dc.l    Upd_MainEngine
+                dc.l    Spawn_MainEngine
                 dc.w    $0000,$1000,$00FF,$0000,$0000,$0059,$0020,$0006
                 dc.w    $2CFC,$0303,$01A6,$8193,$8194,$8195,$81BA,$81A7
                 dc.w    $81A8,$81A9,$81CE,$81BB,$81BC,$81BD,$01B9,$81CF
                 dc.w    $81D0,$01D1
-D_4BBCC:
+EngineGoneCells1:
                 dc.w    $0006,$2CFC,$0303,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0006,$2D88,$0101,$01F5,$81CD
                 dc.w    $0209,$81E1,$0006,$2D88,$0101,$826F,$8270,$0271
                 dc.w    $8272
-D_4BC0E:
+FlameCellsA:
                 dc.w    $0006,$2D80,$0501,$8266,$8267,$8268,$8269,$826A
                 dc.w    $826B,$827A,$827B,$827C,$827D,$827E,$827F
-D_4BC2C:
+FlameCellsB:
                 dc.w    $0006,$2D80,$0501,$828E,$828F,$8290,$8291,$8292
                 dc.w    $8293,$82A2,$82A3,$82A4,$82A5,$82A6,$82A7
-D_4BC4A:
+EngineGoneCells2:
                 dc.w    $0006,$2D80,$0501,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000
-D_4BC68:
+FlameStartCells:
                 dc.w    $0000,$0000,$0004,$BBA6,$0004,$BBCC,$0004,$BBF2
                 dc.w    $0000,$0000,$0004,$BC00,$0000,$0000,$0004,$BBA6
                 dc.w    $0004,$BBCC,$FFFF,$FFFF
-D_4BC90:
+FlameTimer:
                 dc.w    $0000
-D_4BC92:
+FlameState:
                 dc.w    $0000,$0000
-D_4BC96:
+FlamePtr:
                 dc.w    $0000,$0000
-D_4BC9A:
+FlameToggle:
                 dc.b    $00
-D_4BC9B:
+EngineDead:
                 dc.b    $00
-D_4BC9C:
+EngineShotDirs:
                 dc.w    $0003,$FFF8,$FFF9,$0009,$FFF4,$0000,$000F,$FFF8
                 dc.w    $0007
-; object definition: 16x14, 2 frames, gfx $6AB50, update Upd_4B060
-Def_4BCAE:
+; object definition: 16x14, 2 frames, gfx $6AB50, update Upd_EngineShot
+Def_EngineShot:
                 dc.w    $0E02,$0030,$00E0,$0000,$0000,$0000,$0006,$AB50
                 dc.w    $0000,$0070,$0004,$BCD6,$0004,$BCDA
-                dc.l    Upd_4B060
+                dc.l    Upd_EngineShot
                 dc.w    $0000,$0000,$0000,$0000,$0001,$FF00,$0002,$0001
                 dc.w    $000D,$000C,$0002,$0001,$000D,$000C
-; object definition: 32x3, 4 frames, gfx $66E50, update Upd_4B1A4
-Def_4BCEA:
+; object definition: 32x3, 4 frames, gfx $66E50, update Upd_TowerLaser
+Def_TowerLaser:
                 dc.w    $0303,$002E,$0060,$0002,$0000,$0000,$0006,$6E50
                 dc.w    $0000,$0030,$0004,$BD32,$0004,$BD12
-                dc.l    Upd_4B1A4
+                dc.l    Upd_TowerLaser
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0020,$0003
                 dc.w    $0000,$0000,$0020,$0003,$0000,$0000,$0020,$0003
                 dc.w    $0000,$0000,$0020,$0003,$0001,$0203,$FF00
-D_4BD38:
+; LaserTower: the laser tower block - fires TowerLasers (32x3, 7 pixels a
+; frame) from two heights in turn.  Moves with the map and slowly sinks;
+; 55 hits destroy it (30 explosions, 800 points).
+Def_LaserTower:
                 dc.w    $200B,$001E,$1400,$0000,$0000,$0000,$0006,$AD10
                 dc.w    $0000,$0A00,$0004,$BD60,$0004,$BD62
-                dc.l    L_4B0C6
-                dc.l    L_4B08C
+                dc.l    Upd_LaserTower
+                dc.l    Spawn_LaserTower
                 dc.w    $0000,$0800,$00FF,$0000,$0000,$0094,$0020
-D_4BD6A:
+RearTowerStages:
                 dc.w    $0000,$0000,$0000,$0000,$0004,$C012,$0000,$0000
                 dc.w    $0006,$0019,$FFFF,$FFFF,$0000,$00C4,$000C,$0034
                 dc.w    $0004,$C26E,$0000,$00DC,$0007,$0019,$0004,$C294
                 dc.w    $0000,$0118,$0009,$0019,$0004,$C2A2,$0000,$0154
                 dc.w    $000A,$0034,$FFFF,$FFFE,$0000,$01B8,$000E,$0019
                 dc.w    $0004,$C30A
-D_4BDBE:
+RearTowerXOffsets:
                 dc.w    $FFFF,$FFFF,$FFE7,$FFE7,$000E,$0028,$0028,$0040
-D_4BDCE:
+RearTowerAnimA:
                 dc.w    $0004,$C214,$0064,$0004,$C232,$0003,$0004,$C240
                 dc.w    $0003,$0004,$C24E,$0003,$0004,$C25C,$0003
-D_4BDEC:
+RearTowerAnimB:
                 dc.w    $0004,$C2B4,$0064,$0004,$C2D2,$0002,$0004,$C2E0
                 dc.w    $0002,$0004,$C2EE,$0002,$0004,$C2FC,$0002
-D_4BE0A:
+RearTowerBuild:
                 dc.w    $0004,$C012,$0000,$007D,$0004,$C0BC,$0000,$0002
                 dc.w    $0004,$C112,$0000,$0002,$0004,$C168,$0000,$0002
                 dc.w    $0004,$C112,$0000,$0002,$0004,$C168,$0000,$0002
@@ -1313,7 +1358,7 @@ D_4BE0A:
                 dc.w    $0004,$C1BE,$0000,$0002,$0004,$C168,$0000,$0002
                 dc.w    $0004,$C1BE,$0000,$0002,$0004,$C012,$0000,$007D
                 dc.w    $0000,$0000,$FFFF,$FFFF
-D_4C012:
+RearTowerBase:
                 dc.w    $0006,$2F44,$0705,$00C2,$80C3,$80C4,$80C5,$80C6
                 dc.w    $80C7,$81A4,$81A5,$00D6,$00D7,$00D8,$00D9,$00DA
                 dc.w    $00DB,$01B8,$0000,$0000,$0000,$0000,$0000,$0000
@@ -1363,38 +1408,43 @@ D_4C012:
                 dc.w    $0101,$0285,$0286,$0299,$829A,$0006,$2FD6,$0101
                 dc.w    $0297,$0284,$0296,$8298,$0006,$2F4E,$0102,$828B
                 dc.w    $829F,$0000,$0000,$0000,$0000
-D_4C31C:
+RearTowerX:
                 dc.w    $0000
-D_4C31E:
+RearTowerY:
                 dc.w    $0000
-D_4C320:
+BuildTimer:
                 dc.w    $0000
-D_4C322:
+RearAnimTimer:
                 dc.w    $0000
-D_4C324:
+ExplosionWidth:
                 dc.w    $0000
-D_4C326:
+BuildPtr:
                 dc.w    $0000,$0000
-D_4C32A:
+StagePtr:
                 dc.w    $0000,$0000
-D_4C32E:
+XOffsetPtr:
                 dc.w    $0000,$0000
-D_4C332:
+RearTowerDamage:
                 dc.w    $0000
-D_4C334:
+RearAnimStep:
                 dc.w    $0000
-D_4C336:
+RearTowerFrame:
                 dc.w    $0000
-D_4C338:
+RearTowerState:
                 dc.b    $00
-D_4C339:
+RearAnim:
                 dc.b    $00
-D_4C33A:
+ExplosionsLeft:
                 dc.w    $0000
-D_4C33C:
+; RearTower: a tall structure at the rear (4 hit boxes stacked) built up in
+; the map from frame $578 (RearTowerBuild); its damage drives RearTowerStages:
+; each stage blows up a section (explosions across ExplosionWidth, 600
+; points) and patches the map.  (Possibly the FAQ's "multiple gun tower"
+; or "spare engines" - not confirmed.)
+Def_RearTower:
                 dc.w    $0101,$0032,$0000,$0000,$0000,$0000,$0004,$C38A
                 dc.w    $0000,$0000,$0004,$C364,$0004,$C36A
-                dc.l    L_4B3A8
+                dc.l    Upd_RearTower
                 dc.w    $0000,$0000,$0000,$0000,$0001,$0202,$03FF,$0001
                 dc.w    $0001,$005D,$000F,$001B,$0001,$0041,$000F,$0035
                 dc.w    $0001,$0027,$000F,$004F,$0001,$0010,$000F,$0000
@@ -1646,7 +1696,6 @@ D_4C33C:
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000
-D_4D300:
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000

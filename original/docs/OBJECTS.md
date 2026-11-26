@@ -38,13 +38,13 @@ Objects identified so far are listed under their R-Type name (the label in the s
 
 | Label | Frames | Size | HP | Fires | Score | Update | Spawn | Address |
 |---|---|---|---|---|---|---|---|---|
-| `Def_4B80C` | ![](../gfx/objects/level3_4B80C.png) | 16×10 ×4 | – | – | – | `Upd_4AADC` | `Spawn_4AA96` | `$4B80C` |
-| `Def_4B85A` | ![](../gfx/objects/level3_4B85A.png) | 32×23 ×8 | – | – | 200 | `Upd_4ABBC` | `Spawn_4AB40` | `$4B85A` |
-| `Def_4B902` | ![](../gfx/objects/level3_4B902.png) | 32×28 ×6 | – | – | 200 | `Upd_4AC2C` | `Spawn_4AB7C` | `$4B902` |
-| `Def_4B9CE` | ![](../gfx/objects/level3_4B9CE.png) | 32×26 ×5 | – | – | – | `Upd_4ADC2` | – | `$4B9CE` |
-| `Def_4BB74` | ![](../gfx/objects/level3_4BB74.png) | 96×32 ×1 | – | – | 1000 | `Upd_4AE78` | `Spawn_4AE26` | `$4BB74` |
-| `Def_4BCAE` | ![](../gfx/objects/level3_4BCAE.png) | 16×14 ×2 | – | – | – | `Upd_4B060` | – | `$4BCAE` |
-| `Def_4BCEA` | ![](../gfx/objects/level3_4BCEA.png) | 32×3 ×4 | – | – | – | `Upd_4B1A4` | – | `$4BCEA` |
+| `Def_CoreOrb` | ![](../gfx/objects/level3_4B80C.png) | 16×10 ×4 | – | – | – | `Upd_CoreOrb` | `Spawn_CoreOrb` | `$4B80C` |
+| `Def_GunTower` | ![](../gfx/objects/level3_4B85A.png) | 32×23 ×8 | – | – | 200 | `Upd_GunTower` | `Spawn_GunTower` | `$4B85A` |
+| `Def_CannonPod` | ![](../gfx/objects/level3_4B902.png) | 32×28 ×6 | – | – | 200 | `Upd_CannonPod` | `Spawn_CannonPod` | `$4B902` |
+| `Def_Fireball` | ![](../gfx/objects/level3_4B9CE.png) | 32×26 ×5 | – | – | – | `Upd_Fireball` | – | `$4B9CE` |
+| `Def_MainEngine` | ![](../gfx/objects/level3_4BB74.png) | 96×32 ×1 | – | – | 1000 | `Upd_MainEngine` | `Spawn_MainEngine` | `$4BB74` |
+| `Def_EngineShot` | ![](../gfx/objects/level3_4BCAE.png) | 16×14 ×2 | – | – | – | `Upd_EngineShot` | – | `$4BCAE` |
+| `Def_TowerLaser` | ![](../gfx/objects/level3_4BCEA.png) | 32×3 ×4 | – | – | – | `Upd_TowerLaser` | – | `$4BCEA` |
 
 ## Level 4
 
