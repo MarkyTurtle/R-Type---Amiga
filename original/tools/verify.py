@@ -13,6 +13,7 @@ PAIRS = [
     ('src/stage2.s',    'files/stage2_79360.bin'),
     ('src/game.s',      'files/game_low_000a4.bin'),
     ('src/shared.s',    'files/shared_4a300.bin'),
+    ('src/tfmx.s',      'files/tfmx_player_52300.exe'),
 ] + [(f'src/levels/level{n}.s', f'files/level{n}_a_4a2e4.bin') for n in range(1, 9)] + [
 ]
 

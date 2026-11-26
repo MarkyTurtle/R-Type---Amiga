@@ -12,7 +12,7 @@ Reverse-engineering of the Amiga R-Type (Electric Dreams 1989; Amiga version by 
 - [x] Disk formats, game loader, track cache, decruncher and level table documented – `docs/DISK_FORMAT.md`
 - [x] Game program (`game_low_000a4.bin`) – `src/game.s`, first pass, byte-identical; see `docs/GAME.md`
 - [ ] Line-by-line comments for `src/game.s`
-- [x] Level code (`levelN_a`) – `src/levels/level1-8.s`, and the shared title file – `src/shared.s`: first pass, byte-identical
+- [x] Level code (`levelN_a`) – `src/levels/level1-8.s`, the shared title file – `src/shared.s`, and the TFMX replay – `src/tfmx.s`: byte-identical
 - [ ] Name the level routines; data formats (`$6000` block, level B, waves, map)
 
 ## Layout
@@ -24,6 +24,7 @@ src/game.s             the game program ($000A4): engine, all game code
 src/engine.i           engine symbols for the level and shared sources
 src/levels/levelN.s    per-level code and data (level part A, $4A2E4)
 src/shared.s           shared title file ($4A300): jingle player + samples
+src/tfmx.s             the TFMX replay for the title music ($52300)
 files/                 every file extracted from the disk; manifest.json lists
                        names, tracks, load addresses and SHA-1s
 docs/DISK_FORMAT.md    track formats, boot sequence, level table, memory map

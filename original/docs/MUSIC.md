@@ -8,7 +8,7 @@ R-Type uses **two separate music systems**. Neither is a Soundtracker/ProTracker
 
 | File | Load | Contents |
 |---|---|---|
-| `tfmx_player_52300.exe` | `$52300` | the replay as a complete **AmigaDOS executable**: HUNK_HEADER, one code hunk of `$1444` bytes, HUNK_END |
+| `tfmx_player_52300.exe` | `$52300` | the replay as a complete **AmigaDOS executable**: HUNK_HEADER, one code hunk of `$1444` bytes, HUNK_END. Source: `src/tfmx.s` (byte-identical) |
 | `smpl.rtypetitle` | `$53768` | samples |
 | `mdat.rtypetitle` | `$6FD28` | song data, `TFMX-SONG ` header |
 

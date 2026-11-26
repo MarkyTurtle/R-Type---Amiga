@@ -57,4 +57,4 @@ python3 -I original/tools/verify.py      # needs vasmm68k_mot
 VASM=vasmm68k_mot python3 -I original/tools/build_disk.py --from-source R-Type.adf
 ```
 
-The same is done on every push by a GitHub Action (`.github/workflows/build.yml`): it builds vasm, checks that all 12 sources assemble byte-identical, builds `R-Type.adf` from the sources and attaches it to the run as an artifact (*Actions* → the run → *Artifacts*).
+The same is done on every push by a GitHub Action (`.github/workflows/build.yml`): it builds vasm, checks that all 13 sources assemble byte-identical, builds `R-Type.adf` from the sources and attaches it to the run as an artifact (*Actions* → the run → *Artifacts*).
