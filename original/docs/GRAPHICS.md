@@ -28,7 +28,7 @@ From line `$ED` the copper switches to **3 bitplanes** (BPLCON0 `$3200`), non-in
 
 ## Map
 
-`LV_Map`: one word per cell, `MapWidth` cells per row (from `LevelTable`), row pointers at `$48BFA` (up to 26 rows).
+`LV_Map`: one word per cell, row-major, `MapRowBytes` bytes per row (from `LevelTable`; the value is in bytes, not cells), row pointers at `$48BFA` (up to 26 rows).
 
 | Bits | Meaning |
 |---|---|
@@ -36,7 +36,7 @@ From line `$ED` the copper switches to **3 bitplanes** (BPLCON0 `$3200`), non-in
 | 14 | animated tile: bits 0–3 select a routine in `LV_TileAnims` (called while drawing) |
 | 15 | solid: the ship and the walkers collide with it (`GetMapCell` tests bit 7 of the high byte) |
 
-Map widths: level 1 536, 2 360, 3 136 (vertical level), 4 344, 5 420, 6 328, 7 308, 8 374 tiles.
+Map sizes (tiles): level 1 268 × 13, 2 180 × 13, 3 68 × 26 (the giant battleship: the map is the ship itself), 4 172 × 13, 5 210 × 13, 6 164 × 13, 7 154 × 13, 8 187 × 13. Rendered in full in `gfx/levelN_map.png`.
 
 ## BOBs (enemies, shots, explosions)
 
@@ -48,7 +48,7 @@ Example, level 1 definition at `$4BB64`: BLTSIZE `$0D02` (52 lines = 13 × 4 pla
 
 ## Hardware sprites
 
-The ship, the two Bits and the Force are **attached sprite pairs** (16 colours, COLOR16–31 from `SpriteColours`) on channels 4–7, with several sprites chained down the screen in the same channel:
+The ship, the two Bits and the Force are **attached sprite pairs** (16 colours, COLOR16–31 from `SpriteColours`). All eight channels are used:
 
 | Sprite data | Channel | Used for |
 |---|---|---|
@@ -56,8 +56,25 @@ The ship, the two Bits and the Force are **attached sprite pairs** (16 colours, 
 | `$490D6` | SPR4/5 | ship, left half |
 | `$49112` | SPR4/5 | lower Bit |
 | `$491F2` | SPR6/7 | ship, right half |
+| frame in the `$6000` block | SPR0/1 + SPR2/3 | the Force (32 px wide) |
 
-The attached partner of each sprite is `$A8` bytes further on. `CopperInt` copies the current frames in (`CopySprite`) and writes the positions (`SetSprite`) every frame. SPR0–3 are not used. BPLCON2 = `$24` puts the sprites in front of the playfield.
+**Sprite data layout** (the same everywhere): control long, h lines of (plane A word, plane B word), end long = 4 + 4h + 4 bytes. The attached partner (planes 2 and 3) follows directly. Colour = 16 + (B1 B0 A1 A0).
+
+- **Ship, Bits:** `CopperInt` copies the current frame into the chained sprite blocks at `$490A2…` (`CopySprite`, the partner block `$A8` bytes on) and writes the positions (`SetSprite`) every frame.
+- **Force:** `UpdateForce` doesn't copy. It aims the copper's SPR0–3 pointers straight at the frame in the `$6000` block and animates by moving the pointers.
+
+BPLCON2 = `$24` puts the sprites in front of the playfield.
+
+| Graphics | Frames | Lines | Frame size |
+|---|---|---|---|
+| Ship `$6000`–`$64FF` | 5 (tilt, 2 = level) | 14 | `$100` (left + right pair) |
+| Bits `$6500`–`$69CF` | 11 (spin) | 12 | `$70` (one pair) |
+| Force level 0 `$6A40`–`$703F` | 6 | 14 | `$100` |
+| Force level 1 `$7040`–`$775F` | 6 | 17 | `$130` |
+| Force level 2 `$7760`–`$7E7F` | 6 | 17 | `$130` |
+| Force level 3 `$7E80`–`$847F` | 4 | 22 | `$180` |
+
+The Force table is at `$516C` (16 bytes per level: first frame, last frame, frame size, speed, height). Rendered: `gfx/sprites_ship.png`, `sprites_bits.png`, `sprites_force0-3.png`.
 
 ## The `$6000` graphics block (tracks 36–62)
 
@@ -65,9 +82,9 @@ No code at all. References confirmed in the code so far:
 
 | Address | Contents | Used by |
 |---|---|---|
-| `$06000` + n | ship sprite frames (tilt) | `ShipTilt` |
-| `$06500`–`$069D0` | Bit sprite frames | `InitBits`, `UpdateBits` |
-| `$06A40` | Force sprite frames | `Force_Idle`, `NewGame` |
+| `$06000`–`$064FF` | ship sprite frames (5 × `$100`) | `ShipTilt` |
+| `$06500`–`$069CF` | Bit sprite frames (11 × `$70`) | `InitBits`, `UpdateBits` |
+| `$06A40`–`$0847F` | Force sprite frames, 4 power levels | `UpdateForce` |
 | `$15650`, `$15850` | wave cannon beam | `UpdateWaveBeam` |
 | `$19B90` | lasers | `UpdateLasers` |
 | `$19D90` | enemy bullets | `FireEnemyBullet` |
@@ -75,6 +92,36 @@ No code at all. References confirmed in the code so far:
 | `$2C7B0`–`$2CEB7` | HUD bitplanes (see above) | HUD routines |
 
 The rest is still to be mapped. Most enemy graphics live in each level's B file instead and are reached through the object definitions.
+
+## Level B files
+
+Each decrunched level B file (`$4D300` on) holds, in this order: the tiles, the map, the level's music player and tunes, then the BOB graphics for the level's enemies (reached through the object definitions in level A). Tile counts come from the highest tile number each map uses.
+
+| Level | Tiles (count) | Map (tiles) | Music player | BOB graphics |
+|---|---|---|---|---|
+| 1 | `$4D300`–`$5AEFF` (440) | `$5AF00` 268×13 | `$5CA38` | `$62DA8`–`$7965A` |
+| 2 | `$4D300`–`$5D4FF` (516) | `$5D700` 180×13 | `$5E948` | `$61C96`–`$72579` |
+| 3 | `$4D300`–`$5AF7F` (441) | `$62700` 68×26 | `$634D0` | `$66E50`–`$6FCDB` |
+| 4 | `$4D300`–`$50EFF` (120) | `$50F00` 172×13 (copied to `$6EA6A`) | `$52078` | `$55378`–`$6EA69` |
+| 5 | `$4D300`–`$503FF` (98) | `$50500` 210×13 | `$51A54` | `$54E08`–`$688B7` |
+| 6 | `$4D300`–`$59D7F` (405) | `$5B900` 164×13 | `$5C9A8` | `$604B0`–`$6702F` |
+| 7 | `$4D300`–`$56FFF` (314) | `$57300` 154×13 | `$582A4` | `$5BCD6`–`$7108E` |
+| 8 | `$4D300`–`$5AAFF` (432) | `$5AF00` 187×13 | `$5C1FE` | `$61738`–`$682B7` |
+
+Level 1's tiles end exactly where its map starts, and level 4's where its stored map starts, which confirms the 128-byte tile size. Level 3 has `$5AF80`–`$626FF` (about 30 KB) between its tiles and its map that isn't identified yet. The BOB ranges start at the lowest definition graphics found, so the gap between music player and BOBs holds the music data plus anything not yet mapped.
+
+## Rendered images (`gfx/`)
+
+`tools/render_gfx.py files gfx` regenerates them all from the extracted files:
+
+| File | Contents |
+|---|---|
+| `levelN_map.png` | the whole level map as the game draws it (level palette) |
+| `levelN_tiles.png` | the tile set, 16 per row, in tile-number order |
+| `levelN_bobs.png` | one row per object definition found in the level, all its frames (mask applied) |
+| `sprites_ship.png`, `sprites_bits.png`, `sprites_force0-3.png` | the hardware sprites, 3× size |
+
+The BOB sheets come from searching level A's DATA for object definitions by their signature (mask offset = half the frame size, modulo = 52 − 2 × width, valid pointers). Frame counts are capped at the next known graphics block. Level 7's definition `$4BE14` (graphics at `$0B440` in the `$6000` block) renders as noise. It's either a false match or uses another palette.
 
 ## Title picture (boot)
 

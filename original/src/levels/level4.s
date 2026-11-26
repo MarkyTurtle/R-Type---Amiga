@@ -689,6 +689,9 @@ L_4B046:
                 add.w   d4,$A(a0)
 L_4B050:
                 rts
+; The level 4 map is stored at $50F00 (level B) and copied to $6EA6A, the
+; address in LvMap, at every (re)start: the level code changes the map while
+; it plays, so a clean copy is needed for restarts.
 LevelInit:
                 move.w  #$8BB,d0
                 lea.l   ($50F00).l,a0

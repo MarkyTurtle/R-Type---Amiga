@@ -18,6 +18,14 @@ Documentation is in [`original/docs/`](original/docs/README.md):
 
 The same findings are added as comments in the source files.
 
+## Graphics
+
+![R-9 tilt frames](original/gfx/sprites_ship.png)
+
+![Stage 1 map](original/gfx/level1_map.png)
+
+Stage 1's full map and the R-9's tilt frames, rendered straight from the disk data. See [`original/gfx/`](original/gfx/) for all eight levels, their tile sets and enemies.
+
 ## Progress
 
 - [x] IPF decoded, all files extracted with checksums verified
@@ -28,7 +36,8 @@ The same findings are added as comments in the source files.
 - [x] Level code – [`original/src/levels/`](original/src/levels/) (8 levels) and the shared title file [`original/src/shared.s`](original/src/shared.s): first pass, byte-identical
 - [ ] Level code: name enemy routines and object definitions
 - [x] Documented: disk, code structure, data, graphics and music formats (first pass)
-- [ ] Data formats still open: rest of the $6000 graphics block, level B layout, sound effects
+- [x] Graphics extracted to PNG: all level maps, tile sets, enemy frames and the player sprites ([`original/gfx/`](original/gfx/))
+- [ ] Still open: rest of the $6000 graphics block, sound effects, level 8 ending music
 
 ## Game data
 

@@ -29,7 +29,7 @@ The program and the level A files start with a GEMDOS executable header: `$601A`
 
 ## Level loading (`LoadLevel`, `$0029A`)
 
-From `LevelTable` (`$41B4`, 10 bytes per level): load part A to `$4A2E4` and part B to `$4CB00`, set `MapWidth` (`$F4`), then `Decrunch` part B to `$4D300`.
+From `LevelTable` (`$41B4`, 10 bytes per level): load part A to `$4A2E4` and part B to `$4CB00`, set `MapWidth` (`$F4`: the map row length in bytes), then `Decrunch` part B to `$4D300`.
 
 ### Level interface (`$4A300`)
 
@@ -50,7 +50,7 @@ The first TEXT bytes of each level A file are a table the engine reads directly:
 | `$4A328` LV_Music | music player inside level B |
 | `$4A32C` | level 8: ending music; levels 1–7: start of the scroll script |
 
-The level code calls back into the engine through the jump table at `$C2–$EA` (ObjInsert, ObjKillSelf, ObjCreate, ObjAlloc, Random, GetMapCell, FireEnemyBullet, DirectionTo, TurnTowards, AddScore, AdjustForScroll) and `$10A` (PlaySound), and it reads the shared variables at `$EE–$109` (ship position, scroll position, map width…).
+The level code calls back into the engine through the jump table at `$C2–$EA` (ObjInsert, ObjKillSelf, ObjCreate, ObjAlloc, Random, GetMapCell, FireEnemyBullet, DirectionTo, TurnTowards, AddScore, AdjustForScroll) and `$10A` (PlaySound), and it reads the shared variables at `$EE–$109` (ship position, scroll position, map row length…).
 
 | Level | TEXT | DATA | LV_Frame | LV_Init | LV_Music |
 |---|---|---|---|---|---|
@@ -112,6 +112,6 @@ Engine calls in the level sources use the names in `src/engine.i` (for example `
 
 - Comment `src/game.s` routine by routine; name the remaining `L_`/`D_` labels.
 - Name and comment the level routines (enemy behaviours, bosses) and their object definitions.
-- Map the rest of the `$6000` graphics block and the level B files (where the map, tiles, BOB sheets and music data start and end).
+- Map the rest of the `$6000` graphics block (HUD font, bullets, beam, explosions) and level 3's unidentified 30 KB.
 - Sound effect table and samples; the level 8 ending music.
 - Disassemble the in-game music players in level B and the TFMX replay.

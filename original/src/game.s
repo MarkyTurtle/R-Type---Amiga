@@ -113,6 +113,9 @@ jt_AdjustForScroll:
 ;==============================================================================
 ShipPos:
                 dc.w    $0000,$0000
+; MapRowBytes.l ($F2) and MapWidth.w ($F4) overlap: NewGame clears the long,
+; LoadLevel writes the level table's value to MapWidth, so MapRowBytes = the
+; map row length in bytes (2 per cell).  Level 1: 536 bytes = 268 tiles.
 MapRowBytes:
                 dc.w    $0000
 MapWidth:
@@ -1237,7 +1240,7 @@ AdjustForScroll:
 ; Background: blit the visible 20x13 tiles
 ;==============================================================================
 ; Redraws the whole visible background every frame: 20 x 13 tiles.
-; Map cell (one word, LV_Map, MapWidth cells per row, rows via $48BFA):
+; Map cell (one word, LV_Map, MapRowBytes bytes per row, rows via $48BFA):
 ;   bits 0-11  tile number          bit 14  animated: bits 0-3 select a
 ;   bit 15     solid (GetMapCell)            routine in LV_TileAnims
 ; Tile (LV_Tiles + n*128): 16x16 pixels, 4 interleaved planes = 64 words,
@@ -2906,6 +2909,8 @@ L_02234:
                 bra.b   ShipTilt
 .02254:
                 clr.b   (D_050EF).l
+; Ship frames: $6000 + n*$100, n = 0..4 (tilt; 2 = level).  Each frame is
+; 4 sprites of 14 lines ($40 bytes): left pair (SPR4/5), right pair (SPR6/7).
 ShipTilt:
                 moveq   #0,d0
                 move.b  (D_050F0).l,d0
@@ -3030,6 +3035,8 @@ ShipAutoPilot:
 ;==============================================================================
 ; Bits (the two satellites)
 ;==============================================================================
+; Bit frames: 11 of $70 bytes from $6500 to $69CF (one attached pair of 12
+; lines each), cycled to make the Bits spin.
 InitBits:
                 lea.l   ($6500).w,a0
                 move.l  a0,(D_05118).l
@@ -3134,8 +3141,9 @@ L_02490:
 ; screen by chaining several sprites in one channel:
 ;   $490A2 upper Bit   $490D6 ship, left half   $49112 lower Bit  (SPR4/5)
 ;   $491F2 ship, right half                                       (SPR6/7)
-; The attached partner of each sprite is $A8 bytes further on.  SPR0-3 are
-; not used.  The Force's frames start at $6A40 (in the $6000 block).
+; The attached partner of each sprite is $A8 bytes further on.  SPR0-3 show
+; the Force: UpdateForce points them straight at its frames in the $6000
+; block (two attached pairs = 32 pixels wide).
 CopperInt:
                 lea.l   (CUSTOM).l,a6
                 move.w  #$10,$9C(a6)
@@ -3212,6 +3220,11 @@ SetSprite:
                 move.l  d4,(a0,d3.w)
                 movem.w (a7)+,d0-d1
                 rts
+; Sprite data layout used for the ship, Bits and Force (in the $6000 block):
+;   control long, h lines of (plane A word, plane B word), end long
+;   = 4 + h*4 + 4 bytes; the attached partner (planes 2/3) follows directly.
+; CopySprite copies d3+1 longs (control + lines) for both sprites of a pair,
+; skipping the end long of each.
 CopySprite:
                 moveq   #1,d1
                 movea.l a0,a2
@@ -3287,6 +3300,12 @@ SetCopperPtrs:
 ;==============================================================================
 ; The Force
 ;==============================================================================
+; Force animation table at $516C: 16 bytes per Force level
+;   +0.l first frame  +4.l last frame  +8.l frame size  +$D.b frames per
+;   step  +$E.w height.  Level 0: $6A40-$6F40 ($100, 14 lines), 1: $7040-
+;   $7630 ($130, 17), 2: $7760-$7D50 ($130, 17), 3: $7E80-$8300 ($180, 22).
+; A frame = 4 sprites (two attached pairs), size/4 bytes each; the copper's
+; SPR0-3 pointers are aimed at them (SetCopperPtrs) - no copying.
 UpdateForce:
                 move.b  (ForceLevel).l,d0
                 cmp.b   (D_05144).l,d0
@@ -5397,7 +5416,7 @@ EncodeLong:
 ;==============================================================================
 ; DATA segment
 ;==============================================================================
-; LevelTable: 8 x (track,count -> $4A2E4; track,count -> $4CB00; map width)
+; LevelTable: 8 x (track,count -> $4A2E4; track,count -> $4CB00; map row length in BYTES)
 LevelTable:
                 dc.w    $0045,$0002,$0047,$000D,$0218,$0054,$0001,$0055
                 dc.w    $000D,$0168,$0062,$0002,$0064,$000B,$0088,$006F
@@ -5975,7 +5994,7 @@ D_05288:
                 dc.w    $0000,$0000,$0013,$0010,$0000,$0000,$0013,$0014
                 dc.w    $0000,$0000,$0013,$0011,$0002,$0004,$000E,$000B
 ; Copper list.  COLOR00, bitplanes off, BPL1-4 pointers (SetBitplanes),
-; SPR4-7 pointers, SPR0-3 (unused), modulos $A8,
+; SPR4-7 pointers, SPR0-3 (the Force, set by UpdateForce), modulos $A8,
 ; COLOR01-15 (playfield palette), BPLCON1 (fine scroll), BPLCON2 = $24
 ; (sprites in front), BPLCON0 = $4200 (4 planes).
 ; Line $EC: copper interrupt.  Line $ED: HUD - 3 planes ($3200), non

@@ -14,7 +14,7 @@ TEXT starts right after it (`$C0` / `$4A300`), and DATA follows TEXT.
 
 ## Level table (`LevelTable`, `$41B4`, in the engine)
 
-8 × 10 bytes: `track.w, count.w` (part A → `$4A2E4`), `track.w, count.w` (part B, crunched → `$4CB00`, decrunched to `$4D300`), `map width.w` (→ `MapWidth`).
+8 × 10 bytes: `track.w, count.w` (part A → `$4A2E4`), `track.w, count.w` (part B, crunched → `$4CB00`, decrunched to `$4D300`), `map row length.w` in **bytes**, 2 per cell (→ `MapWidth`, which is also the low word of `MapRowBytes`).
 
 ## Level interface (`$4A300`, start of each level's TEXT)
 
@@ -63,7 +63,7 @@ The definition's **spawn routine** (`+$20`) is called with a1 = the wave entry a
 
 ## Scroll script (`LV_ScrollScript`)
 
-6-byte entries `x speed.w, y speed.w, duration.w` (frames). When an entry runs out, the next one is loaded. If the entry *after that* has a negative duration, the current one repeats for ever: that's the end marker. Levels 1, 2, 4–8 just use `(11, 0, 100), (0, 0, −1)`: a steady 1 pixel a frame. Level 3 scrolls vertically.
+6-byte entries `x speed.w, y speed.w, duration.w` (frames). When an entry runs out, the next one is loaded. If the entry *after that* has a negative duration, the current one repeats for ever: that's the end marker. Levels 1, 2, 4–8 just use `(11, 0, 100), (0, 0, −1)`: a steady 1 pixel a frame. Level 3, the giant battleship, also moves vertically: its map is the battleship itself.
 
 Speeds index the table at `$48E9`:
 
@@ -81,7 +81,7 @@ Speeds index the table at `$48E9`:
 
 ## Map cells and tiles
 
-See `GRAPHICS.md`: one word per cell (tile number, animated flag, solid flag), 16 × 16 four-plane interleaved tiles of 128 bytes.
+See `GRAPHICS.md`: one word per cell (tile number, animated flag, solid flag), 16 × 16 four-plane interleaved tiles of 128 bytes. Each map is 13 rows (level 3: 26), row-major, `MapRowBytes` bytes per row. Level 4 keeps its map at `$50F00` and its `LevelInit` copies it to `$6EA6A` at every (re)start, because the level code changes the map while it plays.
 
 ## Objects
 

@@ -26,6 +26,8 @@ LevelHeader:
 ;   $4A324 level start      | $4A328 music player    | ($4A32C level 8:
 ;   ending music; other levels: the scroll script usually starts here)
 ; Formats: docs/DATA_FORMATS.md
+; Level 3 is the giant battleship: the map (68 x 26 tiles) is the ship
+; itself, and the scroll script moves it vertically as well as horizontally.
 LevelInterface:
                 dc.w    $0301,$1969
                 dc.l    WaveList
