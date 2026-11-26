@@ -88,9 +88,52 @@ The main loop never waits for the vertical blank itself. It builds a frame into 
 
 See the comment block in `src/game.s` ("Object system") for the 62-byte object layout and the object-definition layout. There are 40 objects, a free list plus an active list sorted by priority, and each object has its own update routine pointer at `+6`. The level code creates its enemies through `ObjCreate` with a definition pointer.
 
-## The Force (`UpdateForce`)
+## The ship
 
-A state machine in `ForceState` (`$5164`): Idle → Enter (flies on-screen) → Free (floats and tracks the ship's Y) → Return / Attached (front or back, `ForceSide`) → Launched. `ForceLevel` (`$5142`) is the Force's power level, which selects the weapon that `FireForce` uses (reflect, ground and anti-air lasers).
+`ShipControl` runs from the VBL. It reads the joystick in port 2 (`JOY1DAT`: left = bit 9, right = bit 1, up = bit 9 ⊕ bit 8, down = bit 1 ⊕ bit 0) and moves the ship by `ShipSpeed` pixels within x `$96`–`$1A0` and y `$30`–`$DC`.
+
+**Tilt:** moving up or down tilts the ship (`ShipTiltFrame` 0–16, drifting back to 8 = level when you let go). The tilt selects one of 5 sprite frames and also moves its hit box (`ShipTiltTable`).
+
+**Scripted movement:** `ShipFlyIn` (level start: fly right to x `$186`, pause, back to x `$C8`) and `ShipAutoPilot` (stage end and the ending) steer it.
+
+**Blinking:** while the ship isn't alive yet after a respawn, the copper interrupt hides it every other 2 VBLs.
+
+## The Force
+
+A state machine in `ForceState`, run from the copper interrupt (details in the comment above `Force_Idle`):
+
+1. **Enter:** flies in from the left.
+2. **Free:** parks at the screen edge away from the ship and drifts towards the ship's y.
+3. **Return:** fire 2 (button 2 or Space, `ReadFire2`) calls it back.
+4. **Docking:** touching the ship docks it at the front or the back (`ForceSide`). Docking at the back turns level 1 into level 2, which has its own frames.
+5. **Launched:** fire 2 while docked launches it at 8 pixels a frame until it nears the edge, then it's free again.
+
+`ForceLevel` (0–3) is its power. The Force is four hardware sprites (SPR0–3) whose copper pointers are aimed straight at the frames in the `$6000` block (`UpdateForce`, table `ForceAnimTable`).
+
+## Weapons and damage
+
+**Fire button:** a tap fires a normal shot. Holding it charges the wave cannon (`ChargeBeam`, `BeamCharge`, meter in the HUD), released at one of four strengths (`WaveCannonShots`: charge 6/12/18/24 → 16×12 to 64×16 beams).
+
+**The Force's weapon** (`FireForce`) depends on its state:
+- **Free:** its own shots. Level 0 fires forward; level 1+ adds up-right and down-right; level 3 adds up and down (`ShotTypes`).
+- **Docked:** set by the last crystal collected (`LaserType`): type 1 is the reflect laser; types 0 and 2 are segmented lasers (4 segments, or 8 at level 3).
+
+**Player shots** are 14 entries in parallel word arrays (x, y, hit box, type; see `HitByShots`):
+
+| Entries | Weapon | Damage |
+|---|---|---|
+| 13 | wave cannon beam | its charge; carries on through enemies it doesn't kill |
+| 12 | reflect laser | 5 |
+| 10–11 | shot streams | 2 |
+| 0–9 | normal shots | 1, then removed |
+
+**Collisions** (`ObjCollisions`, every object every frame, when on screen):
+- the ship and the Force (touching the ship kills it, the Force damages the object)
+- homing missiles, the Bits, the lasers, the shots
+
+`BoxTest` is a simple distance test with separate left/right and up/down extents. `ObjDamage` adds the damage, and when it reaches the definition's hit points the object explodes and its score is added. Otherwise it flashes white for 3 frames (hit sound). Objects carrying a power-up release it when hit. Flag bit 2 makes an object immune to weapons, and hit points < 0 make it indestructible.
+
+**Enemy bullets:** 16 at most, aimed at the ship when fired (`FireEnemyBullet`, 16 directions). They're stopped by the map and the Force, and kill the ship on contact.
 
 ## Hidden trainer
 

@@ -18,7 +18,7 @@
 CUSTOM          equ     $DFF000
 DMACONR         equ     $002
 VHPOSR          equ     $006
-JOY0DAT         equ     $00C
+JOY1DAT         equ     $00C          ; joystick port 2
 INTREQR         equ     $01E
 DMACON          equ     $096
 INTENA          equ     $09A
@@ -435,7 +435,7 @@ ShipRespawn:
 ResetShipWeapons:
                 bsr.w   InitBits
                 bsr.w   ResetMissiles
-                clr.b   (D_04B5A).l
+                clr.b   (LaserType).l
                 clr.b   (ForceLevel).l
                 clr.b   (ForceActive).l
                 clr.w   (ForcePos).l
@@ -463,7 +463,7 @@ InitLevelScroll:
                 clr.w   (ScrollScriptTimer).l
                 move.l  #St_LevelFadeIn,(GameState).l
                 move.b  #$E,(D_0420A).l
-                clr.b   (D_0420B).l
+                clr.b   (ShipIntroTimer).l
                 movea.l (LV_Init).l,a0
                 jsr     (a0)
                 clr.b   (ShipHit).l
@@ -495,9 +495,9 @@ ApplyMapPatches:
 .00656:
                 rts
 LevelFadeInStep:
-                subq.b  #$1,(D_0420B).l
+                subq.b  #$1,(ShipIntroTimer).l
                 bpl.b   .006ac
-                move.b  #$2,(D_0420B).l
+                move.b  #$2,(ShipIntroTimer).l
                 movea.l (LV_Palette).l,a0
                 bsr.w   PaletteFadeIn
                 subq.b  #$1,(D_0420A).l
@@ -509,7 +509,7 @@ LevelFadeInStep:
                 beq.b   .006a6
                 lea.l   St_PlayStart(pc),a0
                 bset.b  #$0,(StageFlags).l
-                clr.b   (D_0420B).l
+                clr.b   (ShipIntroTimer).l
 .006a6:
                 move.l  a0,(GameState).l
 .006ac:
@@ -557,9 +557,9 @@ DeathWait:
 .0076e:
                 rts
 .00770:
-                subq.b  #$1,(D_0420B).l
+                subq.b  #$1,(ShipIntroTimer).l
                 bpl.b   .0076e
-                move.b  #$2,(D_0420B).l
+                move.b  #$2,(ShipIntroTimer).l
                 bsr.w   PaletteFadeOut
                 subq.b  #$1,(D_0420A).l
                 bne.b   .0076e
@@ -577,12 +577,12 @@ StageEndSequence:
                 bsr.w   ClearBeamMeter
                 clr.b   (ShipAlive).l
                 move.b  #$24,(D_0420A).l
-                clr.b   (D_0420B).l
+                clr.b   (ShipIntroTimer).l
                 st.b    (D_0420D).l
 .007d0:
-                subq.b  #$1,(D_0420B).l
+                subq.b  #$1,(ShipIntroTimer).l
                 bpl.b   .00830
-                move.b  #$2,(D_0420B).l
+                move.b  #$2,(ShipIntroTimer).l
                 subq.b  #$1,(D_0420A).l
                 bne.b   .00822
                 bsr.w   PaletteBlack
@@ -1675,8 +1675,8 @@ UpdateEnemyBullets:
                 sub.w   #$5F,d0
                 sub.w   #$C,d1
                 add.w   (ForceHitbox).l,d0
-                add.w   (D_05154).l,d1
-                movem.w (D_05156).l,d5-d6
+                add.w   (ForceHitboxY).l,d1
+                movem.w (ForceHitboxSize).l,d5-d6
                 bsr.w   BoxTest
                 movem.l (a7)+,d3-d4/a3
                 bne.b   .01422
@@ -1781,30 +1781,30 @@ TurnTowards:
 ; Collisions
 ;==============================================================================
 ObjCollisions:
-                tst.b   (ShipAlive).l
+                tst.b   (ShipAlive).l               ; no collisions while the ship is dead
                 beq.b   .01500
-                tst.b   $5(a0)
+                tst.b   $5(a0)                      ; already dying
                 bne.b   .01500
-                tst.b   $28(a0)
+                tst.b   $28(a0)                     ; hit-flash running: just blink
                 beq.b   .01502
                 subq.b  #$1,$28(a0)
                 btst.b  #$0,$28(a0)
                 beq.b   .01500
-                bset.b  #$0,$23(a0)
+                bset.b  #$0,$23(a0)                 ; draw white this frame
                 moveq   #6,d0                       ; sound: enemy hit
                 bra.w   PlaySound
 .01500:
                 rts
 .01502:
                 move.w  $A(a0),d3
-                cmp.w   #$15E,d3
+                cmp.w   #$15E,d3                    ; only when on screen
                 bcc.b   .01500
-                add.w   $16(a0),d3
+                add.w   $16(a0),d3                  ; d3,d4 = hit box centre, a3/a4 = extents
                 move.w  $C(a0),d4
                 add.w   $18(a0),d4
                 movem.w $1A(a0),a3-a4
-                bsr.w   HitByForceOrShip
-                btst.b  #$2,$23(a0)
+                bsr.w   HitByForceOrShip            ; touching the ship kills it; the Force hurts
+                btst.b  #$2,$23(a0)                 ; flag 2: immune to weapons
                 bne.b   .01500
                 bsr.w   HitByMissiles
                 bsr.w   HitByBits
@@ -1812,8 +1812,8 @@ ObjCollisions:
                 bsr.w   HitByShots
                 rts
 HitByShots:
-                moveq   #13,d7
-                lea.l   (WaveBeamX).l,a1
+                moveq   #13,d7                      ; 14 player shots, parallel word arrays:
+                lea.l   (WaveBeamX).l,a1            ; x +0, y +$1C, box +$54/$70/$8C/$A8, type +$38
 .01544:
                 move.w  (a1),d0
                 beq.w   .015d6
@@ -1824,9 +1824,9 @@ HitByShots:
                 move.w  $A8(a1),d6
                 bsr.w   BoxTest
                 beq.b   .015d6
-                cmp.w   #$D,d7
+                cmp.w   #$D,d7                      ; 13: wave cannon beam
                 bne.b   .01592
-                move.w  $38(a1),d0
+                move.w  $38(a1),d0                  ; its power (charge level)
                 move.w  d0,d2
                 move.w  $24(a0),d1
                 bmi.b   .01588
@@ -1844,11 +1844,11 @@ HitByShots:
                 bsr.w   ObjDamage
                 bra.b   .015d6
 .01592:
-                cmp.w   #$C,d7
+                cmp.w   #$C,d7                      ; 12: reflect laser - 5 damage,
                 bne.b   .015b0
                 move.w  $24(a0),d0
                 sub.w   $26(a0),d0
-                cmp.w   #$5,d0
+                cmp.w   #$5,d0                      ; carries on if that kills the target
                 bls.b   .015a8
                 clr.w   (a1)
 .015a8:
@@ -1856,13 +1856,13 @@ HitByShots:
                 bsr.w   ObjDamage
                 bra.b   .015d6
 .015b0:
-                cmp.w   #$A,d7
+                cmp.w   #$A,d7                      ; 10-11: shot streams - 2 damage
                 bcs.b   .015ce
                 move.w  $24(a0),d0
                 sub.w   $26(a0),d0
                 cmp.w   #$2,d0
                 bls.b   .015c6
-                clr.w   (a1)
+                clr.w   (a1)                        ; 0-9: normal shots - 1 damage, gone
 .015c6:
                 moveq   #2,d0
                 bsr.w   ObjDamage
@@ -1911,7 +1911,7 @@ HitByBits:
 
 ; BoxTest: d0,d1 vs d3,d4 with sizes -> d0 = 1 if overlapping
 BoxTest:
-                sub.w   d3,d0
+                sub.w   d3,d0                       ; dx: left of the target uses d5, right a3
                 bpl.b   .0163c
                 neg.w   d0
                 bra.b   .0163e
@@ -1920,7 +1920,7 @@ BoxTest:
 .0163e:
                 cmp.w   d5,d0
                 bhi.b   .01654
-                sub.w   d4,d1
+                sub.w   d4,d1                       ; dy: above uses d6, below a4
                 bpl.b   .0164a
                 neg.w   d1
                 bra.b   .0164c
@@ -1929,7 +1929,7 @@ BoxTest:
 .0164c:
                 cmp.w   d6,d1
                 bhi.b   .01654
-                moveq   #1,d0
+                moveq   #1,d0                       ; overlap
                 rts
 .01654:
                 moveq   #0,d0
@@ -1938,26 +1938,26 @@ BoxTest:
 ; ObjDamage: d0 = damage
 ObjDamage:
                 move.w  $26(a0),d1
-                add.w   d0,d1
+                add.w   d0,d1                       ; accumulate damage
                 move.w  d1,$26(a0)
-                tst.w   $24(a0)
+                tst.w   $24(a0)                     ; hit points < 0: indestructible
                 bmi.b   .016aa
-                btst.b  #$1,$23(a0)
+                btst.b  #$1,$23(a0)                 ; carrier: release its power-up
                 beq.b   .01674
                 bsr.w   ReleasePowerUp
 .01674:
-                cmp.w   $24(a0),d1
+                cmp.w   $24(a0),d1                  ; destroyed?
                 bcs.b   .01698
                 clr.b   $23(a0)
-                move.b  #$1,$5(a0)
-                clr.l   $6(a0)
-                addq.l  #$8,a7
+                move.b  #$1,$5(a0)                  ; start the explosion
+                clr.l   $6(a0)                      ; no more AI
+                addq.l  #$8,a7                      ; drop out of the whole collision check
                 movea.l $12(a0),a1
-                move.l  $24(a1),d0
+                move.l  $24(a1),d0                  ; definition's score (BCD)
                 beq.b   .016aa
                 bra.w   AddScore
 .01698:
-                bset.b  #$0,$23(a0)
+                bset.b  #$0,$23(a0)                 ; not yet: flash white
                 move.b  #$3,$28(a0)
                 moveq   #6,d0                       ; sound: enemy hit
                 bra.w   PlaySound
@@ -1968,8 +1968,8 @@ HitByForceOrShip:
                 sub.w   #$5F,d0
                 sub.w   #$C,d1
                 add.w   (ForceHitbox).l,d0
-                add.w   (D_05154).l,d1
-                movem.w (D_05156).l,d5-d6
+                add.w   (ForceHitboxY).l,d1
+                movem.w (ForceHitboxSize).l,d5-d6
                 bsr.w   BoxTest
                 beq.b   .016dc
                 moveq   #1,d0
@@ -2007,7 +2007,7 @@ HitByForceOrShip:
                 bset.b  #$1,(BitsFlags).l
                 rts
 .01758:
-                move.b  d0,(D_04B5A).l
+                move.b  d0,(LaserType).l
                 tst.b   (ForceActive).l
                 beq.b   .01794
                 tst.b   (ForceLevel).l
@@ -2047,8 +2047,8 @@ CollectSpeedUp:
 .017e6:
                 rts
 HitByLasers:
-                move.b  (D_04B61).l,d2
-                lea.l   (D_04DBA).l,a1
+                move.b  (LaserType2Active).l,d2
+                lea.l   (LaserSegments).l,a1
                 moveq   #7,d7
 .017f6:
                 move.w  (a1),d0
@@ -2339,7 +2339,7 @@ UpdateShotStream:
                 move.w  d3,d1
                 moveq   #9,d5
                 moveq   #20,d4
-                tst.b   (D_04B5C).l
+                tst.b   (LaserSide).l
                 bpl.b   .01b5e
                 adda.l  #$100,a1
                 moveq   #-16,d4
@@ -2382,7 +2382,7 @@ UpdateReflectBeam:
                 moveq   #10,d5
                 moveq   #46,d7
                 moveq   #4,d2
-                tst.b   (D_04B5C).l
+                tst.b   (LaserSide).l
                 bpl.b   .01bd6
                 neg.w   d2
                 moveq   #14,d7
@@ -2432,10 +2432,10 @@ UpdateLasers:
                 beq.w   .01d1c
                 move.w  #$30,$60(a6)
                 move.w  #$30,$66(a6)
-                lea.l   (D_04DBA).l,a0
+                lea.l   (LaserSegments).l,a0
                 moveq   #7,d7
                 moveq   #0,d6
-                tst.b   (D_04B61).l
+                tst.b   (LaserType2Active).l
                 bne.w   .01d1e
 .01c6a:
                 move.w  (a0),d0
@@ -2573,6 +2573,15 @@ ClipLaser:
                 subq.b  #$1,(LaserCount).l
 L_01DDE:
                 rts
+; Called with every fire-button press.  What the Force fires:
+;   free (ForceSide 0): its own shots (ShotTypes) - level 0: one forward
+;      shot; level 1+: up-right and down-right; level 3: also up and down
+;   docked (ForceSide +/-1, level 1+): by LaserType, the colour of the
+;      last crystal collected (set in HitByForceOrShip):
+;        1    reflect laser (sound 3)
+;        0/2  segmented lasers in LaserSegments - 4 segments at levels
+;             1-2, 8 at level 3; type 2 sets LaserType2Active (sound 4)
+;      fired forwards or backwards by the docking side (LaserSide).
 FireForce:
                 tst.b   (ForceActive).l
                 beq.b   L_01DDE
@@ -2623,8 +2632,8 @@ FireForce:
 .01e72:
                 tst.b   d6
                 beq.b   .01e70
-                move.b  d7,(D_04B5C).l
-                move.b  (D_04B5A).l,d5
+                move.b  d7,(LaserSide).l
+                move.b  (LaserType).l,d5
                 bne.w   .01f0a
                 tst.b   (LaserCount).l
                 bne.w   .01f08
@@ -2649,7 +2658,7 @@ FireForce:
                 moveq   #2,d5
                 add.w   #$FFEC,d0
 .01eca:
-                lea.l   (D_04DBA).l,a0
+                lea.l   (LaserSegments).l,a0
                 moveq   #0,d3
 .01ed2:
                 move.w  d1,$14(a0)
@@ -2664,7 +2673,7 @@ FireForce:
                 move.w  d0,(a0)+
                 addq.w  #$1,d3
                 dbra    d6,.01ed2
-                clr.b   (D_04B61).l
+                clr.b   (LaserType2Active).l
 .01f08:
                 rts
 .01f0a:
@@ -2674,7 +2683,7 @@ FireForce:
                 bne.b   .01f08
                 move.b  #$8,(LaserCount).l
                 moveq   #3,d6
-                lea.l   (D_04DBA).l,a0
+                lea.l   (LaserSegments).l,a0
                 movem.w (ShipPos).l,d0-d1
                 tst.b   d7
                 bpl.b   .01f40
@@ -2701,7 +2710,7 @@ FireForce:
                 move.w  d0,(a0)+
                 addq.w  #$1,d3
                 dbra    d6,.01f4e
-                st.b    (D_04B61).l
+                st.b    (LaserType2Active).l
                 moveq   #4,d0                       ; sound: Force weapon B
                 bra.w   PlaySound
 .01f88:
@@ -2893,46 +2902,46 @@ L_02198:
 ; Ship movement
 ;==============================================================================
 ShipControl:
-                tst.b   (ShipHit).l
+                tst.b   (ShipHit).l                 ; no control while exploding
                 bne.b   L_02198
-                tst.b   (ShipMode).l
+                tst.b   (ShipMode).l                ; -1: stage-end autopilot, 1: fly-in
                 bmi.w   ShipAutoPilot
                 bne.w   ShipFlyIn
-                move.w  (CUSTOM+JOY0DAT).l,d0
-                move.w  (ShipSpeed).l,d2
+                move.w  (CUSTOM+JOY1DAT).l,d0       ; joystick in port 2
+                move.w  (ShipSpeed).l,d2            ; pixels per VBL (speed-ups add to it)
                 move.w  d0,d1
-                asl.w   #$1,d1
+                asl.w   #$1,d1                      ; up = bit 9 ^ bit 8, down = bit 1 ^ bit 0
                 eor.w   d0,d1
-                btst    #$9,d0
+                btst    #$9,d0                      ; left
                 beq.b   .021da
-                cmpi.w  #$96,(ShipX).l
+                cmpi.w  #$96,(ShipX).l              ; left limit
                 bls.b   .021f0
                 sub.w   d2,(ShipX).l
                 bra.b   .021f0
 .021da:
-                btst    #$1,d0
+                btst    #$1,d0                      ; right
                 beq.b   .021f0
-                cmpi.w  #$1A0,(ShipX).l
+                cmpi.w  #$1A0,(ShipX).l             ; right limit
                 bhi.b   .021f0
                 add.w   d2,(ShipX).l
 .021f0:
-                btst    #$9,d1
+                btst    #$9,d1                      ; up
                 beq.b   .02212
-                cmpi.w  #$30,(ShipY).l
+                cmpi.w  #$30,(ShipY).l              ; top limit
                 bls.w   L_02234
                 sub.w   d2,(ShipY).l
-                move.b  #$FF,(ShipTiltInput).l
+                move.b  #$FF,(ShipTiltInput).l      ; tilt towards frame 0 (nose up)
                 bra.b   ShipTilt
 .02212:
-                btst    #$1,d1
+                btst    #$1,d1                      ; down
                 beq.b   L_02234
-                cmpi.w  #$DC,(ShipY).l
+                cmpi.w  #$DC,(ShipY).l              ; bottom limit
                 bcc.w   L_02234
                 add.w   d2,(ShipY).l
-                move.b  #$1,(ShipTiltInput).l
+                move.b  #$1,(ShipTiltInput).l       ; tilt towards frame 16
                 bra.b   ShipTilt
 L_02234:
-                cmpi.b  #$8,(ShipTiltFrame).l
+                cmpi.b  #$8,(ShipTiltFrame).l       ; no vertical input: drift back to level (8)
                 bhi.b   .0224a
                 beq.b   .02254
                 move.b  #$1,(ShipTiltInput).l
@@ -2947,7 +2956,7 @@ L_02234:
 ShipTilt:
                 moveq   #0,d0
                 move.b  (ShipTiltFrame).l,d0
-                add.b   (ShipTiltInput).l,d0
+                add.b   (ShipTiltInput).l,d0        ; tilt frame 0..16
                 bpl.b   .0226e
                 moveq   #0,d0
                 bra.b   .02276
@@ -2957,19 +2966,22 @@ ShipTilt:
                 moveq   #16,d0
 .02276:
                 move.b  d0,(ShipTiltFrame).l
-                lsr.b   #$2,d0
+                lsr.b   #$2,d0                      ; -> sprite frame 0..4
                 lea.l   (ShipTiltTable).l,a0
                 move.b  (a0,d0.w),d1
                 ext.w   d1
-                move.w  d1,(ShipHitboxY).l
+                move.w  d1,(ShipHitboxY).l          ; hit box follows the tilt
                 move.b  $5(a0,d0.w),d1
                 ext.w   d1
                 move.w  d1,(ShipHitboxH).l
-                lsl.w   #$8,d0
+                lsl.w   #$8,d0                      ; frame * $100
                 add.l   #$6000,d0               ; ship sprite frames
                 move.l  d0,(ShipSpriteFrame).l
 L_022AA:
                 rts
+; Level start: StageFlags bit 0 = intro running.  The ship flies right to
+; x $186 (bit 2), waits ShipIntroTimer (bit 3), flies back to x $C8 and
+; gets control (bit 1, ShipMode 0).  Tilt changes every 5th VBL.
 ShipFlyIn:
                 move.b  (StageFlags).l,d7
                 btst    #$0,d7
@@ -2983,7 +2995,7 @@ ShipFlyIn:
                 cmpi.w  #$186,(ShipX).l
                 bcs.b   L_022AA
                 bset.b  #$2,(StageFlags).l
-                move.b  #$F,(D_0420B).l
+                move.b  #$F,(ShipIntroTimer).l
                 rts
 .022ee:
                 btst    #$3,d7
@@ -2997,26 +3009,31 @@ ShipFlyIn:
                 clr.b   (ShipMode).l
                 rts
 .0231a:
-                subq.b  #$1,(D_0420B).l
+                subq.b  #$1,(ShipIntroTimer).l
                 bpl.b   L_022AA
                 bset.b  #$3,(StageFlags).l
-                move.b  #$A,(D_0420B).l
+                move.b  #$A,(ShipIntroTimer).l
                 rts
 .02334:
-                subq.b  #$1,(D_0420B).l
+                subq.b  #$1,(ShipIntroTimer).l
                 bpl.b   .02346
-                move.b  #$4,(D_0420B).l
+                move.b  #$4,(ShipIntroTimer).l
                 jmp     (a0)
 .02346:
                 rts
+; Autopilot (ShipMode < 0): the ship steers itself to AutoPilotX/Y, one
+; pixel per VBL on each axis.  Target: ($10E,$96) at a normal stage end
+; (EndSequenceFlags bit 0 clear); in the final ending ($C8,$82) with
+; weapons reset, then ($1C2,$A) once bit 7 is set (bit 1 starts the
+; ending jingle).  StageFlags bit 7 is set when the target is reached.
 ShipAutoPilot:
                 move.b  (EndSequenceFlags).l,d0
                 btst    #$0,d0
                 beq.b   .023ac
                 btst    #$2,d0
                 beq.b   .0236a
-                move.w  #$1C2,(D_050F2).l
-                move.w  #$A,(D_050F4).l
+                move.w  #$1C2,(AutoPilotX).l
+                move.w  #$A,(AutoPilotY).l
 .0236a:
                 btst    #$7,d0
                 bne.b   .023bc
@@ -3024,8 +3041,8 @@ ShipAutoPilot:
                 bsr.w   ResetShipWeapons
                 move.w  (a7)+,d0
                 clr.b   (ShipAlive).l
-                move.w  #$82,(D_050F4).l
-                move.w  #$C8,(D_050F2).l
+                move.w  #$82,(AutoPilotY).l
+                move.w  #$C8,(AutoPilotX).l
                 btst    #$1,d0
                 beq.b   .023bc
                 move.b  #$FF,(D_056FD).l
@@ -3033,13 +3050,13 @@ ShipAutoPilot:
                 bset.b  #$7,(EndSequenceFlags).l
                 bra.b   .023bc
 .023ac:
-                move.w  #$10E,(D_050F2).l
-                move.w  #$96,(D_050F4).l
+                move.w  #$10E,(AutoPilotX).l
+                move.w  #$96,(AutoPilotY).l
 .023bc:
                 moveq   #0,d4
                 movem.w (ShipX).l,d0-d1
                 moveq   #-1,d2
-                sub.w   (D_050F2).l,d0
+                sub.w   (AutoPilotX).l,d0
                 beq.b   .023de
                 bpl.b   .023d6
                 neg.w   d2
@@ -3050,7 +3067,7 @@ ShipAutoPilot:
 .023de:
                 move.b  #$FF,(ShipTiltInput).l
                 moveq   #-1,d3
-                sub.w   (D_050F4).l,d1
+                sub.w   (AutoPilotY).l,d1
                 beq.w   .02408
                 bpl.b   .023fe
                 neg.w   d3
@@ -3179,45 +3196,45 @@ L_02490:
 ; block (two attached pairs = 32 pixels wide).
 CopperInt:
                 lea.l   (CUSTOM).l,a6
-                move.w  #$10,$9C(a6)
-                bsr.w   SwapScreens
-                bsr.w   UpdateForce
-                lea.l   ($490A2).l,a0
+                move.w  #$10,$9C(a6)                ; acknowledge COPER
+                bsr.w   SwapScreens                 ; flip buffers if a frame is ready
+                bsr.w   UpdateForce                 ; Force: animate, aim SPR0-3, run its state
+                lea.l   ($490A2).l,a0               ; upper Bit into SPR4/5 (13 longs)
                 movea.l (UpperBitFrame).l,a1
                 move.w  #$C,d3
                 bsr.w   CopySprite
-                lea.l   ($490D6).l,a0
+                lea.l   ($490D6).l,a0               ; ship left half, chained below it
                 movea.l (ShipSpriteFrame).l,a1
                 move.w  #$E,d3
                 bsr.w   CopySprite
-                lea.l   ($491F2).l,a0
+                lea.l   ($491F2).l,a0               ; ship right half into SPR6/7
                 bsr.w   CopySprite
-                lea.l   ($49112).l,a0
+                lea.l   ($49112).l,a0               ; lower Bit, chained in SPR4/5
                 movea.l (LowerBitFrame).l,a1
                 move.w  #$C,d3
                 bsr.w   CopySprite
                 lea.l   ($490A2).l,a0
-                movem.w (UpperBitPos).l,d0-d1
+                movem.w (UpperBitPos).l,d0-d1       ; now the positions:
                 moveq   #12,d2
                 move.w  #$A8,d3
                 bsr.b   SetSprite
                 lea.l   ($490D6).l,a0
                 movem.w (ShipX).l,d0-d1
-                move.b  (ShipAlive).l,d6
+                move.b  (ShipAlive).l,d6            ; while respawning the ship blinks:
                 bne.b   .025fe
-                btst.b  #$1,(VblCountLoByte).l
+                btst.b  #$1,(VblCountLoByte).l      ; every other 2 VBLs ...
                 beq.b   .025fe
-                moveq   #95,d0
+                moveq   #95,d0                      ; ... it is put off-screen
 .025fe:
                 moveq   #14,d2
                 bsr.b   SetSprite
-                add.w   #$10,d0
+                add.w   #$10,d0                     ; right half 16 pixels on
                 lea.l   ($491F2).l,a0
                 bsr.b   SetSprite
-                sub.w   #$6F,d0
+                sub.w   #$6F,d0                     ; ship x in game coordinates
                 beq.b   .02620
                 sub.w   #$C,d1
-                movem.w d0-d1,(ShipPos).l
+                movem.w d0-d1,(ShipPos).l           ; -> ShipPos for the game and levels
 .02620:
                 lea.l   ($49112).l,a0
                 movem.w (LowerBitPos).l,d0-d1
@@ -3364,8 +3381,8 @@ UpdateForce:
                 addq.w  #$4,d2
 .027a0:
                 lea.l   (D_051AC).l,a0
-                move.w  (a0,d2.w),(D_0515A).l
-                move.w  $2(a0,d2.w),(D_0515C).l
+                move.w  (a0,d2.w),(ForceDockOfsX).l
+                move.w  $2(a0,d2.w),(ForceDockOfsY).l
                 lsl.w   #$4,d1
                 lea.l   (ForceAnimTable).l,a0
                 move.w  $E(a0,d1.w),d5
@@ -3474,14 +3491,14 @@ UpdateForce:
                 bra.b   .02914
 .02902:
                 subq.w  #$4,d7
-                addq.w  #$2,(D_0516A).l
+                addq.w  #$2,(ForceY).l
                 bra.b   .02914
 .0290c:
                 addq.w  #$4,d7
-                subq.w  #$2,(D_0516A).l
+                subq.w  #$2,(ForceY).l
 .02914:
                 movem.w (a7)+,d0-d1
-                clr.b   (D_0514A).l
+                clr.b   (ForceHalt).l
                 bsr.w   GetMapCell
                 movea.l a4,a3
                 tst.w   d6
@@ -3503,14 +3520,14 @@ UpdateForce:
                 bsr.b   L_029C2
                 beq.b   .0295e
                 subq.w  #$1,(ForcePos).l
-                clr.b   (D_05143).l
+                clr.b   (ForceParkSide).l
                 bra.b   .02970
 .0295e:
                 subq.l  #$4,a3
                 bsr.b   L_029C2
                 beq.b   .02970
                 addq.w  #$1,(ForcePos).l
-                clr.b   (D_05143).l
+                clr.b   (ForceParkSide).l
 .02970:
                 movea.l a4,a3
                 tst.w   d7
@@ -3519,26 +3536,26 @@ UpdateForce:
                 adda.l  (MapRowBytes).l,a3
                 bsr.b   L_029C2
                 beq.b   .029c0
-                add.w   d7,(D_0516A).l
+                add.w   d7,(ForceY).l
                 bra.b   .029c0
 .0298a:
                 suba.l  (MapRowBytes).l,a3
                 bsr.b   L_029C2
                 beq.b   .029c0
-                add.w   d7,(D_0516A).l
+                add.w   d7,(ForceY).l
                 bra.b   .029c0
 .0299c:
                 adda.l  (MapRowBytes).l,a3
                 bsr.b   L_029C2
                 beq.b   .029ae
-                subq.w  #$1,(D_0516A).l
+                subq.w  #$1,(ForceY).l
                 bra.b   .029c0
 .029ae:
                 movea.l a4,a3
                 suba.l  (MapRowBytes).l,a3
                 bsr.b   L_029C2
                 beq.b   .029c0
-                addq.w  #$1,(D_0516A).l
+                addq.w  #$1,(ForceY).l
 .029c0:
                 rts
 L_029C2:
@@ -3550,7 +3567,7 @@ L_029C2:
                 clr.w   (a3)
                 rts
 .029d6:
-                move.b  #$FF,(D_0514A).l
+                move.b  #$FF,(ForceHalt).l
 L_029DE:
                 rts
 L_029E0:
@@ -3560,6 +3577,19 @@ L_029E0:
                 bsr.b   L_029C2
                 adda.l  (MapRowBytes).w,a3
                 bra.b   L_029C2
+; Force state machine (ForceState, run from the copper interrupt):
+;   Force_Idle      not collected yet (ForceActive clear)
+;   Force_Reset     -> Force_Enter: flies in from the left to x $C0
+;   Force_Free      parks at the screen edge away from the ship (x $C0 or
+;                   $152, ForceParkSide) and drifts towards the ship's y
+;   Force_Return    fire 2 while free: comes back to the ship
+;   ForceHitsShip   touching the ship docks it: ForceSide 1 = front,
+;                   -1 = back.  Docking at the back turns level 1 into
+;                   level 2 (the rear-docked Force has its own frames)
+;   Force_Attached  follows the ship (ForceDockOfsX/Y); fire 2 launches it
+;   Force_Launched  flies off at 8 pixels/frame (ForceLaunchSpeed, sign by
+;                   side) until x $86 or $1A6, then Force_Free again
+; ForcePos/ForceY are its position; ForceHitbox* its collision box.
 Force_Idle:
                 tst.b   (ForceActive).l
                 beq.b   L_029DE
@@ -3573,13 +3603,13 @@ Force_Reset:
                 bne.b   .02a2c
                 subq.b  #$1,(ForceLevel).l
 .02a2c:
-                clr.b   (D_0514A).l
-                clr.b   (D_05143).l
+                clr.b   (ForceHalt).l
+                clr.b   (ForceParkSide).l
                 clr.b   (ForceSide).l
-                clr.b   (D_0514B).l
-                clr.b   (D_05149).l
+                clr.b   (ForceYDir).l
+                clr.b   (ForceYTimer).l
                 move.w  #$76,(ForcePos).l
-                move.w  #$8A,(D_0516A).l
+                move.w  #$8A,(ForceY).l
                 move.l  #Force_Enter,(ForceState).l
                 rts
 ForceCommon:
@@ -3594,7 +3624,7 @@ Force_Enter:
                 addq.w  #$2,(ForcePos).l
                 cmpi.w  #$C0,(ForcePos).l
                 bcs.b   .02aa0
-                move.b  #$1,(D_05143).l
+                move.b  #$1,(ForceParkSide).l
                 move.l  #Force_Free,(ForceState).l
 .02aa0:
                 rts
@@ -3603,28 +3633,28 @@ Force_Free:
                 move.w  (ShipX).l,d0
                 cmp.w   #$10E,d0
                 bcs.b   .02ad2
-                cmpi.b  #$1,(D_05143).l
+                cmpi.b  #$1,(ForceParkSide).l
                 beq.b   .02afa
-                clr.b   (D_05143).l
+                clr.b   (ForceParkSide).l
                 move.w  #$C0,d0
                 bsr.w   .02b58
-                move.b  #$1,(D_05143).l
+                move.b  #$1,(ForceParkSide).l
                 bra.b   .02aec
 .02ad2:
-                tst.b   (D_05143).l
+                tst.b   (ForceParkSide).l
                 bmi.b   .02afa
-                clr.b   (D_05143).l
+                clr.b   (ForceParkSide).l
                 move.w  #$152,d0
                 bsr.b   .02b58
-                st.b    (D_05143).l
+                st.b    (ForceParkSide).l
 .02aec:
-                clr.b   (D_0514B).l
-                clr.b   (D_05149).l
+                clr.b   (ForceYDir).l
+                clr.b   (ForceYTimer).l
                 rts
 .02afa:
                 moveq   #1,d2
                 move.w  (ShipY).l,d1
-                sub.w   (D_0516A).l,d1
+                sub.w   (ForceY).l,d1
                 bpl.b   .02b10
                 neg.w   d2
                 neg.w   d7
@@ -3632,22 +3662,22 @@ Force_Free:
 .02b10:
                 cmp.w   #$4,d1
                 bls.b   .02b48
-                subq.b  #$1,(D_05149).l
+                subq.b  #$1,(ForceYTimer).l
                 bpl.b   .02b32
-                move.b  #$10,(D_05149).l
-                move.b  d2,(D_0514B).l
+                move.b  #$10,(ForceYTimer).l
+                move.b  d2,(ForceYDir).l
                 move.b  d2,(ForceAnimDir).l
 .02b32:
-                move.b  (D_0514B).l,d0
+                move.b  (ForceYDir).l,d0
                 ext.w   d0
                 move.w  d0,d7
                 addq.w  #$1,d7
                 neg.w   d7
-                add.w   d0,(D_0516A).l
+                add.w   d0,(ForceY).l
                 rts
 .02b48:
-                clr.b   (D_0514B).l
-                move.b  #$10,(D_05149).l
+                clr.b   (ForceYDir).l
+                move.b  #$10,(ForceYTimer).l
                 rts
 .02b58:
                 moveq   #-3,d6
@@ -3688,8 +3718,8 @@ ForceHitsShip:
                 move.w  d6,-(a7)
                 movem.w (ForcePos).l,d0-d1
                 add.w   (ForceHitbox).l,d0
-                add.w   (D_05154).l,d1
-                movem.w (D_05156).l,d5-d6
+                add.w   (ForceHitboxY).l,d1
+                movem.w (ForceHitboxSize).l,d5-d6
                 movem.w (ShipX).l,d3-d4
                 movea.w #$12,a3
                 movea.w #$8,a4
@@ -3715,11 +3745,11 @@ ForceHitsShip:
                 rts
 Force_Attached:
                 move.w  (ShipX).l,d0
-                add.w   (D_0515A).l,d0
+                add.w   (ForceDockOfsX).l,d0
                 move.w  d0,(ForcePos).l
                 move.w  (ShipY).l,d0
-                add.w   (D_0515C).l,d0
-                move.w  d0,(D_0516A).l
+                add.w   (ForceDockOfsY).l,d0
+                move.w  d0,(ForceY).l
                 bsr.w   ReadFire2
                 beq.b   L_02C7E
                 moveq   #8,d0
@@ -3727,7 +3757,7 @@ Force_Attached:
                 bpl.b   .02c52
                 neg.w   d0
 .02c52:
-                move.w  d0,(D_0515E).l
+                move.w  d0,(ForceLaunchSpeed).l
                 moveq   #5,d0                       ; sound: Force docks
                 bsr.w   PlaySound
                 move.l  #Force_Launched,(ForceState).l
@@ -3738,10 +3768,10 @@ Force_Attached:
 L_02C7E:
                 rts
 Force_Launched:
-                move.w  (D_0515E).l,d0
+                move.w  (ForceLaunchSpeed).l,d0
                 move.w  d0,d7
                 neg.w   d7
-                tst.b   (D_0514A).l
+                tst.b   (ForceHalt).l
                 bne.b   L_02CBE
                 move.w  (ForcePos).l,d1
                 add.w   d0,d1
@@ -3752,7 +3782,7 @@ Force_Bounds:
                 cmp.w   #$1A6,d1
                 bcs.b   L_02C7E
 L_02CAC:
-                clr.b   (D_05143).l
+                clr.b   (ForceParkSide).l
                 move.l  #Force_Free,(ForceState).l
                 rts
 L_02CBE:
@@ -3762,7 +3792,7 @@ ForceFollowY:
                 moveq   #1,d1
                 moveq   #-2,d7
                 move.w  (ShipY).l,d0
-                sub.w   (D_0516A).l,d0
+                sub.w   (ForceY).l,d0
                 bpl.b   .02cda
                 neg.w   d1
                 neg.w   d7
@@ -3770,7 +3800,7 @@ ForceFollowY:
 .02cda:
                 cmp.w   #$2,d0
                 bcs.b   .02ce8
-                add.w   d1,(D_0516A).l
+                add.w   d1,(ForceY).l
                 rts
 .02ce8:
                 moveq   #0,d7
@@ -5476,7 +5506,7 @@ D_04209:
                 dc.b    $00
 D_0420A:
                 dc.b    $00
-D_0420B:
+ShipIntroTimer:
                 dc.b    $00
 SpaceKey:
                 dc.b    $00
@@ -5729,9 +5759,9 @@ BulletVelocities:
                 dc.w    $0004,$0000,$0003,$0002,$0003,$0003,$0002,$0003
                 dc.w    $0000,$0003,$FFFE,$0003,$FFFD,$0003,$FFFD,$0002
                 dc.w    $FFFC,$0000,$FFFD,$FFFE,$FFFD,$FFFD,$FFFE,$FFFD
-D_04B5A:
+LaserType:
                 dc.w    $0000
-D_04B5C:
+LaserSide:
                 dc.b    $00
 FireHeld:
                 dc.b    $00
@@ -5741,7 +5771,7 @@ LaserCount:
                 dc.b    $00
 WaveBeamToggle:
                 dc.b    $00
-D_04B61:
+LaserType2Active:
                 dc.b    $00
 WaveBeamMapOfs:
                 dc.w    $0000
@@ -5840,7 +5870,7 @@ D_04D1A:
                 dc.w    $000F,$0003,$0000,$0192,$0010,$0000,$0000,$0000
                 dc.w    $0002,$0000,$0010,$0002,$0000,$0190,$0000,$0000
                 dc.w    $0001,$0000,$0000
-D_04DBA:
+LaserSegments:
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
@@ -5911,9 +5941,9 @@ ShipTiltFrame:
                 dc.b    $00
 BitsFlags:
                 dc.b    $00
-D_050F2:
+AutoPilotX:
                 dc.w    $0000
-D_050F4:
+AutoPilotY:
                 dc.w    $0000
 ShipSpeed:
                 dc.w    $0000
@@ -5973,7 +6003,7 @@ DrawBuffer:
                 dc.w    $0000,$0000
 ForceLevel:
                 dc.b    $00
-D_05143:
+ForceParkSide:
                 dc.b    $00
 ForceAnimLevel:
                 dc.b    $00
@@ -5985,11 +6015,11 @@ ForceActive:
                 dc.b    $00
 ForceSide:
                 dc.b    $00
-D_05149:
+ForceYTimer:
                 dc.b    $00
-D_0514A:
+ForceHalt:
                 dc.b    $00
-D_0514B:
+ForceYDir:
                 dc.b    $00
 D_0514C:
                 dc.w    $0000
@@ -5999,15 +6029,15 @@ D_05150:
                 dc.w    $0000
 ForceHitbox:
                 dc.w    $0000
-D_05154:
+ForceHitboxY:
                 dc.w    $0000
-D_05156:
+ForceHitboxSize:
                 dc.w    $0000,$0000
-D_0515A:
+ForceDockOfsX:
                 dc.w    $0000
-D_0515C:
+ForceDockOfsY:
                 dc.w    $0000
-D_0515E:
+ForceLaunchSpeed:
                 dc.w    $0000
 ForceFrame:
                 dc.w    $0000,$0000
@@ -6015,7 +6045,7 @@ ForceState:
                 dc.w    $0000,$0000
 ForcePos:
                 dc.w    $0000
-D_0516A:
+ForceY:
                 dc.w    $0000
 ForceAnimTable:
                 dc.w    $0000,$6A40,$0000,$6F40,$0000,$0100,$0003,$000E

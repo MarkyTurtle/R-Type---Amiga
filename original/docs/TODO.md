@@ -4,14 +4,15 @@ State on 26 Nov 2026. All 12 sources reassemble byte-identical (`tools/verify.py
 
 ## 1. The game program (`src/game.s`)
 
-- [ ] **Line-by-line comments.** Done for the core (`MainLoop`, the game states, `GameFrame`, `Level3Int`, `SwapScreens`, `SetBitplanes`, `UpdateScroll`, `UpdateObjects`, `ObjExplode`). Next: `CopperInt` and `ShipControl`, then collisions, weapons, the Force and the title sequence.
-- [ ] **Name the remaining labels**: 125 `L_`/`D_` labels left. `tools/xref.py src/game.s` lists who reads and writes each one; `tools/add_labels.py` inserts labels by address safely.
+- [ ] **Line-by-line comments.** Done for the core (`MainLoop`, the game states, `GameFrame`, `Level3Int`, `SwapScreens`, `SetBitplanes`, `UpdateScroll`, `UpdateObjects`, `ObjExplode`). Also done: `CopperInt`, `ShipControl`/`ShipTilt`, collisions (`ObjCollisions`, `HitByShots`, `BoxTest`, `ObjDamage`), with block comments for the Force states, `FireForce`, the fly-in and autopilot. Next: `UpdateLasers`, the missiles, the Bits, the title sequence.
+- [ ] **Name the remaining labels**: 108 `L_`/`D_` labels left. `tools/xref.py src/game.s` lists who reads and writes each one; `tools/add_labels.py` inserts labels by address safely.
 - [ ] **Variables in `DATA`**: 48 named this round (frame pacing, scroll, ship, Bits, Force animation, wave beam). Still unnamed: the missile arrays (`$556C`–`$55AA`), Force state bytes (`$5143`–`$514B`), title variables (`$56F2`–`$56FE`), death/level counters (`$4209`–`$420D`).
 - [ ] **Remaining first-pass artefacts**: check other `dc.l L_xxxxx` / immediates the generator turned into labels when they're really numbers (two blit sizes in `ShotTypes` were found and fixed).
 - [x] **Frame pacing**: the game is locked to 25 Hz (`Flip50Hz` clear); the ship and Bits move at 50 Hz from the VBL. See `GAME.md`.
 - [ ] **`TimerCheck`**: work out what the CIA timer measurement guards against (speed check or anti-tamper) and why it hangs above `$CCDD`.
 - [ ] **Title / attract sequence**: comment the title-letter objects, the text lists (`TitleTextList`) and the high-score name entry.
-- [ ] **Bits and Force behaviour in detail**: the Force state machine is named; the movement, collision and weapon selection (`FireForce`, Force levels 0–3) need comments.
+- [x] **Force behaviour**: state machine, docking, launching and weapon selection commented (`GAME.md`).
+- [ ] **Bits**: movement and collisions (`InitBits`, `UpdateBits`, `HitByBits`).
 - [ ] **Homing missiles**: `UpdateMissiles` and the `Missile_*` states (how targets are picked).
 - [ ] **Walker AI** (`ObjUpd_Walker`, `Walker_Walk`) and the power-up carrier (`ReleasePowerUp`).
 - [ ] **Map cell bits 12–14**: confirm the destructible-block and "hit" behaviour against the level tile routines.
