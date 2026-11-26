@@ -24,7 +24,7 @@ The `mdat` uses the classic layout (the offset fields at `$1D0` are 0): text at 
 
 With extra memory the game keeps a copy of the music there (stage 2 copies `$52300`–`$71A3B`, which ends exactly at the end of the mdat).
 
-`mdat.rtypetitle` + `smpl.rtypetitle` should play in a TFMX-capable player (e.g. UADE / DeliTracker); not yet tested.
+The data and replay work: `tools/render_music.py` runs the game's own TFMX replay in a 68000 emulator (init, start song 0, play every VBL, as stage 2 does) and the result is `music/songs/title.mp3`. `mdat.rtypetitle` + `smpl.rtypetitle` should also play in a TFMX-capable player (UADE / DeliTracker); not tried.
 
 ## 2. In-game music and jingles: a small sample sequencer
 

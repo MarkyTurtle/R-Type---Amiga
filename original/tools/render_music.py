@@ -12,6 +12,9 @@ at the end of a sample the channel restarts from the registers (so a
 "keep playing" row chains the loop sample on), period -> pitch at the PAL
 clock, volume 0-64.
 
+The TFMX title music is played the same way (init, start song 0, play
+every VBL, as stage 2 does): title.mp3.
+
 Songs played per player:
   tune0 / tune1   MusicRequest 1 / 2: the level's music on channels 0-1
                   (d3 = $FF, d1 = 0 / 1; channels 2-3 are left for the
@@ -87,41 +90,78 @@ class Paula:
                 ch['pos'] += step
         return out
 
-def run(name, fn, base, entry, files, kind, n, seconds):
-    mc = m68.Machine(m68.CPUType.M68000, 1024)
-    mem, cpu = mc.mem, mc.cpu
-    data = open(os.path.join(files, fn), 'rb').read()
-    mem.w_block(base, data)
-    paula = Paula(mem)
-    mem.set_special_range_write_funcs(0xDF0000, 1, w8=lambda a, v: None,
-                                      w16=paula.w16, w32=paula.w32)
-    mem.set_special_range_read_funcs(0xDF0000, 1, r8=lambda a: 0, r16=lambda a: 0, r32=lambda a: 0)
+_MC = None
+_PAULA = [None]
+
+def machine(files, fn, base):
+    """One emulator for everything (Musashi is a single global CPU, and its
+    I/O hooks can only be set once): cleared and loaded for each run."""
+    global _MC
+    if _MC is None:
+        _MC = m68.Machine(m68.CPUType.M68000, 1024)
+        mem = _MC.mem
+        beam = [0]
+        def r16(a):                              # VHPOSR moves on, the rest reads 0
+            if a & 0x1FF == 6:
+                beam[0] = (beam[0] + 0x37) & 0xFFFF
+                return beam[0]
+            return 0
+        mem.set_special_range_write_funcs(0xDF0000, 1, w8=lambda a, v: None,
+                                          w16=lambda a, v: _PAULA[0].w16(a, v),
+                                          w32=lambda a, v: _PAULA[0].w32(a, v))
+        mem.set_special_range_read_funcs(0xDF0000, 1, r8=lambda a: r16(a & ~1) >> (0 if a & 1 else 8) & 255,
+                                         r16=r16, r32=lambda a: (r16(a) << 16) | r16(a + 2))
+        mem.set_invalid_func(lambda *args: None)  # the CIAs (the TFMX replay sets the filter LED)
+    mem = _MC.mem
+    mem.clear_block(0, 0x100000, 0)
+    mem.w_block(base, open(os.path.join(files, fn), 'rb').read())
     mem.w16(RET, 0x4E72); mem.w16(RET + 2, 0x2700)
+    _PAULA[0] = Paula(mem)
+    return _MC, _PAULA[0]
 
-    def call(d0=0, d1=0, d3=0, d4=0):
-        mem.w32(0, 0x80000); mem.w32(4, entry)
-        cpu.pulse_reset()                         # leaves the STOP state; PC <- vector 1
-        for r, v in ((m68.Register.D0, d0), (m68.Register.D1, d1), (m68.Register.D3, d3),
-                     (m68.Register.D4, d4)):
-            cpu.w_reg(r, v & 0xFFFFFFFF)
-        cpu.w_reg(m68.Register.A7, 0x7FFFC); mem.w32(0x7FFFC, RET)
-        for _ in range(200):
-            cpu.execute(2000)
-            if cpu.r_pc() in (RET + 4, RET):
-                break
-        return cpu.r_reg(m68.Register.D0) & 0xFF, cpu.r_reg(m68.Register.D4) & 0xFF
+def call(mc, entry, **regs):
+    mem, cpu = mc.mem, mc.cpu
+    mem.w32(0, 0x80000); mem.w32(4, entry)
+    cpu.pulse_reset()                            # leaves the STOP state; PC <- vector 1
+    for k in range(8):                           # a clean register set every call
+        cpu.w_reg(getattr(m68.Register, f'D{k}'), 0)
+        if k < 7:
+            cpu.w_reg(getattr(m68.Register, f'A{k}'), 0)
+    for r, v in regs.items():
+        cpu.w_reg(getattr(m68.Register, r.upper()), v & 0xFFFFFFFF)
+    cpu.w_reg(m68.Register.A7, 0x7FFFC); mem.w32(0x7FFFC, RET)
+    for _ in range(500):
+        cpu.execute(4000)
+        if cpu.r_pc() in (RET + 4, RET):
+            break
+    return cpu.r_reg(m68.Register.D0) & 0xFF, cpu.r_reg(m68.Register.D4) & 0xFF
 
+def run_title(files, seconds):
+    """The TFMX title music: init (d0 = mdat, d1 = smpl), start song 0, then
+    the play routine every VBL - as stage 2 does."""
+    mc, paula = machine(files, 'music_52300.bin', 0x52300)
+    call(mc, 0x52334, d0=0x6FD28, d1=0x53768)
+    call(mc, 0x5232C, d0=0)
+    s = []
+    for f in range(seconds * 50):
+        call(mc, 0x52324)
+        s += paula.mix(RATE // 50)
+    return s
+
+def run(name, fn, base, entry, files, kind, n, seconds):
+    mc, paula = machine(files, fn, base)
+    c = lambda **r: call(mc, entry, **r)
     samples, frames = [], seconds * 50
     per_frame = RATE // 50
     for f in range(frames):
         if kind == 'shared':
-            d0, _ = call(d0=0xFF if f == 0 else 2)
+            d0, _ = c(d0=0xFF if f == 0 else 2)
             done = d0 == 0 and f > 0
         elif kind == 'tune':
-            d0, _ = call(d1=n if f == 0 else 2, d3=0xFFFF if f == 0 else 2)
+            d0, _ = c(d1=n if f == 0 else 2, d3=0xFFFF if f == 0 else 2)
             done = d0 == 0 and f > 0
         else:
-            _, d4 = call(d4=(n << 8) | 0xFF if f == 0 else 1)
+            _, d4 = c(d4=(n << 8) | 0xFF if f == 0 else 1)
             done = d4 & 0x80 and f > 0
         samples += paula.mix(per_frame)
         if done:
@@ -130,7 +170,7 @@ def run(name, fn, base, entry, files, kind, n, seconds):
     return samples
 
 NAMES = {'tune0': 'music', 'tune1': 'boss', 'jingle0': 'gameover', 'jingle1': 'stageclear',
-         'jingle2': 'start', 'shared': 'jingle'}
+         'jingle2': 'start'}
 
 def main():
     import hashlib
@@ -139,6 +179,19 @@ def main():
     mp3 = '--mp3' in sys.argv
     os.makedirs(out, exist_ok=True)
     seen, index = {}, []
+    def save(fname, s):
+        pcm = struct.pack('<%dh' % len(s), *(max(-32767, min(32767, int(x * 32767 / 128 / 3))) for x in s))
+        path = os.path.join(out, fname + '.wav')
+        with wave.open(path, 'wb') as w:
+            w.setnchannels(1); w.setsampwidth(2); w.setframerate(RATE); w.writeframes(pcm)
+        if mp3:
+            subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-i', path, '-b:a', '48k',
+                            path[:-4] + '.mp3'], check=True)
+            os.remove(path)
+        return pcm
+    s = run_title(files, max(seconds, 120))
+    save('title', s)
+    index.append(('tfmx', 'title', f'title ({len(s) / RATE:.1f} s)'))
     for name, fn, base, entry in PLAYERS:
         if name in ('shared', 'level8end'):        # called like UpdateJingle: d0 = $FF, then 2
             jobs = [('shared', 'shared', 0)]
@@ -149,19 +202,13 @@ def main():
             if max((abs(x) for x in s), default=0) < 1:
                 index.append((name, label, 'silent')); continue
             pcm = struct.pack('<%dh' % len(s), *(max(-32767, min(32767, int(x * 32767 / 128 / 3))) for x in s))
-            h = hashlib.md5(pcm[:RATE * 8]).hexdigest()
+            h = hashlib.md5(pcm).hexdigest()
             if h in seen:
                 index.append((name, label, 'same as ' + seen[h])); continue
             fname = ('ending' if name == 'level8end' else 'highscore' if name == 'shared'
                      else f'{name}_music' if label == 'tune0' else NAMES[label])
             seen[h] = fname
-            path = os.path.join(out, fname + '.wav')
-            with wave.open(path, 'wb') as w:
-                w.setnchannels(1); w.setsampwidth(2); w.setframerate(RATE); w.writeframes(pcm)
-            if mp3:
-                subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-i', path, '-b:a', '48k',
-                                path[:-4] + '.mp3'], check=True)
-                os.remove(path)
+            save(fname, s)
             index.append((name, label, f'{fname} ({len(s) / RATE:.1f} s)'))
     for row in index:
         print('%-10s %-8s %s' % row)

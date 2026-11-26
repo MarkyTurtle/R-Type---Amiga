@@ -49,7 +49,7 @@ State on 26 Nov 2026. All 12 sources reassemble byte-identical (`tools/verify.py
 - [x] **Level 8's ending music**: a third player variant with 32-row (`$82`) patterns.
 - [x] **The music players' command interface**: MUSIC.md, *Commands*.
 - [ ] **Disassemble the TFMX replay** (`files/tfmx_player_52300.exe`) or confirm it matches a known TFMX version.
-- [ ] **Test** `mdat.rtypetitle` + `smpl.rtypetitle` in a TFMX player (UADE / DeliTracker).
+- [x] **Test the TFMX data**: the game's own replay plays it in the emulator (`music/songs/title.mp3`). (Not yet tried in UADE / DeliTracker.)
 
 ## 5. Boot and disk
 
