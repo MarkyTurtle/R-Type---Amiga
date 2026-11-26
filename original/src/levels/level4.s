@@ -50,9 +50,10 @@ WaveList:
                 dc.l    Waves
 ; Wave list: trigger (scroll x; level 3: frame count), x, y, 8 bytes
 ; for the spawn routine, definition (-1 = POW Armor, the default).
+; The parameters of each object: docs/DATA_FORMATS.md, Wave parameters.
 Waves:
                 dc.w    $0066,$0170,$007D
-                dc.l    $00000000,$0004BCA6,Def_Cytron
+                dc.l    $00000000,CytronData1,Def_Cytron
                 dc.w    $0076,$0170,$007A
                 dc.l    $FFFA0000,$00000000,Def_Cytron
                 dc.w    $00C8,$0170,$0096
@@ -62,15 +63,15 @@ Waves:
                 dc.w    $0115,$0170,$002B
                 dc.l    $FFFA0000,$00000000,Def_Cytron
                 dc.w    $0127,$0000,$0000
-                dc.l    $03E8000E,$0004BA0C,Def_Cancer
+                dc.l    $03E8000E,CancerData1,Def_Cancer
                 dc.w    $0128,$0000,$0000
-                dc.l    $0004B6A2,$00000000,Def_PataPata
+                dc.l    PataPataData1,$00000000,Def_PataPata
                 dc.w    $015E,$0170,$00B6
                 dc.l    $00090007,$00000000,Def_PStaff
                 dc.w    $015F,$0000,$0000
-                dc.l    $0004B6B8,$00000000,Def_PataPata
+                dc.l    PataPataData2,$00000000,Def_PataPata
                 dc.w    $018B,$0000,$0000
-                dc.l    $0004B6CA,$00000000,Def_PataPata
+                dc.l    PataPataData3,$00000000,Def_PataPata
                 dc.w    $0192,$000A,$002B
                 dc.l    $00060000,$00000000,Def_Cytron
                 dc.w    $01A2,$00B6,$000A
@@ -78,9 +79,9 @@ Waves:
                 dc.w    $01B8,$0170,$0032
                 dc.l    $0003FFFC,$00000000,$FFFFFFFF ; POW Armor
                 dc.w    $01E3,$0000,$0000
-                dc.l    $0004B6DC,$00000000,Def_PataPata
+                dc.l    PataPataData4,$00000000,Def_PataPata
                 dc.w    $01EF,$0118,$0004
-                dc.l    $00010000,$0004BCB4,Def_Cytron
+                dc.l    $00010000,CytronData2,Def_Cytron
                 dc.w    $01F4,$0170,$00B6
                 dc.l    $FFFE0000,$00000000,Def_Bink
                 dc.w    $020A,$0170,$007B
@@ -96,9 +97,9 @@ Waves:
                 dc.w    $0284,$00BA,$0002
                 dc.l    $00020000,$00000000,Def_Bink
                 dc.w    $029E,$0000,$0000
-                dc.l    $FFFF000A,$0004BA16,Def_Cancer
+                dc.l    $FFFF000A,CancerData2,Def_Cancer
                 dc.w    $02BA,$011A,$000B
-                dc.l    $0004B764,$0008FFFF,Def_Bug
+                dc.l    BugData1,$0008FFFF,Def_Bug 
                 dc.w    $0338,$00D0,$00DF
                 dc.l    $FFFFFFFA,$00000000,Def_Cytron
                 dc.w    $033E,$0170,$003A
@@ -108,13 +109,13 @@ Waves:
                 dc.w    $034E,$0005,$002B
                 dc.l    $00060000,$00000000,Def_Cytron
                 dc.w    $035B,$0000,$0000
-                dc.l    $FFFF000A,$0004BA16,Def_Cancer
+                dc.l    $FFFF000A,CancerData2,Def_Cancer
                 dc.w    $0375,$0170,$007B
                 dc.l    $FFFA0000,$00000000,Def_Cytron
                 dc.w    $0376,$0064,$0005
                 dc.l    $0002FFFF,$00000000,Def_Geld
                 dc.w    $0384,$0000,$0000
-                dc.l    $FFFF000A,$0004BA1C,Def_Cancer
+                dc.l    $FFFF000A,CancerData3,Def_Cancer
                 dc.w    $0396,$0005,$009B
                 dc.l    $00060000,$00000000,Def_Cytron
                 dc.w    $03C6,$0064,$0002
@@ -156,12 +157,12 @@ Waves:
                 dc.w    $0486,$0170,$00B6
                 dc.l    $00090007,$00000000,Def_PStaff
                 dc.w    $048B,$012C,$0005
-                dc.l    $00010000,$0004BCD0,Def_Cytron
+                dc.l    $00010000,CytronData3,Def_Cytron
                 dc.w    $048C,$0005,$0090
-                dc.l    $00010000,$0004BCC2,Def_Cytron
+                dc.l    $00010000,CytronData4,Def_Cytron
 WavesFrom_04A1:
                 dc.w    $04DD,$0000,$0000
-                dc.l    $FFFF000A,$0004BA22,Def_Cancer
+                dc.l    $FFFF000A,CancerData4,Def_Cancer
                 dc.w    $04E0,$00CA,$0005
                 dc.l    $FFFF0006,$00000000,Def_Cytron
                 dc.w    $04ED,$006A,$0005
@@ -187,13 +188,13 @@ WavesFrom_04A1:
                 dc.w    $05BA,$0170,$0073
                 dc.l    $0003FFFC,$00000000,$FFFFFFFF ; POW Armor
                 dc.w    $05BB,$0000,$0000
-                dc.l    $FFFF0006,$0004BA28,Def_Cancer
+                dc.l    $FFFF0006,CancerData5,Def_Cancer
                 dc.w    $05D1,$0068,$00DF
-                dc.l    $00010000,$0004BCDE,Def_Cytron
+                dc.l    $00010000,CytronData5,Def_Cytron
                 dc.w    $0614,$0005,$0080
-                dc.l    $00000000,$0004BCC2,Def_Cytron
+                dc.l    $00000000,CytronData4,Def_Cytron
                 dc.w    $062C,$0108,$0004
-                dc.l    $00000000,$0004BCB4,Def_Cytron
+                dc.l    $00000000,CytronData2,Def_Cytron
                 dc.w    $066B,$0170,$006D
                 dc.l    $FFFA0000,$00000000,Def_Cytron
                 dc.w    $0670,$0170,$004A
@@ -209,7 +210,7 @@ WavesFrom_04A1:
                 dc.w    $06BE,$0170,$0098
                 dc.l    $0001FFFC,$00000000,$FFFFFFFF ; POW Armor
                 dc.w    $0740,$0000,$0000
-                dc.l    $FFFF0005,$0004BA36,Def_Cancer
+                dc.l    $FFFF0005,CancerData6,Def_Cancer
                 dc.w    $076F,$00BA,$0005
                 dc.l    $0002FFFF,$00000000,Def_Geld
                 dc.w    $07D0,$0170,$0060
@@ -237,13 +238,13 @@ WavesFrom_04A1:
                 dc.w    $082B,$011C,$0005
                 dc.l    $0002FFFF,$00000000,Def_Geld
                 dc.w    $0852,$0000,$0000
-                dc.l    $FFFF001E,$0004BA40,Def_Cancer
+                dc.l    $FFFF001E,CancerData7,Def_Cancer
                 dc.w    $08DC,$0170,$003C
-                dc.l    $00000000,$0004BCEC,Def_Cytron
+                dc.l    $00000000,CytronData6,Def_Cytron
                 dc.w    $0911,$0170,$004B
                 dc.l    $FFFA0000,$00000000,Def_Cytron
                 dc.w    $091B,$0010,$004B
-                dc.l    $00000000,$0004BCFA,Def_Cytron
+                dc.l    $00000000,CytronData7,Def_Cytron
                 dc.w    $7530   ; end: never reached
 LevelPalette:
                 dc.w    $0555,$0BBB,$0777,$0500,$005F,$00F0,$0050,$0955
@@ -1292,11 +1293,50 @@ Geld_Turn:
                 clr.b   $20(a0)
                 clr.b   $22(a0)
                 rts
-                dc.w    $006B,$0000,$004E,$0800,$005F,$1800,$0046,$2400
-                dc.w    $006B,$2A00,$FFFF,$0050,$0000,$0060,$0600,$008E
-                dc.w    $1300,$005F,$1D00,$FFFF,$0041,$0000,$0055,$0A00
-                dc.w    $005A,$1400,$004D,$2800,$FFFF,$0061,$0000,$003C
-                dc.w    $0900,$0061,$1B00,$007D,$2700,$004A,$3300,$FFFF
+PataPataData1:
+                dc.w    $006B                   ; y
+                dc.b    $00,$00                 ; delay, frame
+                dc.w    $004E                   ; y
+                dc.b    $08,$00                 ; delay, frame
+                dc.w    $005F                   ; y
+                dc.b    $18,$00                 ; delay, frame
+                dc.w    $0046                   ; y
+                dc.b    $24,$00                 ; delay, frame
+                dc.w    $006B                   ; y
+                dc.b    $2A,$00                 ; delay, frame
+                dc.w    $FFFF
+PataPataData2:
+                dc.w    $0050                   ; y
+                dc.b    $00,$00                 ; delay, frame
+                dc.w    $0060                   ; y
+                dc.b    $06,$00                 ; delay, frame
+                dc.w    $008E                   ; y
+                dc.b    $13,$00                 ; delay, frame
+                dc.w    $005F                   ; y
+                dc.b    $1D,$00                 ; delay, frame
+                dc.w    $FFFF
+PataPataData3:
+                dc.w    $0041                   ; y
+                dc.b    $00,$00                 ; delay, frame
+                dc.w    $0055                   ; y
+                dc.b    $0A,$00                 ; delay, frame
+                dc.w    $005A                   ; y
+                dc.b    $14,$00                 ; delay, frame
+                dc.w    $004D                   ; y
+                dc.b    $28,$00                 ; delay, frame
+                dc.w    $FFFF
+PataPataData4:
+                dc.w    $0061                   ; y
+                dc.b    $00,$00                 ; delay, frame
+                dc.w    $003C                   ; y
+                dc.b    $09,$00                 ; delay, frame
+                dc.w    $0061                   ; y
+                dc.b    $1B,$00                 ; delay, frame
+                dc.w    $007D                   ; y
+                dc.b    $27,$00                 ; delay, frame
+                dc.w    $004A                   ; y
+                dc.b    $33,$00                 ; delay, frame
+                dc.w    $FFFF
 ; PataPata: as in level 1 (the same code)
 ; (32x19, 8 frames, gfx $55378, 1 hit point, fires every ~65 frames, score 200, update Upd_PataPata, spawn Spawn_PataPata)
 Def_PataPata:
@@ -1308,8 +1348,10 @@ Def_PataPata:
                 dc.w    $0000,$000E,$0012,$0005,$0003,$000F,$000E,$0000
                 dc.w    $0006,$0014,$0006,$0005,$0003,$000E,$000E,$0003
                 dc.w    $0001,$0010,$0011,$0004,$0003,$000F,$000E,$0000
-                dc.w    $0007,$0014,$0006,$0004,$0003,$000F,$000E,$0044
-                dc.w    $0006,$C95D,$0006,$C9AA,$0006,$C9F7
+                dc.w    $0007,$0014,$0006,$0004,$0003,$000F,$000E
+BugData1:
+                dc.w    $0044                   ; steps
+                dc.l    $0006C95D,$0006C9AA,$0006C9F7 ; dx, dy, frame tables (level B)
 ; Bug: as in level 1 (the same code)
 ; (32x21, 8 frames, gfx $56678, 1 hit point, fires every ~48 frames, score 200, update Upd_Bug, spawn Spawn_Bug)
 Def_Bug:
@@ -1388,10 +1430,32 @@ BinkJumpRight:
                 dc.b    $03,$00,$18,$00,$15
 BinkJumpArc:
                 dc.w    $FEFE,$FEFF,$FFFF,$FF00,$0000,$0101,$0101,$0202
-                dc.w    $027F,$7F00,$0170,$0062,$0170,$00B8,$FFFF,$0170
-                dc.w    $009B,$FFFF,$0011,$009B,$FFFF,$0170,$0050,$FFFF
-                dc.w    $0011,$0053,$0064,$0004,$0136,$0004,$FFFF,$0170
-                dc.w    $0070,$014A,$0010,$FFFF,$0064,$0010,$0069,$0010
+                dc.w    $027F,$7F00
+CancerData1:
+                dc.w    $0170,$0062             ; x, y
+                dc.w    $0170,$00B8             ; x, y
+                dc.w    $FFFF
+CancerData2:
+                dc.w    $0170,$009B             ; x, y
+                dc.w    $FFFF
+CancerData3:
+                dc.w    $0011,$009B             ; x, y
+                dc.w    $FFFF
+CancerData4:
+                dc.w    $0170,$0050             ; x, y
+                dc.w    $FFFF
+CancerData5:
+                dc.w    $0011,$0053             ; x, y
+                dc.w    $0064,$0004             ; x, y
+                dc.w    $0136,$0004             ; x, y
+                dc.w    $FFFF
+CancerData6:
+                dc.w    $0170,$0070             ; x, y
+                dc.w    $014A,$0010             ; x, y
+                dc.w    $FFFF
+CancerData7:
+                dc.w    $0064,$0010             ; x, y
+                dc.w    $0069,$0010             ; x, y
                 dc.w    $FFFF
 ; Cancer: as in level 1 (the same code)
 ; (32x26, 6 frames, gfx $5E038, 1 hit point, fires every ~40 frames, score 300, update Upd_Cancer, spawn Spawn_Cancer)
@@ -1473,13 +1537,28 @@ Def_CompilerLaser:
                 dc.l    Upd_CompilerLaser
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0020,$0003
                 dc.w    $0000,$0000,$0020,$0003,$0000,$0000,$0020,$0003
-                dc.w    $0000,$0000,$0020,$0003,$004B,$0006,$CA3C,$0006
-                dc.w    $CA88,$0006,$CAD4,$004C,$0006,$CB20,$0006,$CB6D
-                dc.w    $0006,$CBBA,$004F,$0006,$CC07,$0006,$CC57,$0006
-                dc.w    $CCA7,$002E,$0006,$CCF7,$0006,$CD26,$0006,$CD55
-                dc.w    $0054,$0006,$CD84,$0006,$CDD9,$0006,$CE2E,$0031
-                dc.w    $0006,$CE83,$0006,$CEB5,$0006,$CEE7,$0032,$0006
-                dc.w    $CF19,$0006,$CF4C,$0006,$CF7F
+                dc.w    $0000,$0000,$0020,$0003
+CytronData1:
+                dc.w    $004B                   ; steps
+                dc.l    $0006CA3C,$0006CA88,$0006CAD4 ; dx, dy, frame tables (level B)
+CytronData2:
+                dc.w    $004C                   ; steps
+                dc.l    $0006CB20,$0006CB6D,$0006CBBA ; dx, dy, frame tables (level B)
+CytronData4:
+                dc.w    $004F                   ; steps
+                dc.l    $0006CC07,$0006CC57,$0006CCA7 ; dx, dy, frame tables (level B)
+CytronData3:
+                dc.w    $002E                   ; steps
+                dc.l    $0006CCF7,$0006CD26,$0006CD55 ; dx, dy, frame tables (level B)
+CytronData5:
+                dc.w    $0054                   ; steps
+                dc.l    $0006CD84,$0006CDD9,$0006CE2E ; dx, dy, frame tables (level B)
+CytronData6:
+                dc.w    $0031                   ; steps
+                dc.l    $0006CE83,$0006CEB5,$0006CEE7 ; dx, dy, frame tables (level B)
+CytronData7:
+                dc.w    $0032                   ; steps
+                dc.l    $0006CF19,$0006CF4C,$0006CF7F ; dx, dy, frame tables (level B)
 ; Cytron: built to destroy asteroids, it rebuilds the cell walls - every
 ; frame it writes a solid, destructible cell ($9013) into the map cell
 ; under it if that one is empty.

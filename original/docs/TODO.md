@@ -23,7 +23,7 @@ State on 26 Nov 2026. All 12 sources reassemble byte-identical (`tools/verify.py
 - [x] **Object gallery** (`docs/OBJECTS.md`): one picture per definition with its stats and routines. Labels are read from the sources.
 - [x] **Comment the enemy and boss behaviours**: a header comment for every enemy and boss in all 8 levels. Line comments inside the level routines are still sparse: movement, firing, hit boxes, the bosses' multi-part structure (e.g. level 4's 96×81 / 112×58 / 96×68 pieces).
 - [x] **Level start / per-frame routines** (`LevelInit`, `LevelFrame`): commented for every level (the boss sequences, the battleship, the ending).
-- [ ] **Wave lists**: one entry per line with the definition names (`tools/format_waves.py`); level 1's parameters decoded (Pata-Pata groups, Bug chains); the other levels' parameters are described in the spawn routines' comments but not laid out.
+- [x] **Wave lists**: one entry per line with the definition names (`tools/format_waves.py`); the parameters of every object in DATA_FORMATS.md; the parameter lists in the level files labelled and laid out (Pata-Pata groups, Bug and Cytron paths, Cancer positions).
 - [x] **Tile animation routines** (`LV_TileAnims`, level 1) and **map patches**: level 1's are the Blasters, gun batteries built into the map.
 - [x] **Level 3** (the battleship): the scroll script moves the 26-row map in x and y; parts are map cells patched in and out (`PatchMap`) plus invisible targets that follow the scroll. Still to check: the exact stage list of the rear tower.
 - [x] **Unnamed labels**: none left in the level files or `game.s` (`tools/localise_labels.py` turns branch labels local, `tools/format_waves.py` lays out the wave lists). `shared.s` and `stage2.s` are fully named too.

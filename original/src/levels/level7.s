@@ -51,24 +51,25 @@ WaveList:
                 dc.l    Waves
 ; Wave list: trigger (scroll x; level 3: frame count), x, y, 8 bytes
 ; for the spawn routine, definition (-1 = POW Armor, the default).
+; The parameters of each object: docs/DATA_FORMATS.md, Wave parameters.
 AllWaves:
 Waves:
                 dc.w    $003C,$0000,$0000
-                dc.l    $0004B79A,$00000000,Def_PataPata
+                dc.l    PataPataData1,$00000000,Def_PataPata
                 dc.w    $003E,$0170,$0064
                 dc.l    $0003FFFC,$00000000,$FFFFFFFF ; POW Armor
                 dc.w    $0069,$0000,$0000
-                dc.l    $0004B79A,$00000000,Def_PataPata
+                dc.l    PataPataData1,$00000000,Def_PataPata
                 dc.w    $008C,$0000,$0000
-                dc.l    $0004B7A8,$00000000,Def_PataPata
+                dc.l    PataPataData2,$00000000,Def_PataPata
                 dc.w    $00BE,$0170,$00B6
                 dc.l    $00090007,$00000000,Def_PStaff
                 dc.w    $00D2,$0000,$0000
-                dc.l    $0004B7A8,$00000000,Def_PataPata
+                dc.l    PataPataData2,$00000000,Def_PataPata
                 dc.w    $00F5,$00E9,$0010
                 dc.l    $00360000,$00000000,Def_Collapse
                 dc.w    $00FA,$0000,$0000
-                dc.l    $0BB8000B,$0004B83A,Def_Cancer
+                dc.l    $0BB8000B,CancerData1,Def_Cancer
                 dc.w    $010E,$0170,$00B6
                 dc.l    $00090007,$00000000,Def_PStaff
                 dc.w    $0122,$0170,$0067
@@ -84,13 +85,13 @@ Waves:
                 dc.w    $0172,$012C,$00B4
                 dc.l    $0D8A0001,$00010000,Def_Collapse
                 dc.w    $017C,$011D,$000B
-                dc.l    $0004B802,$0009FFFF,Def_Bug
+                dc.l    BugData1,$0009FFFF,Def_Bug 
                 dc.w    $019A,$0170,$0096
                 dc.l    $0000FFFC,$00000000,$FFFFFFFF ; POW Armor
                 dc.w    $01A4,$015E,$0092
                 dc.l    $FFFE0000,$00000000,Def_Crawler
                 dc.w    $01A9,$0000,$0000
-                dc.l    $0BB8000B,$0004B848,Def_Cancer
+                dc.l    $0BB8000B,CancerData2,Def_Cancer
                 dc.w    $01B3,$015E,$0092
                 dc.l    $00020000,$00000000,Def_Crawler
                 dc.w    $01C5,$0170,$00B6
@@ -100,7 +101,7 @@ Waves:
                 dc.w    $01D1,$015E,$0063
                 dc.l    $FFFE0000,$00000000,Def_Bink
                 dc.w    $01FE,$0000,$0000
-                dc.l    $0BB8000B,$0004B84E,Def_Cancer
+                dc.l    $0BB8000B,CancerData3,Def_Cancer
                 dc.w    $0203,$00FF,$001E
                 dc.l    $00580002,$00000000,Def_Collapse
                 dc.w    $0213,$015E,$0087
@@ -146,7 +147,7 @@ Waves:
                 dc.w    $035C,$015E,$005A
                 dc.l    $0001FFFC,$00000000,$FFFFFFFF ; POW Armor
                 dc.w    $0361,$0000,$0000
-                dc.l    $0BB8000B,$0004B858,Def_Cancer
+                dc.l    $0BB8000B,CancerData4,Def_Cancer
                 dc.w    $0370,$00FD,$00B4
                 dc.l    $0DC40001,$00010000,Def_Collapse
                 dc.w    $0375,$0163,$0078
@@ -162,11 +163,11 @@ Waves:
                 dc.w    $03F7,$00F0,$0014
                 dc.l    $00960004,$00000000,Def_Collapse
                 dc.w    $0410,$0000,$0000
-                dc.l    $0BB8000B,$0004B85E,Def_Cancer
+                dc.l    $0BB8000B,CancerData5,Def_Cancer
                 dc.w    $043A,$00AC,$00B4
                 dc.l    $0B6A0005,$00010000,Def_Collapse
                 dc.w    $0451,$0000,$0000
-                dc.l    $0BB8000B,$0004B870,Def_Cancer
+                dc.l    $0BB8000B,CancerData6,Def_Cancer
                 dc.w    $0456,$00DC,$0014
                 dc.l    $00A00000,$00000000,Def_Collapse
                 dc.w    $0474,$0118,$0014
@@ -185,25 +186,25 @@ WavesFrom_046C:
                 dc.w    $04FA,$015E,$00B8
                 dc.l    $FFFE0000,$00000000,Def_Bink
                 dc.w    $0500,$0000,$0000
-                dc.l    $0BB80041,$0004B87A,Def_Cancer
+                dc.l    $0BB80041,CancerData7,Def_Cancer
                 dc.w    $050E,$015E,$00B8
                 dc.l    $FFFE0000,$00000000,Def_Bink
                 dc.w    $0559,$00E6,$00B4
                 dc.l    $0DFE0001,$00010000,Def_Collapse
                 dc.w    $055F,$011D,$000B
-                dc.l    $0004B810,$000AFFFF,Def_Bug
+                dc.l    BugData2,$000AFFFF,Def_Bug 
                 dc.w    $0581,$0109,$000B
-                dc.l    $0004B81E,$0012FFFF,Def_Bug
+                dc.l    BugData3,$0012FFFF,Def_Bug 
                 dc.w    $0607,$00DC,$0014
                 dc.l    $00D60000,$00000000,Def_Collapse
                 dc.w    $0640,$0163,$00B6
                 dc.l    $000F0004,$00000000,Def_PStaff
                 dc.w    $0668,$0023,$00B8
-                dc.l    $0004B82C,$000BFFFF,Def_Bug
+                dc.l    BugData4,$000BFFFF,Def_Bug 
                 dc.w    $0672,$0000,$0000
-                dc.l    $0004B7C8,$00000000,Def_PataPata
+                dc.l    PataPataData3,$00000000,Def_PataPata
                 dc.w    $06C2,$0000,$0000
-                dc.l    $0004B7DA,$00000000,Def_PataPata
+                dc.l    PataPataData4,$00000000,Def_PataPata
                 dc.w    $06C4,$0163,$00B6
                 dc.l    $000F0005,$00000000,Def_PStaff
                 dc.w    $06C7,$0170,$005A
@@ -213,9 +214,9 @@ WavesFrom_046C:
                 dc.w    $0703,$007F,$00B4
                 dc.l    $0E260001,$00010000,Def_Collapse
                 dc.w    $0726,$0000,$0000
-                dc.l    $0004B7DA,$00000000,Def_PataPata
+                dc.l    PataPataData4,$00000000,Def_PataPata
                 dc.w    $0771,$0000,$0000
-                dc.l    $0004B7EC,$00000000,Def_PataPata
+                dc.l    PataPataData5,$00000000,Def_PataPata
                 dc.w    $07D0,$0170,$0084
                 dc.l    $00000000,$00000000,Def_Scant
                 dc.w    $7530   ; end: never reached
@@ -1440,21 +1441,91 @@ Upd_Sonar:
                 move.l  #Sonar_Up,$6(a0)
 .4B798:
                 rts
-                dc.w    $006E,$0000,$0078,$0800,$007A,$1300,$FFFF,$0078
+PataPataData1:
+                dc.w    $006E                   ; y
+                dc.b    $00,$00                 ; delay, frame
+                dc.w    $0078                   ; y
+                dc.b    $08,$00                 ; delay, frame
+                dc.w    $007A                   ; y
+                dc.b    $13,$00                 ; delay, frame
+                dc.w    $FFFF
+PataPataData2:
+                dc.w    $0078
                 dc.w    $0000,$006E,$1000,$007A,$2000,$006E,$3000,$0078
-                dc.w    $4000,$FFFF,$006E,$0000,$0078,$3000,$FFFF,$005A
-                dc.w    $0000,$0064,$1000,$0064,$3200,$0064,$4200,$FFFF
-                dc.w    $0064,$0000,$005A,$1200,$0064,$2400,$0050,$3600
-                dc.w    $FFFF,$005A,$0000,$0064,$0F00,$0050,$1E00,$005A
-                dc.w    $2D00,$0064,$3C00,$FFFF,$0043,$0007,$0B4C,$0007
-                dc.w    $0B99,$0007,$0BE6,$0053,$0007,$0C2D,$0007,$0C84
-                dc.w    $0007,$0CDB,$011F,$0007,$0D2F,$0007,$0E4F,$0007
-                dc.w    $0F6F,$00D5,$0007,$0D79,$0007,$0E99,$0007,$0FB9
-                dc.w    $0170,$005A,$0170,$0046,$0012,$005A,$FFFF,$0170
-                dc.w    $0046,$FFFF,$015E,$0082,$00B4,$0003,$FFFF,$015E
-                dc.w    $0078,$FFFF,$0012,$0028,$0012,$0067,$0163,$0032
-                dc.w    $0163,$005A,$FFFF,$0012,$00B4,$0163,$00A6,$FFFF
-                dc.w    $0163,$0028,$0163,$00B4,$FFFF
+                dc.w    $4000,$FFFF,$006E,$0000,$0078,$3000,$FFFF
+PataPataData3:
+                dc.w    $005A                   ; y
+                dc.b    $00,$00                 ; delay, frame
+                dc.w    $0064                   ; y
+                dc.b    $10,$00                 ; delay, frame
+                dc.w    $0064                   ; y
+                dc.b    $32,$00                 ; delay, frame
+                dc.w    $0064                   ; y
+                dc.b    $42,$00                 ; delay, frame
+                dc.w    $FFFF
+PataPataData4:
+                dc.w    $0064                   ; y
+                dc.b    $00,$00                 ; delay, frame
+                dc.w    $005A                   ; y
+                dc.b    $12,$00                 ; delay, frame
+                dc.w    $0064                   ; y
+                dc.b    $24,$00                 ; delay, frame
+                dc.w    $0050                   ; y
+                dc.b    $36,$00                 ; delay, frame
+                dc.w    $FFFF
+PataPataData5:
+                dc.w    $005A                   ; y
+                dc.b    $00,$00                 ; delay, frame
+                dc.w    $0064                   ; y
+                dc.b    $0F,$00                 ; delay, frame
+                dc.w    $0050                   ; y
+                dc.b    $1E,$00                 ; delay, frame
+                dc.w    $005A                   ; y
+                dc.b    $2D,$00                 ; delay, frame
+                dc.w    $0064                   ; y
+                dc.b    $3C,$00                 ; delay, frame
+                dc.w    $FFFF
+BugData1:
+                dc.w    $0043                   ; steps
+                dc.l    $00070B4C,$00070B99,$00070BE6 ; dx, dy, frame tables (level B)
+BugData2:
+                dc.w    $0053                   ; steps
+                dc.l    $00070C2D,$00070C84,$00070CDB ; dx, dy, frame tables (level B)
+BugData3:
+                dc.w    $011F                   ; steps
+                dc.l    $00070D2F,$00070E4F,$00070F6F ; dx, dy, frame tables (level B)
+BugData4:
+                dc.w    $00D5                   ; steps
+                dc.l    $00070D79,$00070E99,$00070FB9 ; dx, dy, frame tables (level B)
+CancerData1:
+                dc.w    $0170,$005A             ; x, y
+                dc.w    $0170,$0046             ; x, y
+                dc.w    $0012,$005A             ; x, y
+                dc.w    $FFFF
+CancerData2:
+                dc.w    $0170,$0046             ; x, y
+                dc.w    $FFFF
+CancerData3:
+                dc.w    $015E,$0082             ; x, y
+                dc.w    $00B4,$0003             ; x, y
+                dc.w    $FFFF
+CancerData4:
+                dc.w    $015E,$0078             ; x, y
+                dc.w    $FFFF
+CancerData5:
+                dc.w    $0012,$0028             ; x, y
+                dc.w    $0012,$0067             ; x, y
+                dc.w    $0163,$0032             ; x, y
+                dc.w    $0163,$005A             ; x, y
+                dc.w    $FFFF
+CancerData6:
+                dc.w    $0012,$00B4             ; x, y
+                dc.w    $0163,$00A6             ; x, y
+                dc.w    $FFFF
+CancerData7:
+                dc.w    $0163,$0028             ; x, y
+                dc.w    $0163,$00B4             ; x, y
+                dc.w    $FFFF
 ; PataPata: as in level 1 (the same code)
 ; (32x19, 8 frames, gfx $5BCD6, 1 hit point, fires every ~45 frames, score 200, update Upd_PataPata, spawn Spawn_PataPata)
 Def_PataPata:

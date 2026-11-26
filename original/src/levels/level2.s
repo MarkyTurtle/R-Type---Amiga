@@ -50,6 +50,7 @@ WaveList:
                 dc.l    Waves
 ; Wave list: trigger (scroll x; level 3: frame count), x, y, 8 bytes
 ; for the spawn routine, definition (-1 = POW Armor, the default).
+; The parameters of each object: docs/DATA_FORMATS.md, Wave parameters.
 Waves:
                 dc.w    $0092,$0170,$00C3
                 dc.l    $00010000,$00000000,Def_Gouger

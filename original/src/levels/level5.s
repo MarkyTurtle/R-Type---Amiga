@@ -49,6 +49,7 @@ WaveList:
                 dc.l    Waves
 ; Wave list: trigger (scroll x; level 3: frame count), x, y, 8 bytes
 ; for the spawn routine, definition (-1 = POW Armor, the default).
+; The parameters of each object: docs/DATA_FORMATS.md, Wave parameters.
 Waves:
                 dc.w    $005A,$016D,$0082
                 dc.l    $00080124,$00000000,Def_SlitherHead
@@ -59,7 +60,7 @@ Waves:
                 dc.w    $0134,$0082,$00DF
                 dc.l    $00060221,$00000000,Def_SlitherHead
                 dc.w    $0136,$0000,$0000
-                dc.l    $03E8000F,$0004B010,Def_Cancer
+                dc.l    $03E8000F,CancerData1,Def_Cancer
                 dc.w    $01A0,$003C,$0012
                 dc.l    $00060418,$00000000,Def_SlitherHead
                 dc.w    $0205,$0050,$00DF
@@ -95,7 +96,7 @@ Waves:
                 dc.w    $044B,$0136,$0014
                 dc.l    $00080000,$00000000,Def_Pursuer
                 dc.w    $044C,$0000,$0000
-                dc.l    $07D0000F,$0004B010,Def_Cancer
+                dc.l    $07D0000F,CancerData1,Def_Cancer
                 dc.w    $04B0,$016D,$0078
                 dc.l    $00050032,$00320000,Def_MidCheetah
                 dc.w    $04B4,$016D,$0078
@@ -126,7 +127,7 @@ WavesFrom_0604:
                 dc.w    $06F4,$016D,$00B4
                 dc.l    $000C0000,$00000000,Def_Pursuer
                 dc.w    $06F6,$0000,$0000
-                dc.l    $07D0000F,$0004B01A,Def_Cancer
+                dc.l    $07D0000F,CancerData2,Def_Cancer
                 dc.w    $06F9,$016D,$0032
                 dc.l    $000C0000,$00000000,Def_Pursuer
                 dc.w    $0747,$012C,$00DF
@@ -148,7 +149,7 @@ WavesFrom_0604:
                 dc.w    $0831,$00F0,$00DF
                 dc.l    $00000000,$00000000,Def_Pursuer
                 dc.w    $0866,$0000,$0000
-                dc.l    $0BB8000F,$0004B020,Def_Cancer
+                dc.l    $0BB8000F,CancerData3,Def_Cancer
                 dc.w    $0884,$00E6,$00DF
                 dc.l    $00000000,$00000000,Def_Pursuer
                 dc.w    $0886,$0154,$00DF
@@ -164,7 +165,7 @@ WavesFrom_0604:
                 dc.w    $08CE,$0078,$0014
                 dc.l    $00080000,$00000000,Def_Pursuer
                 dc.w    $08CF,$0000,$0000
-                dc.l    $0FA0000F,$0004B026,Def_Cancer
+                dc.l    $0FA0000F,CancerData4,Def_Cancer
                 dc.w    $08E5,$0064,$00DF
                 dc.l    $00000000,$00000000,Def_Pursuer
                 dc.w    $0953,$0096,$00DF
@@ -856,8 +857,19 @@ Upd_BellmiteShell:
                 sub.w   d2,d1
                 movem.w d0-d1,$A(a0)
                 rts
-                dc.w    $0014,$0064,$0170,$00AA,$FFFF,$008C,$00DF,$FFFF
-                dc.w    $012C,$00DF,$FFFF,$0014,$0064,$FFFF
+CancerData1:
+                dc.w    $0014,$0064             ; x, y
+                dc.w    $0170,$00AA             ; x, y
+                dc.w    $FFFF
+CancerData2:
+                dc.w    $008C,$00DF             ; x, y
+                dc.w    $FFFF
+CancerData3:
+                dc.w    $012C,$00DF             ; x, y
+                dc.w    $FFFF
+CancerData4:
+                dc.w    $0014,$0064             ; x, y
+                dc.w    $FFFF
 ; object definition: 32x26, 6 frames, gfx $54E08, 1 hit point, fires every ~34 frames, score 300, update Upd_Cancer, spawn Spawn_Cancer
 Def_Cancer:
                 dc.w    $1A03,$002E

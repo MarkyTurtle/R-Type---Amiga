@@ -151,3 +151,31 @@ They were found by signature (mask offset = half the frame size, modulo = 52 −
 5. **Movement tables** at the end, read by the level code with absolute addresses: wave paths, jump arcs, the Compiler's section paths, the Worm's and the Zoids' paths.
 
 Apart from these only a few small gaps are left (at most 240 bytes, between the last BOB frames and the tables, or padding after the samples).
+
+## Wave parameters by object
+
+Every wave entry is `trigger.w, x.w, y.w`, 8 bytes of parameters (`$06`–`$0D`) and the definition. What the spawn routines read from the parameters (objects not listed use only x and y):
+
+| Object (levels) | Parameters |
+|---|---|
+| POW Armor (all) | `$07.b` the power-up it carries, `$09.b` direction (signed x step) |
+| Pata-Pata (1, 4, 7) | `$06.l` group list: per fighter y.w, delay.b, start frame.b; `$FFFF` ends |
+| Bug (1, 4, 7) | `$06.l` path: steps.w, then dx, dy and frame tables (signed bytes, level B); `$0A.w` number − 1; `$0C.w` extra x speed |
+| Bink (1, 4, 6, 7) | `$06.w` walking step (signed: direction) |
+| Cancer (1, 4, 5, 7) | `$06.w` copied to the object (`$3A`), `$08.w` frames between them, `$0A.l` list of x, y; `$FFFF` ends |
+| Gouger (2) | `$06.w` corner 0–3 (which wall it clings to, and its frames) |
+| Wick (2) | `$06.w` number − 1 |
+| Gun tower (3) | `$06.w` non-zero = upside down, `$08.w` hit points |
+| Cannon pod (3) | `$09.b` hits to destroy it, `$0A.l` its animation |
+| Cytron (4) | `$06.w` dx, `$08.w` dy (both also pick its frame), or `$0A.l` a path like the Bug's |
+| Geld (4) | `$06.w` starting direction 0–3 (up, right, down, left), `$08.w` scroll x after which it stops turning |
+| Slither (5) | `$06.w` body segments, `$08.w` copied to every segment (`$34`) |
+| Pursuer (5) | `$06.w` starting direction (0–15) |
+| Mid-phase Cheetah (5) | `$06.w` number − 1, `$08.w` random y range, `$0A.w` lowest y |
+| Dop (6) | from `$06`: its route, bytes - first the start direction, then a direction change at each junction |
+| Capsule (6) | `$06.l` list of modes (animation, duration, direction) |
+| Collapse (7) | `$02.l` (x, y), `$06.w` offset of its map cells, `$08.w` which rubble block, `$0A.w` non-zero = taller |
+| Crawler (7) | `$06.w` y step towards the floor or ceiling |
+| Win (8) | `$06.w` starting direction |
+
+In the sources the parameter lists that live in the level files are labelled `<Object>Data<n>` and laid out one entry per line.

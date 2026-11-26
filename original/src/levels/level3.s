@@ -85,6 +85,7 @@ WaveList:
                 dc.l    Waves
 ; Wave list: trigger (scroll x; level 3: frame count), x, y, 8 bytes
 ; for the spawn routine, definition (-1 = POW Armor, the default).
+; The parameters of each object: docs/DATA_FORMATS.md, Wave parameters.
 Waves:
                 dc.w    $002D,$0170,$0066
                 dc.l    $00000000,$00000000,Def_MainEngine
@@ -115,19 +116,19 @@ Waves:
                 dc.w    $085B,$010C,$0009
                 dc.l    $00000003,$00000000,Def_GunTower
                 dc.w    $0870,$0159,$009A
-                dc.l    $00000008,$0004B962,Def_CannonPod
+                dc.l    $00000008,CannonPodData1,Def_CannonPod
                 dc.w    $0898,$016E,$0018
                 dc.l    $00000006,$00000000,Def_GunTower
                 dc.w    $08CB,$015D,$00AE
-                dc.l    $00000004,$0004B972,Def_CannonPod
+                dc.l    $00000004,CannonPodData2,Def_CannonPod
                 dc.w    $08D4,$0164,$00A0
-                dc.l    $00000004,$0004B972,Def_CannonPod
+                dc.l    $00000004,CannonPodData2,Def_CannonPod
                 dc.w    $094C,$0162,$0046
-                dc.l    $00000004,$0004B9A2,Def_CannonPod
+                dc.l    $00000004,CannonPodData3,Def_CannonPod
                 dc.w    $094D,$015F,$006A
-                dc.l    $00000004,$0004B982,Def_CannonPod
+                dc.l    $00000004,CannonPodData4,Def_CannonPod
                 dc.w    $094E,$0167,$0058
-                dc.l    $00000004,$0004B992,Def_CannonPod
+                dc.l    $00000004,CannonPodData5,Def_CannonPod
                 dc.w    $0993,$0168,$0082
                 dc.l    $0000FFFC,$00000000,$FFFFFFFF ; POW Armor
                 dc.w    $FFFF   ; end: never reached
@@ -1195,11 +1196,21 @@ Def_CannonPod:
                 dc.w    $0000,$0200,$0007,$0001,$0012,$0013,$0009,$0001
                 dc.w    $000E,$0019,$0007,$0001,$0014,$0014,$0002,$0007
                 dc.w    $0018,$000E,$0007,$0006,$0013,$0015,$0009,$0002
-                dc.w    $000E,$0019,$0006,$0007,$0013,$0013,$0303,$0303
-                dc.w    $0302,$0201,$0100,$0000,$0003,$0303,$0404,$0404
-                dc.w    $0303,$0202,$0101,$0101,$0104,$0404,$0404,$0403
-                dc.w    $0302,$0201,$0101,$0101,$0104,$0404,$0505,$0404
-                dc.w    $0303,$0202,$0101,$0101,$0105,$0505,$0505,$0404
+                dc.w    $000E,$0019,$0006,$0007,$0013,$0013
+CannonPodData1:
+                dc.w    $0303,$0303
+                dc.w    $0302,$0201,$0100,$0000,$0003,$0303
+CannonPodData2:
+                dc.w    $0404,$0404
+                dc.w    $0303,$0202,$0101,$0101,$0104,$0404
+CannonPodData4:
+                dc.w    $0404,$0403
+                dc.w    $0302,$0201,$0101,$0101,$0104,$0404
+CannonPodData5:
+                dc.w    $0505,$0404
+                dc.w    $0303,$0202,$0101,$0101,$0105,$0505
+CannonPodData3:
+                dc.w    $0505,$0404
                 dc.w    $0303,$0202,$0202,$0202,$0606,$0605
 CannonPodSteps:
                 dc.w    $0000,$0000,$0004,$FFFF,$0007,$0001,$000D,$FFF9
