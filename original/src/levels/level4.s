@@ -803,7 +803,7 @@ LevelFrame:
                 tst.b   (D_4BAAC).l
                 bne.w   .4B186
                 clr.b   (ScrollActive).w
-                movea.l (ScoreToAddEnd).w,a4
+                movea.l (PalettePtr).w,a4
                 move.w  #$F99,$1E(a4)
                 move.w  #$3,$2A(a4)
                 move.w  #$F55,$2E(a4)

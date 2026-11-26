@@ -144,8 +144,9 @@ LevelComplete:
                 dc.b    $00
 ScoreToAdd:
                 dc.w    $0000,$0000
-ScoreToAddEnd:
-                dc.w    $0000,$5360
+ScoreToAddEnd:                          ; (end of ScoreToAdd, for ABCD)
+PalettePtr:                             ; -> the copper list's COLOR01 move: level
+                dc.l    CopColours-2            ; code flashes colours through it
 ScrollY:
                 dc.w    $0000
 MusicFadeReq:

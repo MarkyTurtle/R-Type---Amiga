@@ -23,6 +23,7 @@ ScrollActive        equ     $000F8
 LevelComplete       equ     $000F9
 ScoreToAdd          equ     $000FA
 ScoreToAddEnd       equ     $000FE
+PalettePtr          equ     $000FE          ; -> copper COLOR01 move; +2+4n = COLOR(n+1)
 ScrollY             equ     $00102
 MusicFadeReq        equ     $00104
 ShipMode            equ     $00105

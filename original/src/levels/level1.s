@@ -1422,7 +1422,7 @@ Spawn_DobkeratopsTail:
                 addq.w  #$1,d5
                 dbra    d7,.4B5E8
                 st.b    $34(a0)
-                movea.l (ScoreToAddEnd).w,a1
+                movea.l (PalettePtr).w,a1
                 move.w  #$90,$16(a1)
                 st.b    (MusicFadeReq).w
                 rts

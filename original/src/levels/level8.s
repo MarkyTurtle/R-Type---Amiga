@@ -373,7 +373,7 @@ L_4A68C:
                 rts
 .4A846:
                 moveq   #14,d0
-                movea.l (ScoreToAddEnd).w,a1
+                movea.l (PalettePtr).w,a1
                 addq.l  #$2,a1
 .4A84E:
                 move.w  (a1),d2
@@ -397,7 +397,7 @@ L_4A68C:
                 dbra    d0,.4A84E
                 rts
 .4A87A:
-                movea.l (ScoreToAddEnd).w,a0
+                movea.l (PalettePtr).w,a0
                 addq.l  #$2,a0
                 moveq   #14,d5
 .4A882:
