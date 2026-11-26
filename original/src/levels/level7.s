@@ -1069,31 +1069,31 @@ Spawn_Bronco:
 ; opens, and slides back; 50 hits destroy it (BossDead, LevelComplete,
 ; 500 points).
 Upd_Bronco:
-                subq.w  #$1,$32(a0)
+                subq.w  #$1,$32(a0)                 ; wait
                 bpl.b   .4B352
                 clr.w   $1E(a0)
                 move.l  #.4B312,$6(a0)
                 bra.b   .4B352
 .4B312:
-                subq.w  #$2,$A(a0)
+                subq.w  #$2,$A(a0)                  ; slide out to x $131
                 cmpi.w  #$131,$A(a0)
                 bhi.b   .4B352
-                st.b    $22(a0)
+                st.b    $22(a0)                     ; and open
                 move.l  #.4B32C,$6(a0)
                 bra.b   .4B352
 .4B32C:
                 cmpi.w  #$10,$1E(a0)
                 bne.b   .4B352
                 clr.b   $22(a0)
-                addq.w  #$2,$A(a0)
+                addq.w  #$2,$A(a0)                  ; closed again: slide back
                 cmpi.w  #$163,$A(a0)
                 bcs.b   .4B352
                 move.w  #$7D,$32(a0)
                 move.l  #Upd_Bronco,$6(a0)
 .4B352:
-                cmpi.w  #$32,$26(a0)
+                cmpi.w  #$32,$26(a0)                ; 50 hits:
                 bcs.b   .4B372
-                st.b    (BossDead).l
+                st.b    (BossDead).l                ; dead
                 st.b    (LevelComplete).w
                 move.l  #$500,d0
                 jsr     (jt_AddScore).w
@@ -1262,19 +1262,19 @@ Spawn_Bold:
                 clr.b   $36(a0)
                 jmp     (jt_ObjInsert).w
 Upd_Bold:
-                tst.b   $36(a0)
+                tst.b   $36(a0)                     ; exploding?
                 bne.w   .4B5AC
                 move.w  $26(a0),d1
                 clr.w   $26(a0)
                 move.w  $A(a0),d0
-                sub.w   (ShipPos).w,d0
+                sub.w   (ShipPos).w,d0              ; ship in front: hits don't count
                 bmi.b   .4B588
                 add.w   d1,$34(a0)
-                cmpi.w  #$46,$34(a0)
+                cmpi.w  #$46,$34(a0)                ; 70 hits from behind:
                 bcs.b   .4B588
                 move.w  #$110,$36(a0)
 .4B588:
-                tst.w   $32(a0)
+                tst.w   $32(a0)                     ; drift right for 470 frames,
                 bmi.b   .4B5A0
                 subq.w  #$1,$32(a0)
                 btst.b  #$0,$33(a0)
@@ -1282,7 +1282,7 @@ Upd_Bold:
                 addq.w  #$1,$A(a0)
                 rts
 .4B5A0:
-                subq.w  #$1,$A(a0)
+                subq.w  #$1,$A(a0)                  ; then left
                 bpl.b   .4B5AA
                 jmp     (jt_ObjKillSelf).w
 .4B5AA:
@@ -1312,7 +1312,7 @@ Upd_Bold:
 .4B5F8:
                 move.b  #$1,$5(a0)
                 clr.l   $6(a0)
-                move.l  #$1500,d0
+                move.l  #$1500,d0                   ; 1500 points
                 jmp     (jt_AddScore).w
 Spawn_MidCheetah:
                 moveq   #1,d7

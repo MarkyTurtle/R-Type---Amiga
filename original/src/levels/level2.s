@@ -116,9 +116,9 @@ Spawn_Gouger:
                 jsr     (jt_ObjCreate).w
                 clr.w   $32(a0)
                 moveq   #0,d0
-                move.w  $6(a1),d0
+                move.w  $6(a1),d0                   ; corner 0-3
                 move.w  d0,$34(a0)
-                move.l  #GougerAnims,d1
+                move.l  #GougerAnims,d1             ; animation for that corner (3 bytes each)
                 add.l   d0,d1
                 add.l   d0,d1
                 add.l   d0,d1
@@ -135,17 +135,17 @@ Upd_Gouger:
 .4A588:
                 jmp     (jt_ObjKillSelf).w
 .4A58C:
-                tst.b   $32(a0)
+                tst.b   $32(a0)                     ; already leaping?
                 bmi.b   .4A5EE
-                subq.w  #$1,$A(a0)
+                subq.w  #$1,$A(a0)                  ; scrolls with the map
                 move.w  $A(a0),d0
-                sub.w   (ShipPos).w,d0
+                sub.w   (ShipPos).w,d0              ; distance to the ship in x
                 tst.w   $34(a0)
                 beq.b   .4A5AC
                 cmpi.w  #$3,$34(a0)
                 bne.b   .4A5B8
 .4A5AC:
-                cmp.w   #$50,d0
+                cmp.w   #$50,d0                     ; within 80 pixels: leap
                 ble.b   .4A5C2
                 tst.w   d0
                 bmi.b   .4A5C2
@@ -156,7 +156,7 @@ Upd_Gouger:
                 bgt.b   .4A5C2
                 rts
 .4A5C2:
-                lea.l   (GougerLeaps).l,a1
+                lea.l   (GougerLeaps).l,a1          ; dx, dy for the corner
                 move.w  $34(a0),d2
                 lsl.w   #$2,d2
                 move.w  (a1,d2.w),d0
@@ -170,19 +170,19 @@ Upd_Gouger:
 .4A5EE:
                 movem.w $36(a0),d0-d1
                 clr.b   $22(a0)
-                cmpi.w  #$A0,$C(a0)
+                cmpi.w  #$A0,$C(a0)                 ; near the floor or ceiling:
                 bhi.b   .4A608
                 cmpi.w  #$2D,$C(a0)
                 bhi.b   .4A61A
 .4A608:
-                asr.w   #$1,d0
+                asr.w   #$1,d0                      ; half speed
                 asr.w   #$1,d1
                 st.b    $22(a0)
                 cmpi.w  #$2,$34(a0)
                 bne.b   .4A61A
                 moveq   #0,d0
 .4A61A:
-                tst.b   $28(a0)
+                tst.b   $28(a0)                     ; flashing (hit): pause
                 beq.b   .4A626
                 st.b    $22(a0)
                 rts
@@ -193,37 +193,37 @@ Upd_Gouger:
                 bmi.w   .4A588
                 rts
 Spawn_Wick:
-                move.w  $6(a1),d7
+                move.w  $6(a1),d7                   ; number - 1
                 moveq   #0,d6
                 moveq   #4,d5
 .4A640:
                 subq.w  #$1,d5
                 bpl.b   .4A64C
-                move.w  (ShipPos).w,d1
+                move.w  (ShipPos).w,d1              ; every 5th at the ship
                 moveq   #4,d5
                 bra.b   .4A658
 .4A64C:
-                moveq   #105,d0
+                moveq   #105,d0                     ; the others at a random height 80-185
                 jsr     (jt_Random).w
                 add.w   #$50,d0
                 move.w  d0,d1
 .4A658:
-                move.w  #$174,d0
+                move.w  #$174,d0                    ; enter at the right
                 moveq   #1,d2
                 jsr     (jt_ObjCreate).w
-                move.w  d6,$32(a0)
+                move.w  d6,$32(a0)                  ; 20 frames apart
                 move.b  #$1,$21(a0)
                 move.b  #$1,$34(a0)
                 moveq   #7,d0
                 jsr     (jt_Random).w
                 move.b  d0,$35(a0)
                 clr.w   $38(a0)
-                move.w  #$7FFF,$36(a0)
+                move.w  #$7FFF,$36(a0)              ; 70%: never dives
                 moveq   #100,d0
                 jsr     (jt_Random).w
                 cmp.w   #$46,d0
                 bcs.b   .4A6A0
-                moveq   #33,d0
+                moveq   #33,d0                      ; 30%: dives after 25-57 frames
                 jsr     (jt_Random).w
                 add.w   #$19,d0
                 move.w  d0,$36(a0)
@@ -233,7 +233,7 @@ Spawn_Wick:
                 dbra    d7,.4A640
                 rts
 Upd_Wick:
-                tst.w   $32(a0)
+                tst.w   $32(a0)                     ; waiting to start?
                 bmi.b   .4A6BA
                 subq.w  #$1,$32(a0)
                 rts
@@ -241,18 +241,18 @@ Upd_Wick:
                 moveq   #0,d0
                 move.b  $38(a0),d0
                 bne.b   .4A6E4
-                eori.b  #$FF,$39(a0)
+                eori.b  #$FF,$39(a0)                ; every other frame:
                 beq.b   .4A6E4
                 move.b  $34(a0),d1
                 ext.w   d1
-                add.w   d1,$C(a0)
+                add.w   d1,$C(a0)                   ; bob up and down
                 subq.b  #$1,$35(a0)
                 bpl.b   .4A6E4
                 neg.b   $34(a0)
                 move.b  #$6,$35(a0)
 .4A6E4:
                 lsl.w   #$2,d0
-                lea.l   (WickSteps).l,a1
+                lea.l   (WickSteps).l,a1            ; dx, dy: fly left, or dive / climb
                 movem.w (a1,d0.w),d1-d2
                 add.w   d1,$A(a0)
                 add.w   d2,$C(a0)
@@ -263,12 +263,12 @@ Upd_Wick:
                 bhi.b   .4A750
                 cmpi.w  #$C4,$C(a0)
                 bhi.b   .4A750
-                subq.w  #$1,$36(a0)
+                subq.w  #$1,$36(a0)                 ; time to turn?
                 bpl.b   .4A740
                 add.w   #$14,d0
-                cmp.w   (ShipPos).w,d0
+                cmp.w   (ShipPos).w,d0              ; towards the ship:
                 bhi.b   .4A742
-                move.b  #$2,$38(a0)
+                move.b  #$2,$38(a0)                 ; dive
                 lea.l   (WickAnimClimb).l,a1
 .4A72E:
                 move.l  a1,$2A(a0)
@@ -278,7 +278,7 @@ Upd_Wick:
 .4A740:
                 rts
 .4A742:
-                move.b  #$1,$38(a0)
+                move.b  #$1,$38(a0)                 ; climb
                 lea.l   (WickAnimDive).l,a1
                 bra.b   .4A72E
 .4A750:

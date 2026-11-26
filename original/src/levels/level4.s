@@ -892,19 +892,19 @@ LevelFrame:
 ; $8E8: $474 x bytes, then $474 y bytes) round the screen.  Section 2 also
 ; fires CompilerLasers forwards when the ship is level with it and ahead.
 Upd_CompilerSection:
-                tst.b   $3C(a0)
+                tst.b   $3C(a0)                     ; destroyed by its core?
                 beq.b   .4B1AC
                 clr.l   $6(a0)
                 move.b  #$1,$5(a0)
-                subq.b  #$1,(SectionsLeft).l
+                subq.b  #$1,(SectionsLeft).l        ; one section fewer
                 rts
 .4B1AC:
                 bsr.w   .4B216
-                tst.b   (CompilerEntering).l
+                tst.b   (CompilerEntering).l        ; still flying in?
                 bpl.b   .4B1DA
-                addq.w  #$3,$A(a0)
+                addq.w  #$3,$A(a0)                  ; 3 pixels a frame to the right
                 moveq   #0,d0
-                movea.l $36(a0),a1
+                movea.l $36(a0),a1                  ; path: x bytes, then y bytes $474 later
                 move.b  (a1),d0
                 add.w   #$20,d0
                 cmp.w   $A(a0),d0
@@ -925,7 +925,7 @@ Upd_CompilerSection:
                 move.w  d2,$A(a0)
                 move.w  d3,$C(a0)
                 addq.w  #$1,$34(a0)
-                cmpi.w  #$474,$34(a0)
+                cmpi.w  #$474,$34(a0)               ; end of the path: start again
                 bcs.b   .4B214
                 clr.w   $34(a0)
 .4B214:
@@ -973,7 +973,7 @@ Upd_CompilerCore:
                 tst.b   $3C(a0)
                 bne.w   .4B2DC
                 movea.l $32(a0),a1
-                movem.w $A(a1),d0-d1
+                movem.w $A(a1),d0-d1                ; sits inside its section
                 movem.w d0-d1,$A(a0)
                 tst.b   $28(a1)
                 bne.b   .4B2CC
@@ -981,24 +981,24 @@ Upd_CompilerCore:
                 cmp.w   $36(a0),d0
                 beq.b   .4B2CC
                 move.w  d0,$36(a0)
-                cmp.w   #$1E,d0
+                cmp.w   #$1E,d0                     ; 30 hits:
                 bcs.b   .4B2CE
-                st.b    $3C(a1)
+                st.b    $3C(a1)                     ; destroy the section
                 st.b    $3C(a0)
                 clr.w   $34(a0)
                 move.w  #$3,$1E(a0)
 .4B2CC:
                 rts
 .4B2CE:
-                bset.b  #$0,$23(a1)
+                bset.b  #$0,$23(a1)                 ; a hit: the section flashes
                 move.b  #$3,$28(a1)
                 rts
 .4B2DC:
-                subq.b  #$1,$3D(a0)
+                subq.b  #$1,$3D(a0)                 ; explosions, then
                 bne.b   .4B2F6
                 clr.l   $6(a0)
                 move.b  #$1,$5(a0)
-                move.l  #$5000,d0
+                move.l  #$5000,d0                   ; 5000 points
                 jsr     (jt_AddScore).w
 .4B2F6:
                 move.l  a0,-(a7)

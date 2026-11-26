@@ -996,11 +996,11 @@ Upd_Cancer:
 .4B07E:
                 rts
 Spawn_Shell:
-                move.w  #$260,(ShellCentreX).l
+                move.w  #$260,(ShellCentreX).l      ; centre of the ring, off to the right
                 clr.w   (ShellBroken).l
                 moveq   #24,d5
                 moveq   #0,d6
-                moveq   #11,d7
+                moveq   #11,d7                      ; 12 turrets
 .4B094:
                 move.w  #$170,d0
                 move.w  #$34,d1
@@ -1008,12 +1008,12 @@ Spawn_Shell:
                 jsr     (jt_ObjCreate).w
                 clr.b   $22(a0)
                 clr.w   $32(a0)
-                move.w  d6,$34(a0)
-                move.w  d5,$38(a0)
+                move.w  d6,$34(a0)                  ; start delay: 20 frames apart
+                move.w  d5,$38(a0)                  ; explosion countdown when the ring breaks
                 clr.b   $36(a0)
                 subq.w  #$2,d5
                 add.w   #$14,d6
-                cmp.w   #$3,d7
+                cmp.w   #$3,d7                      ; number 3 is the control unit
                 bne.b   .4B0CE
                 move.l  #ShellControlAnim,$2A(a0)
                 st.b    $36(a0)
@@ -1022,31 +1022,31 @@ Spawn_Shell:
                 dbra    d7,.4B094
                 rts
 Upd_Shell:
-                tst.b   (ShellGone).l
+                tst.b   (ShellGone).l               ; ring gone off the left: remove
                 bpl.b   .4B0E4
                 jmp     (jt_ObjKillSelf).w
 .4B0E4:
-                tst.b   (ShellBroken).l
+                tst.b   (ShellBroken).l             ; broken: skip the firing
                 bmi.b   .4B120
                 move.w  (ShipPos).w,d0
                 sub.w   (ShellCentreX).l,d0
                 bpl.b   .4B0FA
                 neg.w   d0
 .4B0FA:
-                cmp.w   #$46,d0
+                cmp.w   #$46,d0                     ; ship within 70 pixels of the centre:
                 bcs.b   .4B106
                 clr.w   $2E(a0)
                 bra.b   .4B120
 .4B106:
                 tst.w   $2E(a0)
                 bne.b   .4B120
-                move.w  #$AF,d0
+                move.w  #$AF,d0                     ; fire every 25-200 frames
                 jsr     (jt_Random).w
                 add.w   #$19,d0
                 move.w  d0,$2E(a0)
                 move.w  d0,$30(a0)
 .4B120:
-                tst.w   $34(a0)
+                tst.w   $34(a0)                     ; waiting to join the ring?
                 bmi.b   .4B138
                 subq.w  #$1,$34(a0)
                 bpl.b   .4B134
@@ -1055,13 +1055,13 @@ Upd_Shell:
 .4B134:
                 bra.w   .4B1C0
 .4B138:
-                lea.l   ($792D1).l,a1
+                lea.l   ($792D1).l,a1               ; ring path: x table, y table at +$127
                 lea.l   $127(a1),a2
 .4B142:
                 move.w  $32(a0),d2
                 move.b  (a1,d2.w),d0
                 move.b  (a2,d2.w),d1
-                cmp.b   #$7F,d1
+                cmp.b   #$7F,d1                     ; end of the path: start again
                 bne.b   .4B15A
                 clr.w   $32(a0)
                 bra.b   .4B142
@@ -1070,9 +1070,9 @@ Upd_Shell:
                 ext.w   d1
                 addq.w  #$1,$32(a0)
                 add.w   #$73,d1
-                add.w   (ShellCentreX).l,d0
+                add.w   (ShellCentreX).l,d0         ; x relative to the moving centre
                 movem.w d0-d1,$A(a0)
-                tst.b   (ShellBroken).l
+                tst.b   (ShellBroken).l             ; broken: count down, then explode
                 bpl.b   .4B1C0
                 subq.w  #$1,$38(a0)
                 bpl.b   .4B1C0
@@ -1085,27 +1085,27 @@ Upd_Shell:
                 move.b  #$A,$4(a0)
                 jsr     (jt_ObjInsert).w
                 movea.l (a7)+,a0
-                move.l  #$200,d0
+                move.l  #$200,d0                    ; 200 points for each turret
                 jsr     (jt_AddScore).w
                 clr.w   $2E(a0)
                 clr.b   $22(a0)
                 move.w  #$9,$1E(a0)
                 clr.b   $20(a0)
 .4B1C0:
-                tst.b   $36(a0)
+                tst.b   $36(a0)                     ; the control unit moves the centre
                 bpl.b   .4B1EC
                 subq.w  #$1,(ShellCentreX).l
-                cmpi.w  #$FFB7,(ShellCentreX).l
+                cmpi.w  #$FFB7,(ShellCentreX).l     ; left the screen?
                 beq.b   .4B1F4
-                cmpi.w  #$5,$1E(a0)
+                cmpi.w  #$5,$1E(a0)                 ; open (frame 5+)?
                 blt.b   .4B1EE
-                cmpi.w  #$6,$26(a0)
+                cmpi.w  #$6,$26(a0)                 ; 6 hits while open break the ring
                 blt.b   .4B1EC
                 st.b    (ShellBroken).l
 .4B1EC:
                 rts
 .4B1EE:
-                clr.w   $26(a0)
+                clr.w   $26(a0)                     ; closed: hits don't count
                 rts
 .4B1F4:
                 st.b    (ShellGone).l
@@ -1498,23 +1498,23 @@ Spawn_DobkeratopsCore:
                 clr.w   $36(a0)
                 jmp     (jt_ObjInsert).w
 Upd_DobkeratopsCore:
-                tst.b   (ScrollActive).w
+                tst.b   (ScrollActive).w            ; stays fixed to the map
                 beq.b   .4B746
                 subq.w  #$1,$A(a0)
 .4B746:
-                tst.b   (BossDead).l
+                tst.b   (BossDead).l                ; dead: random explosions
                 bne.w   .4B81E
-                subq.w  #$1,$32(a0)
+                subq.w  #$1,$32(a0)                 ; fire every 64 frames:
                 bpl.b   .4B7CC
                 move.w  #$3F,$32(a0)
                 move.l  a0,-(a7)
-                moveq   #4,d7
+                moveq   #4,d7                       ; 5 shots
                 moveq   #1,d5
                 movem.w $A(a0),d3-d4
                 sub.w   #$14,d3
                 move.w  d4,d1
                 move.w  #$170,d0
-                move.w  ($F0).w,d2
+                move.w  ($F0).w,d2                  ; path set by the ship's height
                 moveq   #-1,d6
                 cmp.w   #$64,d2
                 bcs.b   .4B788
@@ -1543,26 +1543,26 @@ Upd_DobkeratopsCore:
                 jsr     (jt_ObjInsert).w
                 dbra    d7,.4B792
                 movea.l (a7)+,a0
-                st.b    (BossMouthOpen).l
+                st.b    (BossMouthOpen).l           ; and the mouth opens
 .4B7CC:
-                clr.b   (BossHit).l
+                clr.b   (BossHit).l                 ; hit this frame? -> tail flashes
                 move.w  $26(a0),d0
                 cmp.w   $34(a0),d0
                 beq.b   .4B7E6
                 move.w  d0,$34(a0)
                 st.b    (BossHit).l
 .4B7E6:
-                cmpi.w  #$14,$26(a0)
+                cmpi.w  #$14,$26(a0)                ; 20 hits: the timer is cut to 50
                 bcs.b   .4B800
                 cmpi.w  #$32,(BossTimer).l
                 bls.b   .4B800
                 move.w  #$32,(BossTimer).l
 .4B800:
-                cmpi.w  #$1E,$26(a0)
+                cmpi.w  #$1E,$26(a0)                ; 30 hits: dead
                 bcs.b   .4B81C
                 st.b    (BossDead).l
                 st.b    (LevelComplete).w
-                move.l  #$6200,d0
+                move.l  #$6200,d0                   ; 6200 points
                 jmp     (jt_AddScore).w
 .4B81C:
                 rts

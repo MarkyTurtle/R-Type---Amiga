@@ -290,13 +290,13 @@ Upd_Dop:
                 move.w  $A(a0),d0
                 move.w  $26(a0),d1
                 clr.w   $26(a0)
-                tst.b   $33(a0)
+                tst.b   $33(a0)                     ; which way it faces:
                 bne.b   .4AA1A
                 add.w   #$30,d0
                 move.w  #$7D0,$24(a0)
-                sub.w   (ShipPos).w,d0
+                sub.w   (ShipPos).w,d0              ; ship on the core side?
                 bmi.b   .4AA18
-                move.w  #$FFFF,$24(a0)
+                move.w  #$FFFF,$24(a0)              ; armoured side: indestructible,
                 moveq   #0,d1
 .4AA18:
                 bra.b   .4AA2E
@@ -308,17 +308,17 @@ Upd_Dop:
                 move.w  #$FFFF,$24(a0)
 .4AA2E:
                 add.w   d1,$34(a0)
-                cmpi.w  #$4,$34(a0)
+                cmpi.w  #$4,$34(a0)                 ; 4 hits from the core side destroy it
                 blt.b   .4AA46
                 move.b  #$1,$5(a0)
                 clr.l   $6(a0)
                 rts
 .4AA46:
                 movem.w $A(a0),d0-d1
-                jsr     (jt_AdjustForScroll).w
+                jsr     (jt_AdjustForScroll).w      ; moves with the map
                 moveq   #0,d2
                 move.b  $32(a0),d2
-                lea.l   (DopMoves).l,a1
+                lea.l   (DopMoves).l,a1             ; per direction: step, probe, rail offset
                 lsl.w   #$1,d2
                 adda.l  d2,a1
                 lsl.w   #$2,d2
@@ -334,11 +334,11 @@ Upd_Dop:
                 movem.w d0-d1,-(a7)
                 add.w   (a1)+,d0
                 add.w   (a1)+,d1
-                jsr     (jt_GetMapCell).w
+                jsr     (jt_GetMapCell).w           ; the rail ahead
                 bne.b   .4AA9C
                 move.w  (a1)+,d2
                 lea.l   (a4,d2.w),a4
-                btst.b  #$F,(a4)
+                btst.b  #$F,(a4)                    ; still rail?
                 bne.b   .4AA9C
                 move.l  (a7)+,$A(a0)
                 rts
@@ -346,7 +346,7 @@ Upd_Dop:
                 jmp     (jt_ObjKillSelf).w
 .4AA9C:
                 clr.l   (a7)+
-                movea.l $36(a0),a1
+                movea.l $36(a0),a1                  ; no: next turn from the route
                 moveq   #0,d2
                 move.b  (a1),d2
                 bpl.b   .4AABA

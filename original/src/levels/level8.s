@@ -176,20 +176,20 @@ BossArea:
 ; BossState moves to EndingSequence.
 Upd_BydoCore:
                 move.w  $26(a0),d0
-                cmp.w   $32(a0),d0
+                cmp.w   $32(a0),d0                  ; hit this frame?
                 beq.b   .4A57C
                 move.w  d0,$32(a0)
-                move.b  #$3,$28(a0)
-                cmpi.w  #$3C,$32(a0)
+                move.b  #$3,$28(a0)                 ; flash
+                cmpi.w  #$3C,$32(a0)                ; 60 hits:
                 bcs.b   .4A57C
-                move.l  #EndingSequence,(BossState).l
+                move.l  #EndingSequence,(BossState).l ; the ending
                 move.b  #$28,(StateTimer).l
                 move.w  #$F,$96(a6)
                 clr.b   (MusicFadeReq).w
                 clr.b   (MusicRequest).w
-                bset.b  #$0,(EndSequenceFlags).w
+                bset.b  #$0,(EndSequenceFlags).w    ; Wins vanish, autopilot
                 st.b    (ShipMode).w
-                move.l  #$15000,d0
+                move.l  #$15000,d0                  ; 15000 points
                 jsr     (jt_AddScore).w
                 jmp     (jt_ObjKillSelf).w
 .4A57C:
@@ -211,12 +211,12 @@ PatchMap:
                 rts
 ; SpawnMikun: every 26 frames a Mikun appears at the top or bottom edge at a
 ; random x and drifts towards where the ship is (MikunDirections; not
-; straight up or down).
+; straight sideways).
 SpawnMikun:
-                subq.b  #$1,(MikunTimer).l
+                subq.b  #$1,(MikunTimer).l          ; every 26 frames
                 bne.b   .4A618
                 move.b  #$1A,(MikunTimer).l
-                moveq   #10,d0
+                moveq   #10,d0                      ; top or bottom edge
                 jsr     (jt_Random).w
                 cmp.w   #$5,d0
                 bcc.b   .4A5BC
@@ -225,17 +225,17 @@ SpawnMikun:
 .4A5BC:
                 move.w  #$E0,d1
 .4A5C0:
-                move.w  #$12C,d0
+                move.w  #$12C,d0                    ; random x
                 jsr     (jt_Random).w
                 add.w   #$2D,d0
                 movem.w d0-d1,-(a7)
                 movem.w (ShipPos).w,d2-d3
-                jsr     (jt_DirectionTo).w
-                cmp.w   #$4,d0
+                jsr     (jt_DirectionTo).w          ; towards the ship,
+                cmp.w   #$4,d0                      ; but not straight across
                 beq.b   .4A616
                 cmp.w   #$C,d0
                 beq.b   .4A616
-                lea.l   (MikunDirections).l,a3
+                lea.l   (MikunDirections).l,a3      ; velocity and animation for it
                 lsl.w   #$2,d0
                 move.l  (a3,d0.w),d6
                 movea.l $40(a3,d0.w),a1

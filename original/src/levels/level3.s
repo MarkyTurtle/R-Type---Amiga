@@ -220,8 +220,8 @@ PatchMap:
 ; (PartGunOffsets), and after its number of hits leaves a trail of
 ; explosions and patches the map with its wrecked cells.
 Upd_ShipPart:
-                bsr.w   FollowScroll
-                subq.b  #$1,$37(a0)
+                bsr.w   FollowScroll                ; stay on the hull
+                subq.b  #$1,$37(a0)                 ; fire every 30-80 frames
                 bpl.b   .4A838
                 moveq   #50,d0
                 jsr     (jt_Random).w
@@ -231,28 +231,28 @@ Upd_ShipPart:
                 moveq   #0,d2
                 move.b  $3D(a0),d2
                 lsl.w   #$2,d2
-                lea.l   (PartGunOffsets).l,a1
+                lea.l   (PartGunOffsets).l,a1       ; from its gun
                 add.w   (a1,d2.w),d0
                 add.w   $2(a1,d2.w),d1
                 jsr     (jt_FireEnemyBullet).w
 .4A838:
                 moveq   #0,d0
                 move.b  $36(a0),d0
-                cmp.w   $26(a0),d0
+                cmp.w   $26(a0),d0                  ; enough hits?
                 bhi.b   .4A85E
-                tst.b   $3C(a0)
+                tst.b   $3C(a0)                     ; explosions still to go?
                 bne.b   .4A860
                 movea.l a0,a3
                 movea.l $32(a0),a0
-                bsr.b   PatchMap
+                bsr.b   PatchMap                    ; none left: wreck cells into the map, gone
                 movea.l a3,a0
                 move.b  #$1,$5(a0)
                 clr.l   $6(a0)
 .4A85E:
                 rts
 .4A860:
-                subq.b  #$1,$3C(a0)
-                move.w  #$FFFF,$24(a0)
+                subq.b  #$1,$3C(a0)                 ; one more explosion
+                move.w  #$FFFF,$24(a0)              ; (indestructible meanwhile)
                 move.l  a0,-(a7)
                 moveq   #50,d0
                 jsr     (jt_Random).w
@@ -392,17 +392,17 @@ EngineRoom:
 ; LevelComplete), then BossPhase keeps setting off explosions round it.
 Upd_BattleshipCore:
                 movem.w $A(a0),d0-d1
-                jsr     (jt_AdjustForScroll).w
+                jsr     (jt_AdjustForScroll).w      ; stay on the hull
                 movem.w d0-d1,$A(a0)
-                movem.w d0-d1,(CoreX).l
+                movem.w d0-d1,(CoreX).l             ; for the orbs and the final explosions
                 move.w  $26(a0),d0
-                cmp.w   $32(a0),d0
+                cmp.w   $32(a0),d0                  ; hit this frame?
                 beq.b   .4AA94
                 move.w  d0,$32(a0)
-                move.b  #$3,$28(a0)
-                cmp.w   #$A,d0
+                move.b  #$3,$28(a0)                 ; flash
+                cmp.w   #$A,d0                      ; 10 hits:
                 bcs.b   .4AA94
-                st.b    (BossDead).l
+                st.b    (BossDead).l                ; the battleship is beaten
                 st.b    (LevelComplete).w
 .4AA94:
                 rts
