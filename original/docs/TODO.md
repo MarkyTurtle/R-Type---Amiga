@@ -61,3 +61,31 @@ State on 26 Nov 2026. All 12 sources reassemble byte-identical (`tools/verify.py
 - [x] **Build**: `tools/build_disk.py --from-source` assembles every source into a disk image (`tools/verify.py` checks them against `files/`).
 - [x] **Cross-reference**: `tools/xref.py` (which routines read/write each label).
 - [ ] Retire `work`-style one-off generators once all sources are hand-maintained (`bootstrap_source.py`, `gen_source.py`, `trace68k.py` are kept only for reference).
+
+## 7. Enhanced version (`enhanced/`, later)
+
+The `original/` sources stay byte-identical; changes go in a separate `enhanced/` tree.
+
+### A normal AmigaDOS disk
+
+Replace the custom-track loader with one that reads a standard AmigaDOS (11-sector, `$4489`) disk that has a proper file system, so the disk can be copied, browsed and checked with ordinary tools.
+
+- [ ] **Loader**: use the 4489 byte loader from [MarkyTurtle/infinitedreams](https://github.com/MarkyTurtle/infinitedreams) (`src-singledisk/demo-redux/4489Loader/`: disassembled, TOD-timed fork of [4489/4489_byteloader](https://github.com/4489/4489_byteloader)).
+  - Interface: d0 = disk offset, d1 = length, d2 = drive, a0 = destination, a1 = MFM buffer. It returns d0 = 0 on success.
+  - It needs `$1760` words of MFM buffer. The game's `TRACK_BUFFER` at `$7C400` has room (`$7C400`–`$7F2C0`); check nothing else uses that area while loading.
+- [ ] **Space problem, solve first.** The files don't fit on an 880K disk as they are. The data on the custom tracks comes to about 987K, which is why the original uses long tracks. A standard disk holds 901,120 bytes raw, about 837K of file data on FFS. Options:
+  - **Crunch the uncrunched files** with the game's own ByteKiller format, so `Decrunch` can unpack them. Candidates: music, game program, `$6000` block, shared file, title picture, level A files. Deflate as a guide shrinks them from about 475K to 241K. That gives about 752K with the already-crunched level B files, which fits, but ByteKiller packs less tightly than deflate.
+  - Also trim the track padding: files are stored padded to whole tracks, so their real lengths are shorter.
+  - Check there's enough free memory to decrunch into for each file; the level B files already decrunch from `$4CB00` to `$4D300`.
+- [ ] **File-system layout**: make an **FFS** disk (`DOS\1`) with each file in **contiguous** blocks.
+  - FFS data blocks hold 512 bytes of plain data, with no 24-byte header as on OFS. A contiguous file can therefore be read directly by the byte loader at a known disk offset, with no file-system code in the game.
+  - Have the build tool write the disk and an offset/length table that the loader assembles in.
+  - Optionally add a small root-directory/file-header lookup instead, so the files can be replaced without rebuilding.
+- [ ] **Patch the load calls** in the bootblock, stage 2 (title, music, game program, `$6000` block, shared file) and `LevelTable`/`LoadLevel` (level A/B by track) to use file offsets instead of track numbers.
+- [ ] **Bootblock**: a standard `DOS\1` bootblock that loads stage 2 with the byte loader (or through trackdisk.device before taking over the machine).
+- [ ] **Saving high scores**: use the **Rob Northen disk routines** for the write.
+  - The byte loader is read-only.
+  - Writing to an AmigaDOS disk means MFM-encoding and writing a whole 11-sector track, or reading, modifying and rewriting the sector.
+  - Keep the high-score table as a one-block file in a fixed place, so the save never touches the file system's bitmap or directory.
+  - Keep the checksum check so a bad or missing table falls back to the default.
+- [ ] **Build**: extend `build_disk.py` (or add an `enhanced` mode) to write a plain ADF and verify it, and test it in WinUAE on a 512K A500 and with more memory.
