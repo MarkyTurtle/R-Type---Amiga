@@ -130,7 +130,7 @@ See `GRAPHICS.md`: one word per cell (tile number, animated flag, solid flag), 1
 ### Definitions in the sources
 
 Every definition found is labelled in the sources:
-- **Labels:** `Def_xxxxx` in the level files; `DefExplosion1`, `DefWalker`, `DefPowerUp`… in `game.s`.
+- **Labels:** `Def_xxxxx` in the level files; `DefExplosion1`, `DefPowArmor`, `DefPowerUp`… in `game.s`.
 - **Summary comment:** size, frame count, graphics address, hit points, fire rate and score.
 - **Routines:** each update routine is labelled `Upd_xxxxx` and each spawn routine `Spawn_xxxxx`. Several definitions often share one update routine with different graphics: level 2's three 32-pixel enemies all use `Upd_4AA08`.
 

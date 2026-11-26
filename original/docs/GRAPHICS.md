@@ -33,10 +33,10 @@ From line `$ED` the copper switches to **3 bitplanes** (BPLCON0 `$3200`), non-in
 | Bits | Meaning |
 |---|---|
 | 0–11 | tile number |
-| 14 | animated tile: bits 0–3 select a routine in `LV_TileAnims` (called while drawing) |
-| 12 | destructible: player shots and the wave beam clear the cell to 0 |
-| 13 | set when a player shot hits the cell (for the tile's routine) |
-| 15 | solid: the ship and the walkers collide with it (`GetMapCell` tests bit 7 of the high byte) |
+| 12 | destructible: shots, the Force, the Bits, the shot streams and the anti-air laser clear the cell to 0; the wave beam clears it and carries on. Some level objects (level 4) clear such cells too. |
+| 13 | hit: set by shots, the wave beam, the lasers, the Force and the Bits when they touch the cell. The tile routine reads it: level 1's animated blocks clear themselves and their neighbour when hit. |
+| 14 | animated tile: bits 0–3 select a routine in `LV_TileAnims` (called while drawing). A solid animated cell stops the reflect laser without a bounce, and the wave beam passes through it. |
+| 15 | solid: `GetMapCell` tests it (bit 7 of the high byte). The ship, the Force, the POW Armor, shots, lasers and the Bits collide with solid cells. |
 
 Map sizes (tiles): level 1 268 × 13, 2 180 × 13, 3 68 × 26 (the giant battleship: the map is the ship itself), 4 172 × 13, 5 210 × 13, 6 164 × 13, 7 154 × 13, 8 187 × 13. Rendered in full in `gfx/levelN_map.png`.
 
@@ -94,7 +94,7 @@ No code at all: shared graphics and the sound-effect samples. The pieces are con
 | `$12490`–`$1294F` | speed-up flash, 2 frames | BOB, `DefSpeedFlash` |
 | `$12950`–`$1564F` | anti-air laser (red crystal: the double helix), 64×30, 6 × `$780` | `AntiAirLaserFrames`, `UpdateAntiAirLaser` |
 | `$15650`–`$15A4F` | two 32×4 shot streams (2 frames + mirrored pair each) | `UpdateShotStream` |
-| `$15A50`–`$17ACF` | cannon walker, 10 frames | BOB, `DefWalker` (default wave object) |
+| `$15A50`–`$17ACF` | POW Armor (power-up carrier), 10 frames | BOB, `DefPowArmor` (default wave object) |
 | `$17AD0`–`$189CF` | power-up items: blue/red/yellow crystal, S, M, bit | BOB, `DefPowerUp` |
 | `$189D0`–`$19B8F` | wave cannon by charge: 16×12, 32×12, 48×14, 64×16, 2 frames each | `WaveCannonShots`, `FireWaveCannon` |
 | `$19B90`–`$19D8F` | reflect laser segments (blue crystal), 16×16, 2 frames (diagonal up/down) | `UpdateLasers` |
@@ -133,7 +133,7 @@ Level 1's tiles end exactly where its map starts, and level 4's where its stored
 | `levelN_tiles.png` | the tile set, 16 per row, in tile-number order |
 | `levelN_bobs.png` | one row per object definition found in the level, all its frames (mask applied) |
 | `sprites_ship.png`, `sprites_bits.png`, `sprites_force0-3.png` | the hardware sprites, 3× size |
-| `engine_bobs.png` | the engine's own BOBs: explosions, ring burst, speed-up flash, walker, power-ups (2× size) |
+| `engine_bobs.png` | the engine's own BOBs: explosions, ring burst, speed-up flash, POW Armor, power-ups (2× size) |
 | `engine_weapons.png` | ship shots, shot streams, anti-air, reflect and ground lasers, enemy bullets, homing missiles, wave cannon sizes (2× size) |
 
 The BOB sheets come from searching level A's DATA for object definitions by their signature (mask offset = half the frame size, modulo = 52 − 2 × width, valid pointers). Frame counts are capped at the next known graphics block. Level definitions can also point at engine graphics in the `$6000` block, for example level 7's `$4BE14` uses the large explosion.

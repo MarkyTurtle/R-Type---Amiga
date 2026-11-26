@@ -5,17 +5,17 @@ State on 26 Nov 2026. All 12 sources reassemble byte-identical (`tools/verify.py
 ## 1. The game program (`src/game.s`)
 
 - [ ] **Line-by-line comments.** Done for the core (`MainLoop`, the game states, `GameFrame`, `Level3Int`, `SwapScreens`, `SetBitplanes`, `UpdateScroll`, `UpdateObjects`, `ObjExplode`). Also done: `CopperInt`, `ShipControl`/`ShipTilt`, collisions (`ObjCollisions`, `HitByShots`, `BoxTest`, `ObjDamage`), with block comments for the Force states, `FireForce`, the fly-in and autopilot. Also block comments for the Bits and the homing missiles. Also the three lasers (`UpdateLasers`, `UpdateAntiAirLaser`), the missile states and power-up collection. Also the attract mode (state machine, title letters, name entry).
-- [ ] **Name the remaining labels**: 88 `L_`/`D_` labels left. `tools/xref.py src/game.s` lists who reads and writes each one; `tools/add_labels.py` inserts labels by address safely.
+- [x] **Name the remaining labels**: all `L_`/`D_` labels in `game.s` are named (the levels still have theirs).
 - [ ] **Variables in `DATA`**: 48 named this round (frame pacing, scroll, ship, Bits, Force animation, wave beam). Still unnamed: the missile arrays (`$556C`–`$55AA`), Force state bytes (`$5143`–`$514B`), title variables (`$56F2`–`$56FE`), death/level counters (`$4209`–`$420D`).
-- [ ] **Remaining first-pass artefacts**: check other `dc.l L_xxxxx` / immediates the generator turned into labels when they're really numbers (two blit sizes in `ShotTypes` were found and fixed).
+- [x] **First-pass artefacts**: the 16 `dc.l` values the generator had turned into code labels are numbers again (mask offsets, frame sizes, ground-laser moves, the copper list, the high-score table). The copper list is one instruction per line, the high-score table one entry per line.
 - [x] **Frame pacing**: the game is locked to 25 Hz (`Flip50Hz` clear); the ship and Bits move at 50 Hz from the VBL. See `GAME.md`.
-- [ ] **`TimerCheck`**: work out what the CIA timer measurement guards against (speed check or anti-tamper) and why it hangs above `$CCDD`.
+- [x] **`PalCheck`** (was `TimerCheck`): times one frame with CIA-A timer B against the TOD (vertical sync) counter; an NTSC frame is too short, so the game hangs on NTSC machines when a game starts. Still to confirm in WinUAE with an NTSC configuration.
 - [x] **Title / attract sequence**: states renamed to what they show, title letters, text lists, name entry commented; the Amiga team credits documented in `GAME.md`.
 - [x] **Force behaviour**: state machine, docking, launching and weapon selection commented (`GAME.md`).
 - [x] **Bits**: trailing movement via a position ring buffer (`UpdateBits`).
 - [x] **Homing missiles**: launch, forward, seek (nearest enemy above/below) and home states commented.
-- [ ] **Walker AI** (`ObjUpd_Walker`, `Walker_Walk`) and the power-up carrier (`ReleasePowerUp`).
-- [ ] **Map cell bits 12–14**: confirm the destructible-block and "hit" behaviour against the level tile routines.
+- [x] **POW Armor** (was the "walker"): the default wave object and power-up carrier. Its jump/slide/walk states, jump arc and animations, and `ReleasePowerUp`, are commented.
+- [x] **Map cell bits 12–15**: what each weapon does with them, confirmed in the engine and level 1's tile routine (`DrawMap` comment, GRAPHICS.md).
 
 ## 2. Level code (`src/levels/level1-8.s`)
 

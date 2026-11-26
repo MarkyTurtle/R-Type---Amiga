@@ -68,8 +68,8 @@ BuildMapRows        equ     $00C3C
 InitHardware        equ     $00C58
 ClearScreens        equ     $00D06
 InitMapOffsets      equ     $00D18
-TimerCheck          equ     $00D78
-WaitTimer           equ     $00DD2
+PalCheck            equ     $00D78
+WaitTodTick         equ     $00DD2
 Level2Int           equ     $00DE4
 Random              equ     $00E58
 ObjUpd_FlyInShip    equ     $00E94
@@ -147,9 +147,9 @@ ForceFollowY        equ     $02CC2
 ReadFire2           equ     $02CEC
 ReleasePowerUp      equ     $02D38
 ObjUpd_ScrollOff    equ     $02D74
-SpawnWalker         equ     $02D90
-ObjUpd_Walker       equ     $02DDE
-Walker_Walk         equ     $02E0E
+SpawnPowArmor       equ     $02D90
+ObjUpd_PowArmor     equ     $02DDE
+PowArmor_Jump       equ     $02E0E
 ResetMissiles       equ     $02F60
 UpdateMissiles      equ     $02F80
 Missile_Launch      equ     $030B8

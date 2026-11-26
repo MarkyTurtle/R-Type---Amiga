@@ -8,7 +8,7 @@ position), levelN_map.png (the whole map, as the game draws it) and
 levelN_bobs.png (every frame of each object definition found in the level's
 DATA, one row per definition).  From the $6000 block: sprites_ship.png,
 sprites_bits.png, sprites_force0-3.png (hardware sprites, 16 colours) and
-engine_bobs.png (explosions, walker, power-ups... defined in the game
+engine_bobs.png (explosions, POW Armor, power-ups... defined in the game
 program itself).
 Formats: docs/GRAPHICS.md.
 """
@@ -202,7 +202,7 @@ def render_sprites(files, out):
     return force
 
 def render_engine_bobs(files, out, low6000):
-    """Object definitions in the game program's DATA (explosions, walker,
+    """Object definitions in the game program's DATA (explosions, POW Armor,
     power-ups, speed-up flash), drawn with level 1's palette."""
     low = open(os.path.join(files, 'game_low_000a4.bin'), 'rb').read()
     R = lambda a, n: low[a - 0xA4:a - 0xA4 + n]

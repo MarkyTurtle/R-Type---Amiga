@@ -55,11 +55,11 @@ TRACK_BUFFER    equ     $7C400          ; raw MFM buffer
 ;   $08740-$0B43F explosions (DefExplosion1/2)
 ;   $0B440-$10A4F large explosion         $10A50-$1248F ring burst
 ;   $12490-$1294F speed-up flash          $12950-$1564F anti-air laser (helix)
-;   $15650-$15A4F 32x4 shot streams       $15A50-$17ACF cannon walker
+;   $15650-$15A4F 32x4 shot streams       $15A50-$17ACF POW Armor
 ;   $17AD0-$189CF power-up items          $189D0-$19B8F wave cannon shots
 ;   $19B90-$19D8F lasers                  $19D90-$1A2CF enemy bullets
 ;   $1A2D0-$1C2CF homing missiles (16 directions x 2 frames)
-;   $1C2D0-$1C64F laser frames            $1C650-$1C689 walker jump arc
+;   $1C2D0-$1C64F laser frames            $1C650-$1C689 POW Armor jump arc
 ;   $1C68A-$2C7AF sound effect samples
 ;   $2C7B0-$2CEB7 HUD bitplanes (3 x $258)
 ; Details: docs/GRAPHICS.md, rendered in gfx/engine_bobs.png and gfx/sprites_*
@@ -216,7 +216,7 @@ NewGame:
                 bsr.w   TitleSequence
                 move.w  #$780,$9C(a6)
                 move.w  #$8600,$9A(a6)
-                bsr.w   TimerCheck
+                bsr.w   PalCheck
                 move.l  (TopScore).l,d0
                 lea.l   ($2C905).l,a0
                 bsr.w   DrawDigits
@@ -1063,31 +1063,40 @@ InitMapOffsets:
 .00d76:
                 rts
 
-; TimerCheck: CIA timer measurement; hangs if the result is out of range
-TimerCheck:
+; PalCheck: a PAL-only check, run at the start of every game.  It times one
+; video frame with CIA-A timer B: the CIA-A TOD counter is clocked by
+; vertical sync, so WaitTodTick waits for a frame boundary, the timer runs
+; ($FFFF down, E clock) until the next one, and d0 = what is left.
+;   PAL   709,379 Hz / 50 = 14,188 ticks -> d0 ~ $C893  (passes)
+;   NTSC  715,909 Hz / 60 = 11,932 ticks -> d0 ~ $D163  (hangs)
+; Anything shorter than 13,090 ticks (a refresh above ~54 Hz) leaves
+; d0 > $CCDD and the game locks up in the loop with interrupts back on.
+; WaitTodTick also gives up if the timer passes $8000, so a missing TOD
+; doesn't hang it.
+PalCheck:
                 lea.l   (CIAA_PRA).l,a5
-                move.w  #$4000,$9A(a6)
-                move.b  #$8,$F00(a5)
+                move.w  #$4000,$9A(a6)          ; INTENA: master off
+                move.b  #$8,$F00(a5)            ; CRB: timer B one-shot, stopped; TOD writes set the clock
                 moveq   #0,d0
-                move.b  d0,$A00(a5)
+                move.b  d0,$A00(a5)             ; TOD = 0 (hi stops it, lo restarts it)
                 move.b  d0,$900(a5)
                 move.b  d0,$800(a5)
-                move.b  #$FF,$600(a5)
+                move.b  #$FF,$600(a5)           ; timer B latch = $FFFF
                 move.b  #$FF,$700(a5)
-                bsr.w   WaitTimer
-                move.b  #$19,$F00(a5)
-                bsr.w   WaitTimer
-                move.b  #$8,$F00(a5)
+                bsr.w   WaitTodTick             ; sync to a frame boundary
+                move.b  #$19,$F00(a5)           ; CRB: load and start timer B (one-shot)
+                bsr.w   WaitTodTick             ; one frame later
+                move.b  #$8,$F00(a5)            ; stop it
                 moveq   #0,d0
-                move.b  $700(a5),d0
+                move.b  $700(a5),d0             ; d0 = ticks left
                 lsl.w   #$8,d0
                 move.b  $600(a5),d0
-                move.w  #$C000,$9A(a6)
+                move.w  #$C000,$9A(a6)          ; INTENA: master on
 .00dca:
-                cmp.w   #$CCDD,d0
+                cmp.w   #$CCDD,d0               ; frame too short (not PAL): hang
                 bhi.b   .00dca
                 rts
-WaitTimer:
+WaitTodTick:
                 move.b  $800(a5),d0
 .00dd6:
                 cmp.b   $800(a5),d0
@@ -1253,10 +1262,20 @@ AdjustForScroll:
 ;==============================================================================
 ; Redraws the whole visible background every frame: 20 x 13 tiles.
 ; Map cell (one word, LV_Map, MapRowBytes bytes per row, rows via $48BFA):
-;   bits 0-11  tile number          bit 14  animated: bits 0-3 select a
-;   bit 15     solid (GetMapCell)            routine in LV_TileAnims
-;   bit 12     destructible: shots and the wave beam clear the cell to 0
-;   bit 13     set when a shot hits the cell (read by the tile routine)
+;   bits 0-11  tile number
+;   bit 15     solid: GetMapCell tests it.  The ship, the Force, the POW
+;              Armor, shots, lasers and the Bits collide with solid cells.
+;   bit 14     animated: bits 0-3 select a routine in LV_TileAnims (called
+;              by DrawMap).  A solid animated cell stops the reflect laser
+;              without a bounce, and the wave beam passes through it.
+;   bit 13     hit: set by shots, the wave beam, the lasers, the Force and
+;              the Bits when they touch the (solid) cell.  The tile routine
+;              reads it - level 1's animated blocks clear themselves and
+;              their neighbour when hit.
+;   bit 12     destructible: shots, the Force, the Bits, the shot streams
+;              and the anti-air laser clear the cell to 0 at once; the wave
+;              beam clears it and carries on.  Some level objects (level 4)
+;              clear destructible cells they touch too.
 ; Tile (LV_Tiles + n*128): 16x16 pixels, 4 interleaved planes = 64 words,
 ;   copied with one A->D blit (BLTSIZE $1001: 64 lines x 1 word,
 ;   D modulo $32 = 52-2 for the interleaved screen).
@@ -1345,7 +1364,7 @@ SpawnWaves:
                 bcs.b   .0107e
                 move.l  $E(a1),d1
                 bpl.b   .0106c
-                move.l  #DefWalker,d1
+                move.l  #DefPowArmor,d1
 .0106c:
                 movea.l d1,a2
                 movea.l $20(a2),a3
@@ -3847,8 +3866,14 @@ ReadFire2:
                 rts
 
 ;==============================================================================
-; Power-up carriers and walkers
+; Power-up carriers: the POW Armor
 ;==============================================================================
+; Object flags ($23): bit 0 hit flash, bit 1 carrier (releases a power-up
+; when hit, see ObjDamage), bit 2 immune to weapons, bit 3 power-up item
+; (collected by the ship, see HitByForceOrShip).
+; ReleasePowerUp: a0 = the carrier.  Creates a DefPowerUp object at its
+; position showing item $32(a0) (0-2 laser crystals, 3 speed, 4 missiles,
+; 5 Bit), immune to weapons; it scrolls off with the map (ObjUpd_ScrollOff).
 ReleasePowerUp:
                 move.l  a0,-(a7)
                 moveq   #0,d3
@@ -3874,23 +3899,41 @@ ObjUpd_ScrollOff:
                 jmp     (ObjKillSelf).l
 .02d8e:
                 rts
-SpawnWalker:
+; The POW Armor (DefPowArmor, 32x26, 1 hit point, 200 points) is the
+; default wave object (wave entries with a negative definition).  Wave
+; parameters: $07 = the power-up it carries, $09 = direction (signed x
+; step: negative walks left).  It is a carrier (flag bit 1).
+; States ($36):
+;   PowArmor_Jump  x += direction, y += the jump arc at $1C650 (58 signed
+;                  steps, index $34: spawned at $2B = falling, a jump
+;                  starts at $10).  Probes the map ahead of its leading
+;                  foot: solid ground just below -> lands and walks; a
+;                  tile in the way ->
+;   .02e74         sliding down: 2 pixels down and 1 left a frame until
+;                  its feet meet the map, then it lands.
+;   .02ea0         walking: 2 pixels a frame.  A tile ahead turns it round
+;                  with a jump; no solid ground ahead makes it jump off.
+; .02f20 snaps y to the tile row and selects the walk animation;
+; .02f0c gives the probe x (4 pixels left of it, or 29 right).
+; Frames: 0-5 walking (left 1,0,2,0 / right 3,5,4,5), 6/7 and 8/9 jumping
+; (take-off, then in the air).  It dies when it leaves the screen area.
+SpawnPowArmor:
                 move.w  $2(a1),d0
                 move.w  $4(a1),d1
                 moveq   #1,d2
                 jsr     (ObjCreate).l
                 bset.b  #$1,$23(a0)
                 move.b  $7(a1),$32(a0)
-                move.l  #WalkerJumpRight,$2A(a0)
+                move.l  #PowArmorJumpRight,$2A(a0)
                 move.b  $9(a1),$33(a0)
                 bpl.b   .02dc4
-                move.l  #WalkerJumpLeft,$2A(a0)
+                move.l  #PowArmorJumpLeft,$2A(a0)
 .02dc4:
                 move.b  #$2B,$34(a0)
-                move.l  #Walker_Walk,$36(a0)
+                move.l  #PowArmor_Jump,$36(a0)
                 move.b  #$2,$4(a0)
                 jmp     (ObjInsert).l
-ObjUpd_Walker:
+ObjUpd_PowArmor:
                 cmpi.w  #$10,$C(a0)
                 bcs.b   .02dfe
                 cmpi.w  #$E0,$C(a0)
@@ -3905,7 +3948,7 @@ ObjUpd_Walker:
                 movea.l $12(a0),a2
                 movea.l $36(a0),a1
                 jmp     (a1)
-Walker_Walk:
+PowArmor_Jump:
                 lea.l   ($1C650).l,a1           ; jump arc: 58 signed y steps
                 movem.w $A(a0),d0-d1
                 move.b  $33(a0),d2
@@ -3958,17 +4001,17 @@ Walker_Walk:
                 beq.b   .02eea
                 neg.b   $33(a0)
 .02eb8:
-                move.l  #Walker_Walk,$36(a0)
-                lea.l   (WalkerJumpRight).l,a1
+                move.l  #PowArmor_Jump,$36(a0)
+                lea.l   (PowArmorJumpRight).l,a1
                 tst.b   $33(a0)
                 bpl.b   .02ed2
-                lea.l   (WalkerJumpLeft).l,a1
+                lea.l   (PowArmorJumpLeft).l,a1
 .02ed2:
                 move.l  a1,$2A(a0)
                 move.b  #$10,$34(a0)
                 move.w  #$3,$1E(a0)
                 clr.b   $20(a0)
-                bra.w   Walker_Walk
+                bra.w   PowArmor_Jump
 .02eea:
                 move.l  (MapRowBytes).l,d0
                 adda.l  d0,a4
@@ -4003,10 +4046,10 @@ Walker_Walk:
                 clr.w   $1E(a0)
                 tst.b   $33(a0)
                 bpl.w   .02f54
-                lea.l   (WalkerAnimLeft).l,a1
+                lea.l   (PowArmorWalkLeft).l,a1
                 bra.b   .02f5a
 .02f54:
-                lea.l   (WalkerAnimRight).l,a1
+                lea.l   (PowArmorWalkRight).l,a1
 .02f5a:
                 move.l  a1,$2A(a0)
                 rts
@@ -6111,20 +6154,20 @@ ForceSpriteOffsets:
 ForceHitboxes:
                 dc.w    $0000,$0000,$0015,$000E,$0000,$0000,$0015,$0011
                 dc.w    $000C,$0000,$0014,$0011,$0005,$0001,$0017,$0014
-; object definition: cannon walker, 10 frames ($15A50) - default wave object
-DefWalker:
+; object definition: POW Armor (power-up carrier), 10 frames ($15A50) - default wave object
+DefPowArmor:
                 dc.w    $1A03,$002E,$0340,$0003,$0001,$0000,$0001,$5A50
                 dc.w    $0000,$01A0,$0000,$5224,$0000,$5238
-                dc.l    ObjUpd_Walker
-                dc.l    SpawnWalker
+                dc.l    ObjUpd_PowArmor
+                dc.l    SpawnPowArmor
                 dc.w    $0000,$0200
-WalkerAnimLeft:
+PowArmorWalkLeft:
                 dc.b    $01,$00,$02,$00,$FF
-WalkerAnimRight:
+PowArmorWalkRight:
                 dc.b    $03,$05,$04,$05,$FF
-WalkerJumpLeft:
+PowArmorJumpLeft:
                 dc.b    $07,$FF,$00,$06,$FF
-WalkerJumpRight:
+PowArmorJumpRight:
                 dc.b    $09,$FF,$00,$08,$FF,$00,$03,$00,$04,$00,$12,$00,$16,$00,$02,$00
                 dc.b    $07,$00,$15,$00,$12,$00,$02,$00,$07,$00,$15,$00,$11,$00,$03,$00
                 dc.b    $07,$00,$15,$00,$12,$00,$03,$00,$07,$00,$14,$00,$12,$00,$03,$00

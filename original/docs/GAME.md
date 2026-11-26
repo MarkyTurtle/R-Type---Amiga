@@ -23,7 +23,7 @@ The program and the level A files start with a GEMDOS executable header: `$601A`
 2. `LoadHighScores` (track 68), `FormatScores`, `LoadShared` (tracks 63–67 → `$4A300`).
 3. Sets stage 2's fade flag and waits until stage 2's VBL handler has faded the title out.
 4. `ClearScreens`, `InitHardware`; installs the interrupt handlers: level 2 = keyboard (`$DE4`), level 3 = VBL + copper (`$20FC`), level 4 = audio (`$3BD6`); copper list `CopperList` (`$52E8`).
-5. `TimerCheck` measures with a CIA timer and hangs if the result is out of range. It looks like a speed or tamper check.
+5. `PalCheck` is a PAL-only check. It times one video frame with CIA-A timer B, synchronised by the TOD counter, which counts vertical syncs. A PAL frame takes about 14,188 E-clock ticks and passes; an NTSC frame (about 11,932) falls under the 13,090-tick limit, and the game hangs. It runs at the start of every game, so an NTSC Amiga gets as far as the title screen and stops when a game starts.
 6. `TitleSequence`: the attract mode (title letters, "blast off and strike the evil bydo empire!", high-score table, credits) until fire is pressed.
 7. `NewGame` → `LoadLevel`.
 
