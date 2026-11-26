@@ -16,7 +16,7 @@ Documentation is in [`original/docs/`](original/docs/README.md):
 - [GRAPHICS.md](original/docs/GRAPHICS.md) – screen layout, tiles, map, BOBs, sprites
 - [MUSIC.md](original/docs/MUSIC.md) – TFMX title music and the in-game sequencer
 
-The same findings are added as comments in the source files.
+The same findings are added as comments in the source files. What's left is listed in [TODO.md](original/docs/TODO.md).
 
 ## Graphics
 

@@ -239,6 +239,48 @@ def render_engine_bobs(files, out, low6000):
     im.resize((im.width * 2, im.height * 2), Image.NEAREST).save(os.path.join(out, 'engine_bobs.png'))
     return info
 
+def render_engine_weapons(files, out, low6000):
+    """Shots, beams, lasers, bullets and missiles drawn by dedicated code
+    (sizes from the BlitBob calls in game.s), level 1's palette."""
+    low = open(os.path.join(files, 'game_low_000a4.bin'), 'rb').read()
+    mem = bytearray(low6000)
+    mem[0xA4:0xA4 + len(low)] = low                      # engine data ($4E1E)
+    pal = Level(files, 1).palette
+    def strip(gfx, lines, words, stride, mask, n):
+        return [bob_frame(bytes(mem[gfx + i * stride:gfx + i * stride + 2 * mask]), lines, words, mask)
+                for i in range(n)]
+    groups = [
+        ('ship shot', strip(0x4E1E, 4, 1, 0x40, 0x20, 1)),
+        ('diagonal/vertical shots', strip(0x8480, 11, 1, 0xB0, 0x58, 4)),
+        ('shot stream A (fwd, back)', strip(0x15650, 4, 2, 0x80, 0x40, 4)),
+        ('shot stream B (fwd, back)', strip(0x15850, 4, 2, 0x80, 0x40, 4)),
+        ('reflect laser', strip(0x12950, 30, 4, 0x780, 0x3C0, 6)),
+        ('lasers', strip(0x19B90, 16, 1, 0x100, 0x80, 2)),
+        ('laser frames', strip(0x1C2D0, 14, 1, 0xE0, 0x70, 4)),
+        ('enemy bullets', strip(0x19D90, 14, 1, 0xE0, 0x70, 6)),
+        ('homing missiles', strip(0x1A2D0, 16, 1, 0x100, 0x80, 32)),
+    ]
+    for k in range(4):                                   # wave cannon by charge
+        r = 0x4CA2 - 0xA4 + k * 0x1E                    # $1E-byte records
+        bs = struct.unpack('>H', low[r + 0x12:r + 0x14])[0]
+        g, fs = struct.unpack('>II', low[r + 0x16:r + 0x1E])
+        groups.append((f'wave cannon {k}', strip(g, (bs >> 6) // 4, (bs & 63) - 1, 2 * fs, fs, 2)))
+    W = max(sum(len(f[0]) + 2 for f in fr) for _, fr in groups) + 2
+    H = sum(max(len(f) for f in fr) + 3 for _, fr in groups)
+    im = Image.new('RGB', (W, H), (60, 0, 60))
+    y = 1
+    for _, fr in groups:
+        x = 1
+        for f in fr:
+            for yy, row in enumerate(f):
+                for xx, v in enumerate(row):
+                    if v is not None:
+                        im.putpixel((x + xx, y + yy), pal[v])
+            x += len(f[0]) + 2
+        y += max(len(f) for f in fr) + 3
+    im.resize((im.width * 2, im.height * 2), Image.NEAREST).save(os.path.join(out, 'engine_weapons.png'))
+    return [name for name, _ in groups]
+
 def main():
     files, out = sys.argv[1], sys.argv[2]
     os.makedirs(out, exist_ok=True)
@@ -251,6 +293,7 @@ def main():
     print(render_sprites(files, out))
     for line in render_engine_bobs(files, out, low6000):
         print('   ', line)
+    print(render_engine_weapons(files, out, low6000))
 
 if __name__ == '__main__':
     main()

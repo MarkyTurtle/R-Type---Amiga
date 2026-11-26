@@ -51,11 +51,11 @@ TRACK_BUFFER    equ     $7C400          ; raw MFM buffer
 ; --- The $6000 block (tracks 36-62): graphics and sound only ----------------
 ;   $06000-$064FF ship sprite frames      $06500-$069CF Bit sprite frames
 ;   $06A40-$0847F Force sprite frames (4 power levels, see UpdateForce)
-;   $08480-$0873F small frames (table at $4C52, not identified yet)
+;   $08480-$0873F 16x11 diagonal/vertical shots (ShotTypes 1-4)
 ;   $08740-$0B43F explosions (DefExplosion1/2)
 ;   $0B440-$10A4F large explosion         $10A50-$1248F ring burst
 ;   $12490-$1294F speed-up flash          $12950-$1564F reflect laser
-;   $15650-$15A4F wave cannon beam        $15A50-$17ACF cannon walker
+;   $15650-$15A4F 32x4 shot streams       $15A50-$17ACF cannon walker
 ;   $17AD0-$189CF power-up items          $189D0-$19B8F wave cannon shots
 ;   $19B90-$19D8F lasers                  $19D90-$1A2CF enemy bullets
 ;   $1A2D0-$1C2CF homing missiles (32 directions)
@@ -1258,6 +1258,8 @@ AdjustForScroll:
 ; Map cell (one word, LV_Map, MapRowBytes bytes per row, rows via $48BFA):
 ;   bits 0-11  tile number          bit 14  animated: bits 0-3 select a
 ;   bit 15     solid (GetMapCell)            routine in LV_TileAnims
+;   bit 12     destructible: shots and the wave beam clear the cell to 0
+;   bit 13     set when a shot hits the cell (read by the tile routine)
 ; Tile (LV_Tiles + n*128): 16x16 pixels, 4 interleaved planes = 64 words,
 ;   copied with one A->D blit (BLTSIZE $1001: 64 lines x 1 word,
 ;   D modulo $32 = 52-2 for the interleaved screen).
@@ -2188,7 +2190,7 @@ UpdateShots:
                 move.w  #$30,$66(a6)
                 moveq   #9,d7
                 lea.l   (D_04B88).l,a0
-                lea.l   (D_04C3A).l,a3
+                lea.l   (ShotTypes).l,a3
 .019c6:
                 move.w  (a0),d5
                 beq.b   .01a20
@@ -2306,14 +2308,18 @@ UpdateWaveBeam:
 .01b14:
                 move.w  #$2E,$60(a6)
                 move.w  #$2E,$66(a6)
-                lea.l   ($15650).l,a1           ; wave cannon beam graphics
+                lea.l   ($15650).l,a1           ; shot stream A graphics
                 lea.l   (D_04B8A).l,a0
-                bsr.b   UpdateForceShot
+                bsr.b   UpdateShotStream
                 lea.l   ($15850).l,a1
                 addq.w  #$2,a0
-                bsr.b   UpdateForceShot
+                bsr.b   UpdateShotStream
                 bra.w   UpdateReflectBeam
-UpdateForceShot:
+; 32x4 shot streams ($15650 and $15850, 2 frames of $80 each, plus a
+; mirrored pair $100 on for firing backwards).  Like all player shots, a
+; hit on a map cell sets bit 13 of the cell (bit 5 of its high byte); a
+; cell with bit 12 set is destroyed (cleared to 0).
+UpdateShotStream:
                 move.w  (a0),d6
                 beq.b   .01ba4
                 move.w  $1C(a0),d3
@@ -5770,23 +5776,33 @@ D_04BC6:
                 dc.w    $0000,$0000,$0000,$0000,$0004,$0004,$0004,$0004
                 dc.w    $0000,$0000,$0000,$0000,$000B,$000B,$0000,$0000
                 dc.w    $0000,$0000
-D_04C3A:
+; Ship shot types (UpdateShots, type = shot $38): 16 bytes each
+;   +0.w dx  +2.w dy  +4.l BLTSIZE  +8.l graphics  +$C.l mask
+;   0: normal shot, 16x4, graphics in this file at $4E1E
+;   1-4: 16x11 shots up-right, down-right, up, down ($08480-$0873F)
+ShotTypes:
                 dc.w    $0010,$0000
-                dc.l    L_00402
+                dc.l    $00000402               ; BLTSIZE: 4 lines x 4 planes, 2 words
                 dc.w    $0000,$4E1E,$0000,$4E3E,$000C,$FFF4
-                dc.l    L_00B02
+                dc.l    $00000B02               ; BLTSIZE: 11 lines x 4 planes, 2 words
                 dc.w    $0000,$8480,$0000,$84D8,$000C,$000C
-                dc.l    L_00B02
+                dc.l    $00000B02               ; BLTSIZE: 11 lines x 4 planes, 2 words
                 dc.w    $0000,$8530,$0000,$8588,$0000,$FFF4
-                dc.l    L_00B02
+                dc.l    $00000B02               ; BLTSIZE: 11 lines x 4 planes, 2 words
                 dc.w    $0000,$85E0,$0000,$8638,$0000,$000C
-                dc.l    L_00B02
+                dc.l    $00000B02               ; BLTSIZE: 11 lines x 4 planes, 2 words
                 dc.w    $0000,$8690,$0000,$86E8
 ; reflect laser frames: 6 x $780 from $12950 (UpdateReflectBeam)
 ReflectLaserFrames:
                 dc.w    $0001,$2950,$0001,$30D0,$0001,$3850,$0001,$3FD0
                 dc.w    $0001,$4750,$0001,$4ED0
 ; wave cannon shot sizes by charge ($189D0-$19B8F) (FireWaveCannon)
+; Wave cannon, 4 records of $1E bytes, highest charge first:
+;   +0 charge needed  +2 dx  +4 dy  +6..+$D hit box  +$E map test offset
+;   +$10 modulo  +$12 BLTSIZE  +$14 type  +$16.l graphics  +$1A.l frame size
+;   charge 24: 64x16 ($19390)  18: 48x14 ($18E50)  12: 32x12 ($18B50)
+;   6: 16x12 ($189D0).  Two frames alternate (graphics, graphics + 2*size),
+;   mask at + size.
 WaveCannonShots:
                 dc.w    $0018,$000B,$0001,$0007,$0002,$0036,$000C,$0008
                 dc.w    $002A,$1005,$000B,$0001,$9390,$0000,$0200,$0012

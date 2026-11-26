@@ -34,6 +34,8 @@ From line `$ED` the copper switches to **3 bitplanes** (BPLCON0 `$3200`), non-in
 |---|---|
 | 0–11 | tile number |
 | 14 | animated tile: bits 0–3 select a routine in `LV_TileAnims` (called while drawing) |
+| 12 | destructible: player shots and the wave beam clear the cell to 0 |
+| 13 | set when a player shot hits the cell (for the tile's routine) |
 | 15 | solid: the ship and the walkers collide with it (`GetMapCell` tests bit 7 of the high byte) |
 
 Map sizes (tiles): level 1 268 × 13, 2 180 × 13, 3 68 × 26 (the giant battleship: the map is the ship itself), 4 172 × 13, 5 210 × 13, 6 164 × 13, 7 154 × 13, 8 187 × 13. Rendered in full in `gfx/levelN_map.png`.
@@ -85,24 +87,24 @@ No code at all: shared graphics and the sound-effect samples. The pieces are con
 | `$06000`–`$064FF` | ship, 5 tilt frames | sprites, `ShipTilt` |
 | `$06500`–`$069CF` | Bits, 11 frames | sprites, `InitBits` |
 | `$06A40`–`$0847F` | the Force, 4 power levels | sprites, `UpdateForce` |
-| `$08480`–`$0873F` | small frames (pointer table at `$4C52`) | not identified yet |
+| `$08480`–`$0873F` | 16×11 shots: up-right, down-right, up, down (4 × `$B0`) | `ShotTypes` 1–4, `UpdateShots` |
 | `$08740`–`$0B43F` | two explosions, 6 frames each | BOB, `DefExplosion1/2` |
 | `$0B440`–`$10A4F` | large explosion, 48×51, 9 frames | BOB, `DefExplosionLarge` |
 | `$10A50`–`$1248F` | ring burst, 7 frames | BOB, `DefRingBurst` |
 | `$12490`–`$1294F` | speed-up flash, 2 frames | BOB, `DefSpeedFlash` |
-| `$12950`–`$1564F` | reflect laser, 6 × `$780` | `ReflectLaserFrames`, `UpdateReflectBeam` |
-| `$15650`–`$15A4F` | wave cannon beam | `UpdateWaveBeam` |
+| `$12950`–`$1564F` | reflect laser (the double helix), 64×30, 6 × `$780` | `ReflectLaserFrames`, `UpdateReflectBeam` |
+| `$15650`–`$15A4F` | two 32×4 shot streams (2 frames + mirrored pair each) | `UpdateShotStream` |
 | `$15A50`–`$17ACF` | cannon walker, 10 frames | BOB, `DefWalker` (default wave object) |
 | `$17AD0`–`$189CF` | power-up items: blue/red/yellow crystal, S, M, bit | BOB, `DefPowerUp` |
-| `$189D0`–`$19B8F` | wave cannon shots by charge level | `WaveCannonShots`, `FireWaveCannon` |
-| `$19B90`–`$19D8F` | lasers | `UpdateLasers` |
-| `$19D90`–`$1A2CF` | enemy bullets | `FireEnemyBullet` |
-| `$1A2D0`–`$1C2CF` | homing missiles, 32 directions × `$100` | `MissileFrames`, `UpdateMissiles` |
-| `$1C2D0`–`$1C64F` | laser frames, 4 × `$E0` | `LaserFrames`, `UpdateLasers` |
+| `$189D0`–`$19B8F` | wave cannon by charge: 16×12, 32×12, 48×14, 64×16, 2 frames each | `WaveCannonShots`, `FireWaveCannon` |
+| `$19B90`–`$19D8F` | lasers, 16×16, 2 frames | `UpdateLasers` |
+| `$19D90`–`$1A2CF` | enemy bullet + hit burst, 16×14, 6 frames | `FireEnemyBullet`, `UpdateEnemyBullets` |
+| `$1A2D0`–`$1C2CF` | homing missiles, 16×16, 32 directions × `$100` | `MissileFrames`, `UpdateMissiles` |
+| `$1C2D0`–`$1C64F` | laser frames, 16×14, 4 × `$E0` | `LaserFrames`, `UpdateLasers` |
 | `$1C68A`–`$2C7AF` | 14 sound-effect samples | `SoundTable` (see `MUSIC.md`) |
 | `$2C7B0`–`$2CEB7` | HUD bitplanes, 3 × `$258` | see HUD above |
 
-The BOB entries are rendered in `gfx/engine_bobs.png` (with level 1's palette; each level supplies its own colours). The beam, laser, bullet and missile frames are drawn by dedicated code rather than through object definitions, so their exact sizes aren't documented yet.
+The BOB entries are rendered in `gfx/engine_bobs.png`, and the shots, beams, lasers, bullets and missiles (drawn by dedicated code, sizes from its `BlitBob` calls) in `gfx/engine_weapons.png`. Both use level 1's palette; each level supplies its own colours. The ship's normal shot (16×4) is the one graphic kept in the program itself, at `$4E1E`.
 
 ## Level B files
 
@@ -132,6 +134,7 @@ Level 1's tiles end exactly where its map starts, and level 4's where its stored
 | `levelN_bobs.png` | one row per object definition found in the level, all its frames (mask applied) |
 | `sprites_ship.png`, `sprites_bits.png`, `sprites_force0-3.png` | the hardware sprites, 3× size |
 | `engine_bobs.png` | the engine's own BOBs: explosions, ring burst, speed-up flash, walker, power-ups (2× size) |
+| `engine_weapons.png` | ship shots, shot streams, reflect laser, lasers, enemy bullets, homing missiles, wave cannon sizes (2× size) |
 
 The BOB sheets come from searching level A's DATA for object definitions by their signature (mask offset = half the frame size, modulo = 52 − 2 × width, valid pointers). Frame counts are capped at the next known graphics block. Level definitions can also point at engine graphics in the `$6000` block, for example level 7's `$4BE14` uses the large explosion.
 

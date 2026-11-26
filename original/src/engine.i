@@ -112,7 +112,7 @@ FireWaveCannon      equ     $01940
 UpdateShots         equ     $019AC
 BlitBob             equ     $01A28
 UpdateWaveBeam      equ     $01A6C
-UpdateForceShot     equ     $01B3C
+UpdateShotStream     equ     $01B3C
 UpdateReflectBeam   equ     $01BA6
 UpdateLasers        equ     $01C40
 ClipLaser           equ     $01DBC
