@@ -197,6 +197,23 @@ The code was found by tracing from `LevelInit` and `LevelFrame` and from every p
 
 Engine calls in the level sources use the names in `src/engine.i` (for example `jsr (jt_ObjCreate).w`, `move.w (ShipPos).w,d0`).
 
+## The stages
+
+Enemies are named after the arcade's, matched by points, graphics and behaviour (labels `Def_<name>`, `Upd_<name>`, `Spawn_<name>`; pictures in [OBJECTS.md](OBJECTS.md)). Levels 4 and 7 reuse level 1's enemies with the same code, copied into each level file. Every boss is mostly map cells, which the level code rewrites (`PatchMap`) to animate it, plus one or more invisible target objects that take the hits.
+
+| Stage | Enemies | Boss |
+|---|---|---|
+| 1 | Pata-Pata, Bug, P-Staff, Scant, Bink, Cancer, Shell (12 turrets round a control unit), Tabrok; Blasters (gun batteries built into the map, the tile animations) | Dobkeratops: tail of 16 segments, core takes 30 hits; if it takes too long the scroll restarts and the boss advances |
+| 2 | Gouger, Wick, the Worm (two heads, 7 eyes at 200 each), two Broods that release Zoids | Gomander: the eye opens and closes in the map, faster each time; core takes 30 hits (9000 points) |
+| 3 | The battleship itself: gun towers, cannon pods, the main engine (three-way shots, breaks away), the laser tower, shooting hull parts, the rear tower | The Main Core in the engine room (10 hits); a timer ends the level when the ship has gone by |
+| 4 | Level 1's Pata-Pata, Bug, P-Staff, Bink, Cancer; Cytron (builds cell walls), Geld (eats them) | The Compiler: three sections on their own paths, each with a core (30 hits, 5000 points) and a gun |
+| 5 | Cancer, Slither (breaks apart when the head dies), Pursuer, Cheetah and the Mid-phase Cheetah | Bellmite with 8 shells in formation (30 hits, 2000 points); the background loops |
+| 6 | Dop containers on rails (hurt only from the core side), Bink, the Capsule | None: a queue of Dops at the end |
+| 7 | Level 1's enemies, the Mid-phase Cheetah, Bold (70 hits, from behind), the Sonar, a crawler, collapsing buildings | Bronco (50 hits) with 5 garbage chutes that drop junk and enemies |
+| 8 | Mikun, Win (immortal, homes in faster each time the core opens) | The Bydo (60 hits, 15000 points), then the ending: the R-9 escort and the ending text |
+
+Every stage also has the POW Armor, the engine's default wave object, which carries the power-ups.
+
 ## Shared title file (`src/shared.s`)
 
 `$4A300–$4A615` is a small position-independent sample sequencer (`JinglePlayer`) that drives all four audio channels; `$4A616` on is its state and data: the jingle sequence, `NoteTable` (`$4A78E`), `SampleTable` (`$4B430`), `PeriodTable` (`$4B480`) and the 8-bit samples (`$4B4D6` on). The engine calls it from the VBL (`UpdateJingle`) for the title and high-score screens. The in-game music players are separate: each one sits in its level's part B and is reached through `LV_Music`.

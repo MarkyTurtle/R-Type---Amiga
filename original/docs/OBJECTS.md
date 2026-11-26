@@ -50,69 +50,69 @@ Objects identified so far are listed under their R-Type name (the label in the s
 
 | Label | Frames | Size | HP | Fires | Score | Update | Spawn | Address |
 |---|---|---|---|---|---|---|---|---|
-| `Def_4B6F2` | ![](../gfx/objects/level4_4B6F2.png) | 32×19 ×8 | 1 | 65 | 200 | `Upd_4AA4A` | `Spawn_4AA24` | `$4B6F2` |
-| `Def_4B772` | ![](../gfx/objects/level4_4B772.png) | 32×21 ×8 | 1 | 48 | 200 | `Upd_4AAC2` | `Spawn_4AA8A` | `$4B772` |
-| `Def_4B7E4` | ![](../gfx/objects/level4_4B7E4.png) | 32×26 ×6 | 6 | – | 500 | `Upd_4AB3C` | `Spawn_4AB12` | `$4B7E4` |
-| `Def_4B8A0` | ![](../gfx/objects/level4_4B8A0.png) | 16×13 ×16 | – | – | – | `Upd_4AD22` | – | `$4B8A0` |
-| `Def_4B95C` | ![](../gfx/objects/level4_4B95C.png) | 32×26 ×4 | 1 | 30 | 200 | `Upd_4AE04` | `Spawn_4ADC2` | `$4B95C` |
-| `Def_4BA4A` | ![](../gfx/objects/level4_4BA4A.png) | 32×26 ×6 | 1 | 40 | 300 | `Upd_4AF74` | `Spawn_4AF44` | `$4BA4A` |
-| `Def_4BACE` | ![](../gfx/objects/level4_4BACE.png) | 96×81 ×1 | – | – | – | `Upd_4B194` | – | `$4BACE` |
-| `Def_4BAF6` | ![](../gfx/objects/level4_4BAF6.png) | 112×58 ×1 | – | – | – | `Upd_4B194` | – | `$4BAF6` |
-| `Def_4BB1E` | ![](../gfx/objects/level4_4BB1E.png) | 96×68 ×1 | – | – | – | `Upd_4B194` | – | `$4BB1E` |
-| `Def_4BBAC` | ![](../gfx/objects/level4_4BBAC.png) | 32×25 ×5 | – | – | – | `Upd_4B332` | – | `$4BBAC` |
-| `Def_4BC5E` | ![](../gfx/objects/level4_4BC5E.png) | 32×3 ×4 | – | – | – | `Upd_4B3BE` | – | `$4BC5E` |
-| `Def_4BD08` | ![](../gfx/objects/level4_4BD08.png) | 32×25 ×16 | 3 | – | 400 | `Upd_4B418` | `Spawn_4B3D0` | `$4BD08` |
-| `Def_4BDC2` | ![](../gfx/objects/level4_4BDC2.png) | 32×32 ×3 | 1 | – | 200 | `Upd_4B506` | `Spawn_4B4A6` | `$4BDC2` |
+| `Def_PataPata` | ![](../gfx/objects/level4_4B6F2.png) | 32×19 ×8 | 1 | 65 | 200 | `Upd_PataPata` | `Spawn_PataPata` | `$4B6F2` |
+| `Def_Bug` | ![](../gfx/objects/level4_4B772.png) | 32×21 ×8 | 1 | 48 | 200 | `Upd_Bug` | `Spawn_Bug` | `$4B772` |
+| `Def_PStaff` | ![](../gfx/objects/level4_4B7E4.png) | 32×26 ×6 | 6 | – | 500 | `Upd_PStaff` | `Spawn_PStaff` | `$4B7E4` |
+| `Def_PStaffMissile` | ![](../gfx/objects/level4_4B8A0.png) | 16×13 ×16 | – | – | – | `Upd_PStaffMissile` | – | `$4B8A0` |
+| `Def_Bink` | ![](../gfx/objects/level4_4B95C.png) | 32×26 ×4 | 1 | 30 | 200 | `Upd_Bink` | `Spawn_Bink` | `$4B95C` |
+| `Def_Cancer` | ![](../gfx/objects/level4_4BA4A.png) | 32×26 ×6 | 1 | 40 | 300 | `Upd_Cancer` | `Spawn_Cancer` | `$4BA4A` |
+| `Def_CompilerA` | ![](../gfx/objects/level4_4BACE.png) | 96×81 ×1 | – | – | – | `Upd_CompilerSection` | – | `$4BACE` |
+| `Def_CompilerB` | ![](../gfx/objects/level4_4BAF6.png) | 112×58 ×1 | – | – | – | `Upd_CompilerSection` | – | `$4BAF6` |
+| `Def_CompilerC` | ![](../gfx/objects/level4_4BB1E.png) | 96×68 ×1 | – | – | – | `Upd_CompilerSection` | – | `$4BB1E` |
+| `Def_CompilerGun` | ![](../gfx/objects/level4_4BBAC.png) | 32×25 ×5 | – | – | – | `Upd_CompilerGun` | – | `$4BBAC` |
+| `Def_CompilerLaser` | ![](../gfx/objects/level4_4BC5E.png) | 32×3 ×4 | – | – | – | `Upd_CompilerLaser` | – | `$4BC5E` |
+| `Def_Cytron` | ![](../gfx/objects/level4_4BD08.png) | 32×25 ×16 | 3 | – | 400 | `Upd_Cytron` | `Spawn_Cytron` | `$4BD08` |
+| `Def_Geld` | ![](../gfx/objects/level4_4BDC2.png) | 32×32 ×3 | 1 | – | 200 | `Upd_Geld` | `Spawn_Geld` | `$4BDC2` |
 
 ## Level 5
 
 | Label | Frames | Size | HP | Fires | Score | Update | Spawn | Address |
 |---|---|---|---|---|---|---|---|---|
-| `Def_4B02C` | ![](../gfx/objects/level5_4B02C.png) | 32×26 ×6 | 1 | 34 | 300 | `Upd_4A838` | `Spawn_4A808` | `$4B02C` |
-| `Def_4B0D0` | ![](../gfx/objects/level5_4B0D0.png) | 32×29 ×16 | – | – | 500 | `Upd_4A9F0` | `Spawn_4A928` | `$4B0D0` |
-| `Def_4B18A` | ![](../gfx/objects/level5_4B18A.png) | 32×29 ×16 | – | – | 300 | `Upd_4A9F0` | `Spawn_4A928` | `$4B18A` |
-| `Def_4B232` | ![](../gfx/objects/level5_4B232.png) | 32×23 ×16 | – | – | 300 | `Upd_4A9F0` | `Spawn_4A928` | `$4B232` |
-| `Def_4B2DA` | ![](../gfx/objects/level5_4B2DA.png) | 32×28 ×16 | – | 10 | 200 | `Upd_4ABA0` | `Spawn_4AB76` | `$4B2DA` |
-| `Def_4B3D4` | ![](../gfx/objects/level5_4B3D4.png) | 32×3 ×4 | – | – | – | `Upd_4ACEE` | – | `$4B3D4` |
-| `Def_4B422` | ![](../gfx/objects/level5_4B422.png) | 48×41 ×4 | – | – | 800 | `Upd_4AC86` | `Spawn_4AC10` | `$4B422` |
-| `Def_4B452` | ![](../gfx/objects/level5_4B452.png) | 32×20 ×8 | – | – | 400 | `Upd_4AC8E` | `Spawn_4AC36` | `$4B452` |
-| `Def_4B5F8` | ![](../gfx/objects/level5_4B5F8.png) | 48×48 ×1 | – | – | 1000 | `Upd_4AD94` | `Spawn_4AD00` | `$4B5F8` |
-| `Def_4B628` | ![](../gfx/objects/level5_4B628.png) | 32×28 ×2 | – | – | 500 | `Upd_4AF14` | `Spawn_4AD00` | `$4B628` |
+| `Def_Cancer` | ![](../gfx/objects/level5_4B02C.png) | 32×26 ×6 | 1 | 34 | 300 | `Upd_Cancer` | `Spawn_Cancer` | `$4B02C` |
+| `Def_SlitherHead` | ![](../gfx/objects/level5_4B0D0.png) | 32×29 ×16 | – | – | 500 | `Upd_Slither` | `Spawn_Slither` | `$4B0D0` |
+| `Def_SlitherBody` | ![](../gfx/objects/level5_4B18A.png) | 32×29 ×16 | – | – | 300 | `Upd_Slither` | `Spawn_Slither` | `$4B18A` |
+| `Def_SlitherTail` | ![](../gfx/objects/level5_4B232.png) | 32×23 ×16 | – | – | 300 | `Upd_Slither` | `Spawn_Slither` | `$4B232` |
+| `Def_Pursuer` | ![](../gfx/objects/level5_4B2DA.png) | 32×28 ×16 | – | 10 | 200 | `Upd_Pursuer` | `Spawn_Pursuer` | `$4B2DA` |
+| `Def_CheetahBeam` | ![](../gfx/objects/level5_4B3D4.png) | 32×3 ×4 | – | – | – | `Upd_CheetahBeam` | – | `$4B3D4` |
+| `Def_Cheetah` | ![](../gfx/objects/level5_4B422.png) | 48×41 ×4 | – | – | 800 | `Upd_Cheetah` | `Spawn_Cheetah` | `$4B422` |
+| `Def_MidCheetah` | ![](../gfx/objects/level5_4B452.png) | 32×20 ×8 | – | – | 400 | `Upd_MidCheetah` | `Spawn_MidCheetah` | `$4B452` |
+| `Def_Bellmite` | ![](../gfx/objects/level5_4B5F8.png) | 48×48 ×1 | – | – | 1000 | `Upd_Bellmite` | `Spawn_Bellmite` | `$4B5F8` |
+| `Def_BellmiteShell` | ![](../gfx/objects/level5_4B628.png) | 32×28 ×2 | – | – | 500 | `Upd_BellmiteShell` | `Spawn_Bellmite` | `$4B628` |
 
 ## Level 6
 
 | Label | Frames | Size | HP | Fires | Score | Update | Spawn | Address |
 |---|---|---|---|---|---|---|---|---|
-| `Def_4ADBC` | ![](../gfx/objects/level6_4ADBC.png) | 48×32 ×3 | – | – | 1000 | `Upd_4A9EE` | `Spawn_4A9B0` | `$4ADBC` |
-| `Def_4AE1E` | ![](../gfx/objects/level6_4AE1E.png) | 32×26 ×4 | 1 | 9 | 200 | `Upd_4AB08` | `Spawn_4AAC6` | `$4AE1E` |
-| `Def_4AEFE` | ![](../gfx/objects/level6_4AEFE.png) | 32×26 ×5 | – | – | 300 | `Upd_4AC8E` | `Spawn_4AC70` | `$4AEFE` |
+| `Def_Dop` | ![](../gfx/objects/level6_4ADBC.png) | 48×32 ×3 | – | – | 1000 | `Upd_Dop` | `Spawn_Dop` | `$4ADBC` |
+| `Def_Bink` | ![](../gfx/objects/level6_4AE1E.png) | 32×26 ×4 | 1 | 9 | 200 | `Upd_Bink` | `Spawn_Bink` | `$4AE1E` |
+| `Def_Capsule` | ![](../gfx/objects/level6_4AEFE.png) | 32×26 ×5 | – | – | 300 | `Upd_Capsule` | `Spawn_Capsule` | `$4AEFE` |
 
 ## Level 7
 
 | Label | Frames | Size | HP | Fires | Score | Update | Spawn | Address |
 |---|---|---|---|---|---|---|---|---|
-| `Def_4B884` | ![](../gfx/objects/level7_4B884.png) | 32×19 ×8 | 1 | 45 | 200 | `Upd_4A94E` | `Spawn_4A928` | `$4B884` |
-| `Def_4B8F6` | ![](../gfx/objects/level7_4B8F6.png) | 32×21 ×8 | 1 | 95 | 200 | `Upd_4A9D0` | `Spawn_4A98E` | `$4B8F6` |
-| `Def_4B968` | ![](../gfx/objects/level7_4B968.png) | 32×26 ×6 | 6 | – | 500 | `Upd_4AA52` | `Spawn_4AA28` | `$4B968` |
-| `Def_4BA24` | ![](../gfx/objects/level7_4BA24.png) | 16×13 ×16 | – | – | – | `Upd_4AC38` | – | `$4BA24` |
-| `Def_4BAE0` | ![](../gfx/objects/level7_4BAE0.png) | 48×47 ×3 | 30 | – | 500 | `Upd_4AD08` | `Spawn_4ACD8` | `$4BAE0` |
-| `Def_4BB24` | ![](../gfx/objects/level7_4BB24.png) | 48×16 ×2 | – | – | – | – | – | `$4BB24` |
-| `Def_4BB60` | ![](../gfx/objects/level7_4BB60.png) | 32×26 ×4 | 1 | 30 | 200 | `Upd_4AF1E` | `Spawn_4AEDC` | `$4BB60` |
-| `Def_4BC10` | ![](../gfx/objects/level7_4BC10.png) | 32×26 ×6 | 1 | 40 | 300 | `Upd_4B08E` | `Spawn_4B05E` | `$4BC10` |
-| `Def_4BC70` | ![](../gfx/objects/level7_4BC70.png) | 48×48 ×4 | – | – | – | `Upd_4B2FE` | – | `$4BC70` |
-| `Def_4BCF6` | ![](../gfx/objects/level7_4BCF6.png) | 32×31 ×4 | – | – | 100 | `Upd_4B2C4` | – | `$4BCF6` |
-| `Def_4BE14` | ![](../gfx/objects/level7_4BE14.png) | 48×51 ×9 | indestructible | – | – | `Upd_4B42C` | `Spawn_4B3EC` | `$4BE14` |
-| `Def_4BFA8` | ![](../gfx/objects/level7_4BFA8.png) | 32×21 ×1 | – | – | 300 | `Upd_4B4FC` | `Spawn_4B4E2` | `$4BFA8` |
-| `Def_4BFDA` | ![](../gfx/objects/level7_4BFDA.png) | 96×32 ×1 | – | – | 1500 | `Upd_4B55C` | `Spawn_4B534` | `$4BFDA` |
-| `Def_4C00A` | ![](../gfx/objects/level7_4C00A.png) | 32×3 ×4 | – | – | – | `Upd_4B68C` | – | `$4C00A` |
-| `Def_4C058` | ![](../gfx/objects/level7_4C058.png) | 32×20 ×8 | – | – | 400 | `Upd_4B640` | `Spawn_4B60C` | `$4C058` |
-| `Def_4C0EA` | ![](../gfx/objects/level7_4C0EA.png) | 32×47 ×9 | – | – | 100 | `Upd_4B774` | – | `$4C0EA` |
+| `Def_PataPata` | ![](../gfx/objects/level7_4B884.png) | 32×19 ×8 | 1 | 45 | 200 | `Upd_PataPata` | `Spawn_PataPata` | `$4B884` |
+| `Def_Bug` | ![](../gfx/objects/level7_4B8F6.png) | 32×21 ×8 | 1 | 95 | 200 | `Upd_Bug` | `Spawn_Bug` | `$4B8F6` |
+| `Def_PStaff` | ![](../gfx/objects/level7_4B968.png) | 32×26 ×6 | 6 | – | 500 | `Upd_PStaff` | `Spawn_PStaff` | `$4B968` |
+| `Def_PStaffMissile` | ![](../gfx/objects/level7_4BA24.png) | 16×13 ×16 | – | – | – | `Upd_PStaffMissile` | – | `$4BA24` |
+| `Def_Scant` | ![](../gfx/objects/level7_4BAE0.png) | 48×47 ×3 | 30 | – | 500 | `Upd_Scant` | `Spawn_Scant` | `$4BAE0` |
+| `Def_ScantBeam` | ![](../gfx/objects/level7_4BB24.png) | 48×16 ×2 | – | – | – | – | – | `$4BB24` |
+| `Def_Bink` | ![](../gfx/objects/level7_4BB60.png) | 32×26 ×4 | 1 | 30 | 200 | `Upd_Bink` | `Spawn_Bink` | `$4BB60` |
+| `Def_Cancer` | ![](../gfx/objects/level7_4BC10.png) | 32×26 ×6 | 1 | 40 | 300 | `Upd_Cancer` | `Spawn_Cancer` | `$4BC10` |
+| `Def_Bronco` | ![](../gfx/objects/level7_4BC70.png) | 48×48 ×4 | – | – | – | `Upd_Bronco` | – | `$4BC70` |
+| `Def_Junk` | ![](../gfx/objects/level7_4BCF6.png) | 32×31 ×4 | – | – | 100 | `Upd_Falling` | – | `$4BCF6` |
+| `Def_Collapse` | ![](../gfx/objects/level7_4BE14.png) | 48×51 ×9 | indestructible | – | – | `Upd_Collapse` | `Spawn_Collapse` | `$4BE14` |
+| `Def_Crawler` | ![](../gfx/objects/level7_4BFA8.png) | 32×21 ×1 | – | – | 300 | `Upd_Crawler` | `Spawn_Crawler` | `$4BFA8` |
+| `Def_Bold` | ![](../gfx/objects/level7_4BFDA.png) | 96×32 ×1 | – | – | 1500 | `Upd_Bold` | `Spawn_Bold` | `$4BFDA` |
+| `Def_CheetahBeam` | ![](../gfx/objects/level7_4C00A.png) | 32×3 ×4 | – | – | – | `Upd_CheetahBeam` | – | `$4C00A` |
+| `Def_MidCheetah` | ![](../gfx/objects/level7_4C058.png) | 32×20 ×8 | – | – | 400 | `Upd_MidCheetah` | `Spawn_MidCheetah` | `$4C058` |
+| `Def_Sonar` | ![](../gfx/objects/level7_4C0EA.png) | 32×47 ×9 | – | – | 100 | `Upd_Sonar` | – | `$4C0EA` |
 
 ## Level 8
 
 | Label | Frames | Size | HP | Fires | Score | Update | Spawn | Address |
 |---|---|---|---|---|---|---|---|---|
-| `Def_4AA4C` | ![](../gfx/objects/level8_4AA4C.png) | 32×14 ×4 | – | – | – | `Upd_4A8A8` | – | `$4AA4C` |
-| `Def_4AA78` | ![](../gfx/objects/level8_4AA78.png) | 32×23 ×10 | – | – | 200 | `Upd_4A61A` | – | `$4AA78` |
-| `Def_4AC04` | ![](../gfx/objects/level8_4AC04.png) | 32×30 ×6 | – | – | – | – | – | `$4AC04` |
-| `Def_4B020` | ![](../gfx/objects/level8_4B020.png) | 32×24 ×3 | – | – | – | `Upd_4A906` | `Spawn_4A8BE` | `$4B020` |
+| `Def_R9Escort` | ![](../gfx/objects/level8_4AA4C.png) | 32×14 ×4 | – | – | – | `Upd_R9Escort` | – | `$4AA4C` |
+| `Def_Mikun` | ![](../gfx/objects/level8_4AA78.png) | 32×23 ×10 | – | – | 200 | `Upd_Mikun` | – | `$4AA78` |
+| `Def_MikunBurst` | ![](../gfx/objects/level8_4AC04.png) | 32×30 ×6 | – | – | – | – | – | `$4AC04` |
+| `Def_Win` | ![](../gfx/objects/level8_4B020.png) | 32×24 ×3 | – | – | – | `Upd_Win` | `Spawn_Win` | `$4B020` |
