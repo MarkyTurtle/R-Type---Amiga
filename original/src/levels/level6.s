@@ -19,6 +19,13 @@
 LevelHeader:
                 dc.w    $601A,$0000,$0A2A,$0000,$0266,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0004,$A300,$0001
+; Level interface table, read by the engine (equates LV_* in game.s):
+;   $4A300 magic $03011969  | $4A304 checkpoint list | $4A308 palette (15)
+;   $4A30C map (level B)    | $4A310 tiles (level B) | $4A314 scroll script
+;   $4A318 tile animations  | $4A31C map patches     | $4A320 every frame
+;   $4A324 level start      | $4A328 music player    | ($4A32C level 8:
+;   ending music; other levels: the scroll script usually starts here)
+; Formats: docs/DATA_FORMATS.md
 LevelInterface:
                 dc.w    $0301,$1969
                 dc.l    WaveList

@@ -171,7 +171,7 @@ L_00140:
                 bsr.w   InitHardware
                 move.l  #Level2Int,($68).w
                 move.l  #SCREEN_A,(DrawBuffer).l
-                move.l  #$6A40,(D_05160).l
+                move.l  #$6A40,(D_05160).l      ; Force sprite frames ($6000 block)
                 move.l  #Force_Idle,(ForceState).l
                 clr.l   (Score).l
                 clr.b   (ForceActive).l
@@ -416,6 +416,10 @@ ResetShipWeapons:
                 clr.w   (ForcePos).l
                 move.l  #Force_Idle,(ForceState).l
                 rts
+; LV_Waves is the CHECKPOINT list: 6-byte entries (scroll x.w, wave list.l),
+; highest first, ending with the scroll-x 0 entry (level start).  On a
+; restart the first entry at or below Checkpoint gives the new ScrollX and
+; the wave list position.
 InitLevelScroll:
                 movea.l (LV_Waves).l,a0
 .0059c:
@@ -447,6 +451,8 @@ InitLevelScroll:
                 clr.w   (D_04918).l
                 move.b  #$1,(MusicRequest).l
                 rts
+; Map patches (LV_MapPatches): (x.w, y.w, tile.w) ... until x < 0.
+; Written into the map at level start (level 1 only).
 ApplyMapPatches:
                 move.l  (LV_MapPatches).l,d0
                 beq.b   .00656
@@ -574,6 +580,8 @@ StageEndSequence:
 ; Map access
 ;==============================================================================
 ; GetMapCell: d0,d1 = screen x,y -> a4 = map cell, Z clear if solid (bit 7)
+; x,y are screen coordinates: the map origin is at x=$30, y=$20 (the
+; off-screen margins), each cell 16x16 pixels.
 GetMapCell:
                 lea.l   ($48BFA).l,a4
                 add.w   (ScrollY).l,d1
@@ -949,6 +957,7 @@ InitObjects:
                 adda.l  #$E,a0
                 dbra    d0,.00c2e
                 rts
+; $48BFA: 26 pointers to the start of each map row (LV_Map + n*MapRowBytes)
 BuildMapRows:
                 movea.l (LV_Map).l,a0
                 lea.l   ($48BFA).l,a1
@@ -962,6 +971,9 @@ BuildMapRows:
 ;==============================================================================
 ; Hardware set-up
 ;==============================================================================
+; Row tables: $48BBA = 16 x line offset (FineScrollY), $48C62 = 272 x line
+; offset ($D0 per line) used by every BOB blit (a5).
+; Sprite colours (COLOR16-31) come from SpriteColours.
 InitHardware:
                 lea.l   (CUSTOM).l,a6
                 move.l  #$2C91FCC1,$8E(a6)
@@ -1149,6 +1161,15 @@ ObjUpd_FlyInShip:
 ;==============================================================================
 ; Scrolling
 ;==============================================================================
+; Scroll script (LV_ScrollScript): 6-byte entries
+;   x speed.w, y speed.w, duration.w (frames)
+; An entry is followed until its duration runs out; if the NEXT entry has a
+; negative duration the current one repeats for ever (end marker).
+; Speeds index the table at $48E9: table[n] = pixels per step and
+; table[15+|n|] = extra frames to wait between steps (n < 0 = other way):
+;   n = 0 stopped, 1..10: 1 pixel every 12-n frames, 11: 1 pixel a frame,
+;   12/13/14: 2/3/4 pixels a frame.
+; Only level 3 scrolls vertically.
 UpdateScroll:
                 tst.b   (ScrollActive).l
                 beq.w   .00f04
@@ -1215,6 +1236,15 @@ AdjustForScroll:
 ;==============================================================================
 ; Background: blit the visible 20x13 tiles
 ;==============================================================================
+; Redraws the whole visible background every frame: 20 x 13 tiles.
+; Map cell (one word, LV_Map, MapWidth cells per row, rows via $48BFA):
+;   bits 0-11  tile number          bit 14  animated: bits 0-3 select a
+;   bit 15     solid (GetMapCell)            routine in LV_TileAnims
+; Tile (LV_Tiles + n*128): 16x16 pixels, 4 interleaved planes = 64 words,
+;   copied with one A->D blit (BLTSIZE $1001: 64 lines x 1 word,
+;   D modulo $32 = 52-2 for the interleaved screen).
+; Coarse scroll = which map column is drawn first (ScrollX/16), fine scroll
+; = BPLCON1 (ScrollX & 15); vertically the same with FineScrollY lines.
 DrawMap:
                 move.w  #$32,$66(a6)
                 clr.w   $64(a6)
@@ -1281,6 +1311,11 @@ DrawMap:
 ;==============================================================================
 ; Enemy waves
 ;==============================================================================
+; Wave list (from the checkpoint entry): $12-byte entries
+;   $00.w scroll x to trigger at (level 3: a frame counter instead)
+;   $02.w x, $04.w y, $06.. $0D parameters for the spawn routine
+;   $0E.l object definition (negative = default $051FC)
+; The definition's spawn routine ($20) is called with a1 = entry, a2 = def.
 SpawnWaves:
                 movea.l (WavePtr).l,a1
                 move.w  (ScrollX).l,d0
@@ -1386,6 +1421,20 @@ ObjExplode:
                 subq.b  #$1,$21(a0)
                 bpl.b   ObjAnimDraw
                 jmp     (ObjKillSelf).l
+; BOB drawing (cookie cut).  The object definition (a1 = $12(a0)) gives:
+;   $00.w BLTSIZE   (height = lines x 4 planes, width in words incl. the
+;                    extra word for shifting)
+;   $02.w C/D modulo for the interleaved screen (52 - width*2)
+;   $04.w bytes per frame          $07.b frames per animation step
+;   $08.w hit points ($0A.w fire rate)
+;   $0C.l graphics (frame 0)       $10.l mask offset (mask follows graphics)
+;   $14.l animation sequence: frame numbers, negative = loop to start
+;   $18.l hit boxes: 4 words per frame, copied to object $16-$1C
+;   $1C.l update routine           $20.l spawn routine (waves)
+; Graphics are interleaved like the screen (each line: plane 0-3).  The mask
+; is one plane repeated for each plane line.  Minterm $CA: D = A.B + /A.C
+; (A = mask, B = graphics, C = background).  While the hit-flash bit is set
+; the mask is also used as B, drawing the whole shape in colour 15.
 ObjAnimDraw:
                 movea.l $12(a0),a1
                 subq.b  #$1,$20(a0)
@@ -1539,7 +1588,7 @@ FireEnemyBullet:
                 tst.w   (a1)
                 bne.b   .01348
                 clr.w   $8(a1)
-                move.l  #$19D90,$A(a1)
+                move.l  #$19D90,$A(a1)          ; enemy bullet graphics
                 movem.w d0-d1,(a1)
                 movem.w (ShipPos).l,d2-d3
                 bsr.w   DirectionTo
@@ -2239,7 +2288,7 @@ UpdateWaveBeam:
 .01b14:
                 move.w  #$2E,$60(a6)
                 move.w  #$2E,$66(a6)
-                lea.l   ($15650).l,a1
+                lea.l   ($15650).l,a1           ; wave cannon beam graphics
                 lea.l   (D_04B8A).l,a0
                 bsr.b   UpdateForceShot
                 lea.l   ($15850).l,a1
@@ -2738,7 +2787,7 @@ ChargeBeam:
                 moveq   #-1,d1
                 move.l  d5,d2
 DrawBeamMeter:
-                lea.l   ($2C7E8).l,a0
+                lea.l   ($2C7E8).l,a0           ; HUD: beam meter position
                 move.l  d0,(a0)
                 move.l  d0,$28(a0)
                 move.l  d0,$50(a0)
@@ -2879,7 +2928,7 @@ ShipTilt:
                 ext.w   d1
                 move.w  d1,(D_050FE).l
                 lsl.w   #$8,d0
-                add.l   #$6000,d0
+                add.l   #$6000,d0               ; ship sprite frames
                 move.l  d0,(D_05100).l
 L_022AA:
                 rts
@@ -3080,6 +3129,13 @@ L_02490:
 ;==============================================================================
 ; Copper interrupt: hardware sprites for ship, bits and Force
 ;==============================================================================
+; Copper interrupt at line $EC (end of the playfield).  Hardware sprites:
+; channels 4-7 as attached pairs (16 colours, COLOR16-31), reused down the
+; screen by chaining several sprites in one channel:
+;   $490A2 upper Bit   $490D6 ship, left half   $49112 lower Bit  (SPR4/5)
+;   $491F2 ship, right half                                       (SPR6/7)
+; The attached partner of each sprite is $A8 bytes further on.  SPR0-3 are
+; not used.  The Force's frames start at $6A40 (in the $6000 block).
 CopperInt:
                 lea.l   (CUSTOM).l,a6
                 move.w  #$10,$9C(a6)
@@ -3130,6 +3186,8 @@ CopperInt:
                 rte
 
 ; SetSprite: d0,d1 = x,y  d2 = height  a0 = sprite
+; Builds SPRxPOS/SPRxCTL from x,y,height; the second control word (d3 bytes
+; on) gets the ATTACH bit (bit 7).
 SetSprite:
                 movem.w d0-d1,-(a7)
                 clr.w   d5
@@ -3190,6 +3248,14 @@ SwapScreens:
                 clr.b   (FrameReady).l
 .026d0:
                 rts
+; Display layout (see docs/GRAPHICS.md)
+;   Playfield: 4 bitplanes, INTERLEAVED.  Each screen line is 4 x 52 bytes
+;   ($D0): plane 0..3 one after the other, 52 bytes = 416 pixels so that the
+;   320-pixel view can scroll over a 16-pixel tile margin.  BPLxMOD = $A8
+;   (= 3*52 + 52-40).  A buffer is 272 lines ($DD00 bytes); the view starts
+;   32 lines and 6 bytes in ($1A06), plus FineScrollY lines.
+;   SCREEN_A $2D1BA / SCREEN_B $3AEBA: the copper shows one while the game
+;   draws into the other (DrawBuffer).  Fine horizontal scroll is BPLCON1.
 SetBitplanes:
                 move.w  (ScrollBplcon1).l,(D_0539E).l
                 lea.l   ($48BBA).l,a0
@@ -3446,7 +3512,7 @@ Force_Idle:
                 tst.b   (ForceActive).l
                 beq.b   L_029DE
                 clr.b   (ForceLevel).l
-                move.l  #$6A40,(D_05160).l
+                move.l  #$6A40,(D_05160).l      ; Force sprite frames ($6000 block)
                 move.b  #$1,(D_05146).l
                 clr.b   (D_05144).l
                 clr.b   (D_05145).l
@@ -3745,7 +3811,7 @@ ObjUpd_Walker:
                 movea.l $36(a0),a1
                 jmp     (a1)
 Walker_Walk:
-                lea.l   ($1C650).l,a1
+                lea.l   ($1C650).l,a1           ; walker graphics
                 movem.w $A(a0),d0-d1
                 move.b  $33(a0),d2
                 ext.w   d2
@@ -5081,6 +5147,10 @@ StepDelay:
                 rts
 
 ; Decrunch: a0 = crunched, a1 = dest -> d0 = 0 if the checksum is good
+; Crunched file: +0.l length L, stream longs read backwards, L-8 checksum,
+; L-4 decrunched length.  Codes: 00+3 bits n+1 literals | 01+8 off: copy 2
+; | 100+9 off: copy 3 | 101+10 off: copy 4 | 110+8 n,12 off: copy n+1
+; | 111+8 n: n+9 literals.  (tools/decrunch.py is an exact port.)
 Decrunch:
                 adda.l  (a0),a0
                 movea.l -(a0),a2
@@ -5904,6 +5974,13 @@ D_05288:
                 dc.w    $0000,$0000,$0013,$0010,$0000,$0000,$0013,$0010
                 dc.w    $0000,$0000,$0013,$0010,$0000,$0000,$0013,$0014
                 dc.w    $0000,$0000,$0013,$0011,$0002,$0004,$000E,$000B
+; Copper list.  COLOR00, bitplanes off, BPL1-4 pointers (SetBitplanes),
+; SPR4-7 pointers, SPR0-3 (unused), modulos $A8,
+; COLOR01-15 (playfield palette), BPLCON1 (fine scroll), BPLCON2 = $24
+; (sprites in front), BPLCON0 = $4200 (4 planes).
+; Line $EC: copper interrupt.  Line $ED: HUD - 3 planes ($3200), non
+; interleaved 40-byte lines at $2C7B0/$2CA08/$2CC60 ($258 each, 15 lines),
+; its own colours, then COLOR01 changes on lines $EE-$F3 (gradient).
 CopperList:
                 dc.w    $0180,$0000,$0100,$0000,$00E0
 D_052F2:

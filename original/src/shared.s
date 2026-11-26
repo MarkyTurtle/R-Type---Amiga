@@ -316,6 +316,10 @@ D_4A622:
                 dc.w    $0000
 D_4A624:
                 dc.w    $0000,$0000,$0000,$0000
+; Song: rows of (pattern.b, transpose.b) for each channel (4 channels = 8
+; bytes a row, 2 channels = 4), ending with $FF.  Every pattern is 24 rows,
+; so all channels step through their patterns together (the end test reads
+; pattern 0's terminator).
 JingleSequence:
                 dc.w    $0100,$071D,$0B0D,$0725,$0200,$081D,$0C0D,$0825
                 dc.w    $0300,$071E,$0B0F,$0727,$0400,$081E,$0C0F,$0827
@@ -340,6 +344,16 @@ JingleSequence:
                 dc.w    $0E2A,$0E25,$1F12,$1F19,$0E29,$0E25,$1F11,$1F14
                 dc.w    $0E27,$0E20,$1F0F,$1F20,$1D00,$1E00,$2000,$1120
                 dc.w    $FFFF
+; Patterns: $62 (98) bytes each = 24 rows of 4 bytes, ending $FF $FF.
+;   +0 sample number (SampleTable)   +2 volume (0-64, minus the fade level)
+;   +1 note (PeriodTable index, plus the song's transpose); bit 7 set =
+;      slide: period = last period +/- (note & $7F), +3 bit 7 = direction
+;   +3 flags: bit 0 set = keep playing (the new sample start/length is only
+;      queued, so an attack sample can run into a loop sample: e.g. 8 then
+;      9); bit 0 clear = DMA off on the in-between call, then on again:
+;      the note is retriggered.
+; One row is played every second call (25 per second from the VBL).
+; Pattern 0 is silence.
 NoteTable:
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
@@ -544,12 +558,14 @@ NoteTable:
                 dc.w    $020C,$4001,$020C,$4001,$020C,$4001,$020C,$4001
                 dc.w    $020C,$4001,$020C,$4001,$020C,$4001,$020C,$2C00
                 dc.w    $FFFF
+; Samples: 8 bytes each - offset.l from Samples, 0.w, length.w (words).
 SampleTable:
                 dc.w    $0000,$0000,$0000,$0001,$0000,$0044,$0000,$0780
                 dc.w    $0000,$0F44,$0000,$0040,$0000,$0FC4,$0000,$0100
                 dc.w    $0000,$0004,$0000,$0020,$0000,$12EC,$0000,$0010
                 dc.w    $0000,$11EC,$0000,$0080,$0000,$130C,$0000,$0010
                 dc.w    $0000,$132C,$0000,$04B0,$0000,$1C8C,$0000,$0310
+; 43 Amiga periods, 1440 .. 127 (index 9 = 856 = ProTracker C-1).
 PeriodTable:
                 dc.w    $05A0,$054C,$0500,$04B8,$0474,$0434,$03F8,$03C0
                 dc.w    $038A,$0358,$0328,$02FA,$02D0,$02A6,$0280,$025C

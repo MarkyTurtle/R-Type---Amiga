@@ -28,6 +28,9 @@ files/                 every file extracted from the disk; manifest.json lists
                        names, tracks, load addresses and SHA-1s
 docs/DISK_FORMAT.md    track formats, boot sequence, level table, memory map
 docs/GAME.md           how the game is organised: interfaces, frame, objects
+docs/DATA_FORMATS.md   level interface, checkpoints, waves, scroll script, objects
+docs/GRAPHICS.md       playfield, HUD, tiles, map, BOBs, sprites, $6000 block
+docs/MUSIC.md          TFMX title music, in-game sequencer format, effects
 tools/
   ipf2mfm.py           IPF -> raw MFM bitstreams per track
   mfmlib.py            MFM helpers + AmigaDOS sector decoder

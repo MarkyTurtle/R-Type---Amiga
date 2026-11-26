@@ -94,6 +94,13 @@ def main():
     def longs(a, n):  return b''.join(D.long_track(t) for t in range(a, a + n))
 
     emit('music_52300.bin', shorts(10, 22), tracks='10-31', load='$52300', note='music + replay (copied to fast RAM if present, $1F73C used)')
+    music = shorts(10, 22)
+    # The title tune is Chris Huelsbeck's TFMX: an AmigaDOS executable player
+    # (hunk header .. HUNK_END), then the smpl and mdat files it was written to
+    # load from df1:.  Stage 2 passes the mdat/smpl addresses to the init entry.
+    emit('tfmx_player_52300.exe', music[:0x1468], load='$52300', note='TFMX replay: AmigaDOS hunk executable (code hunk $1444 bytes)')
+    emit('smpl.rtypetitle', music[0x1468:0x1DA28], load='$53768', note='TFMX samples (title tune)')
+    emit('mdat.rtypetitle', music[0x1DA28:0x1F73C], load='$6FD28', note='TFMX song data, "TFMX-SONG" header (title tune)')
     emit('game_low_000a4.bin', shorts(32, 4), tracks='32-35', load='$000A4', note='game low code: entry $C0, disk/decrunch routines')
     emit('game_main_06000.bin', shorts(36, 27), tracks='36-62', load='$06000', note='game main code/data')
     emit('shared_4a300.bin', longs(63, 5), tracks='63-67', load='$4A300', note='loaded by $3A0E at start-up')

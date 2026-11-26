@@ -11,7 +11,7 @@ Findings from the first pass over `src/game.s`. Addresses are absolute.
 | `shared_4a300.bin` (tracks 63–67) | `$4A300` | Title / high-score data plus the jingle player called at `$4A300`. Overwritten when a level loads |
 | `levelN_a_4a2e4.bin` | `$4A2E4` | ST header + level table at `$4A300` + level-specific code and data |
 | `levelN_b_4d300.bin` | `$4D300` | Decrunched: tile graphics (from `$4D300`), map, level graphics and the level's music player |
-| `music_52300.bin` | `$52300` | Title music (Chris Huelsbeck) and replay |
+| `music_52300.bin` | `$52300` | Title music: TFMX replay + `smpl` + `mdat` (also extracted separately: `tfmx_player_52300.exe`, `smpl.rtypetitle`, `mdat.rtypetitle`; see `MUSIC.md`) |
 
 ### Atari ST heritage
 
@@ -111,7 +111,7 @@ Engine calls in the level sources use the names in `src/engine.i` (for example `
 ## Still to do
 
 - Comment `src/game.s` routine by routine; name the remaining `L_`/`D_` labels.
-- Name and comment the level routines (enemy behaviours, bosses) and the object definitions.
-- The level B files: map, tile graphics, music player and tunes.
-- Map the `$6000` graphics block (sprite and BOB sheets, font, HUD).
-- Work out the formats of the wave list, the scroll script and the map.
+- Name and comment the level routines (enemy behaviours, bosses) and their object definitions.
+- Map the rest of the `$6000` graphics block and the level B files (where the map, tiles, BOB sheets and music data start and end).
+- Sound effect table and samples; the level 8 ending music.
+- Disassemble the in-game music players in level B and the TFMX replay.

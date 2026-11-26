@@ -38,6 +38,27 @@
   "note": "music + replay (copied to fast RAM if present, $1F73C used)"
  },
  {
+  "name": "tfmx_player_52300.exe",
+  "size": 5224,
+  "sha1": "ac490a64d02c817be1d4e8b9fb5053a88c0fc456",
+  "load": "$52300",
+  "note": "TFMX replay: AmigaDOS hunk executable (code hunk $1444 bytes)"
+ },
+ {
+  "name": "smpl.rtypetitle",
+  "size": 116160,
+  "sha1": "1879867b2c5b248d5a9328abaa6f0221356ddb47",
+  "load": "$53768",
+  "note": "TFMX samples (title tune)"
+ },
+ {
+  "name": "mdat.rtypetitle",
+  "size": 7444,
+  "sha1": "3b361214ad197746ed34d403db9684f6a53e031c",
+  "load": "$6FD28",
+  "note": "TFMX song data, \"TFMX-SONG\" header (title tune)"
+ },
+ {
   "name": "game_low_000a4.bin",
   "size": 23872,
   "sha1": "ee0bbfa0ceb3aba888b49a63fa2708e5c7f7160b",

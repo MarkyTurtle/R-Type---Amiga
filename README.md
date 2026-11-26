@@ -8,7 +8,15 @@ Reverse-engineering and annotated disassembly of the Amiga **R-Type** (Electric 
 |---|---|
 | [`original/`](original/) | Byte-identical, annotated disassembly of the original disk, the extraction tools and documentation |
 
-Start with [`original/docs/DISK_FORMAT.md`](original/docs/DISK_FORMAT.md) for the disk and boot process, then [`original/docs/GAME.md`](original/docs/GAME.md) for how the game itself is organised.
+Documentation is in [`original/docs/`](original/docs/README.md):
+
+- [DISK_FORMAT.md](original/docs/DISK_FORMAT.md) – disk, track formats, boot process, loaders
+- [GAME.md](original/docs/GAME.md) – how the program is organised
+- [DATA_FORMATS.md](original/docs/DATA_FORMATS.md) – levels, checkpoints, waves, scrolling, objects
+- [GRAPHICS.md](original/docs/GRAPHICS.md) – screen layout, tiles, map, BOBs, sprites
+- [MUSIC.md](original/docs/MUSIC.md) – TFMX title music and the in-game sequencer
+
+The same findings are added as comments in the source files.
 
 ## Progress
 
@@ -19,7 +27,8 @@ Start with [`original/docs/DISK_FORMAT.md`](original/docs/DISK_FORMAT.md) for th
 - [ ] Game program: line-by-line comments
 - [x] Level code – [`original/src/levels/`](original/src/levels/) (8 levels) and the shared title file [`original/src/shared.s`](original/src/shared.s): first pass, byte-identical
 - [ ] Level code: name enemy routines and object definitions
-- [ ] Data formats: the $6000 graphics block, level B (tiles, map), waves, scroll script
+- [x] Documented: disk, code structure, data, graphics and music formats (first pass)
+- [ ] Data formats still open: rest of the $6000 graphics block, level B layout, sound effects
 
 ## Game data
 

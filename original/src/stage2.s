@@ -93,8 +93,12 @@ MUSIC_SIZE      equ     MUSIC_END-MUSIC ; $1F73C
 MUSIC_PLAY      equ     MUSIC+$24       ; call once per frame
 MUSIC_START     equ     MUSIC+$2C       ; d0 = song number
 MUSIC_INIT      equ     MUSIC+$34       ; d0/d1 = data pointers
-MUSIC_INIT_D0   equ     $6FD28
-MUSIC_INIT_D1   equ     $53768
+MUSIC_INIT_D0   equ     $6FD28          ; TFMX mdat ("TFMX-SONG" header)
+MUSIC_INIT_D1   equ     $53768          ; TFMX smpl
+; The music file is Chris Huelsbeck's TFMX: an AmigaDOS executable replay
+; ($52300, hunk header still in place - code at $52320, jump table entries
+; +4 play, +$C start song, +$14 init), then smpl ($53768) and mdat
+; ($6FD28).  See docs/MUSIC.md.
 
 GAME_LOW        equ     $000A4          ; tracks 32-35
 GAME_MAIN       equ     $06000          ; tracks 36-62

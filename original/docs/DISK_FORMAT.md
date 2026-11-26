@@ -8,7 +8,7 @@ Source image: the SPS/CAPS IPF you supplied (164 track records, cylinders 0–81
 | Tracks (cyl×2+side) | Format | Read by | Contents |
 |---|---|---|---|
 | 0–9 (cyl 0–4) | AmigaDOS 11×512, sync `$4489` | Kickstart + trackdisk | Bootblock (blocks 0–1) and the boot read (blocks 2–93); blocks 94–109 are empty. **No filesystem.** |
-| 10–62 | "short" custom, sync `$9521`, `$1750` bytes | stage 2 `LoadTracks` ($79A50) | music, game code |
+| 10–62 | "short" custom, sync `$9521`, `$1750` bytes | stage 2 `LoadTracks` ($79A50) | TFMX title music (10–31), game code (32–35), graphics block (36–62) |
 | 63–158 (not 68) | "long" custom, sync `$9521`, `$1998` bytes | game `LoadTracks` ($3CC8) | shared data + per-level data |
 | 68 (cyl 34, side 0) | sync `$4489`, short block | game $3FA2 / $4022 | high-score save track |
 | 159, 160–163 | unformatted | – | – |
