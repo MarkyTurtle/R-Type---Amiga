@@ -73,6 +73,17 @@ The VBL (`Level3Int`) plays music, sound effects and jingles, reads the joystick
 
 Controls: joystick in port 2. Fire taps for shots; holding fire charges the wave cannon (`ChargeBeam` / `DrawBeamMeter`). Button 2 or **Space** (`ReadFire2`) launches and recalls the Force. **P** pauses (keyboard interrupt).
 
+## Frame pacing: 25 Hz game, 50 Hz ship
+
+The main loop never waits for the vertical blank itself. It builds a frame into `DrawBuffer`, sets `FrameReady`, and spins until the copper interrupt has shown that frame; then it starts the next one.
+
+- **`SwapScreens`** (called from the copper interrupt at line `$EC`) flips the buffers when a frame is ready and `FlipCountdown` has run out.
+- **During play `Flip50Hz` is clear.** The countdown is reloaded with 1, so a flip can only happen every second VBL: the game logic and the BOBs run at a locked **25 Hz**.
+- **The ship and the Bits move at 50 Hz.** They're hardware sprites, moved from the VBL (`ShipControl`, `UpdateBits`) up to `ShipUpdatesLeft` times per game frame (2 at 25 Hz) and positioned by the copper interrupt every frame. The player's own ship therefore moves at 50 Hz while everything else updates at 25 Hz.
+- **The title and high-score screens set `Flip50Hz`** and run at 50 Hz.
+- **Pause:** P toggles `Paused` from the keyboard interrupt. The main loop then stops after a complete frame, and unpausing resets the flip countdown.
+- **Title music check:** the title tune is only started if `$52300` still begins with the TFMX file's hunk header (`$3F3`), i.e. if the music hasn't been overwritten by level data.
+
 ## Object system
 
 See the comment block in `src/game.s` ("Object system") for the 62-byte object layout and the object-definition layout. There are 40 objects, a free list plus an active list sorted by priority, and each object has its own update routine pointer at `+6`. The level code creates its enemies through `ObjCreate` with a definition pointer.

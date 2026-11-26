@@ -46,6 +46,7 @@ tools/
   add_labels.py        insert labels at addresses in a source (keeps it identical)
   music_tables.py      locate each music player's tables, write its samples to music/
   object_gallery.py    build docs/OBJECTS.md and gfx/objects/
+  xref.py              which routines read/write each label (for naming)
   dis68k.py            quick capstone listing of any region
   bootstrap_source.py  one-off first-pass source generator (not part of the build)
   trace68k.py          recursive-descent code/data separation

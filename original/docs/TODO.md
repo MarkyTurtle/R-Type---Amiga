@@ -4,11 +4,11 @@ State on 26 Nov 2026. All 12 sources reassemble byte-identical (`tools/verify.py
 
 ## 1. The game program (`src/game.s`)
 
-- [ ] **Line-by-line comments.** Routines are named and grouped and the formats are commented, but most instructions aren't explained yet. Suggested order: main loop and frame (`MainLoop`, `GameFrame`, `Level3Int`, `CopperInt`), then the object system, collisions, weapons, the Force, the title sequence.
-- [ ] **Name the remaining labels**: 174 `L_`/`D_` labels left (`tools/add_labels.py` inserts labels by address safely).
-- [ ] **Variables in `DATA`**: many `D_0xxxx` variables between `$41B4` and `$5C66` are still unnamed (ship state `$50EE–$5160`, Force state, shot arrays at `$4B5x–$4BAx`, the title variables at `$56xx`).
+- [ ] **Line-by-line comments.** Done for the core (`MainLoop`, the game states, `GameFrame`, `Level3Int`, `SwapScreens`, `SetBitplanes`, `UpdateScroll`, `UpdateObjects`, `ObjExplode`). Next: `CopperInt` and `ShipControl`, then collisions, weapons, the Force and the title sequence.
+- [ ] **Name the remaining labels**: 125 `L_`/`D_` labels left. `tools/xref.py src/game.s` lists who reads and writes each one; `tools/add_labels.py` inserts labels by address safely.
+- [ ] **Variables in `DATA`**: 48 named this round (frame pacing, scroll, ship, Bits, Force animation, wave beam). Still unnamed: the missile arrays (`$556C`–`$55AA`), Force state bytes (`$5143`–`$514B`), title variables (`$56F2`–`$56FE`), death/level counters (`$4209`–`$420D`).
 - [ ] **Remaining first-pass artefacts**: check other `dc.l L_xxxxx` / immediates the generator turned into labels when they're really numbers (two blit sizes in `ShotTypes` were found and fixed).
-- [ ] **Frame pacing**: what selects 25 Hz vs 50 Hz screen flipping (`D_05136`, `D_0513C` in `SwapScreens`).
+- [x] **Frame pacing**: the game is locked to 25 Hz (`Flip50Hz` clear); the ship and Bits move at 50 Hz from the VBL. See `GAME.md`.
 - [ ] **`TimerCheck`**: work out what the CIA timer measurement guards against (speed check or anti-tamper) and why it hangs above `$CCDD`.
 - [ ] **Title / attract sequence**: comment the title-letter objects, the text lists (`TitleTextList`) and the high-score name entry.
 - [ ] **Bits and Force behaviour in detail**: the Force state machine is named; the movement, collision and weapon selection (`FireForce`, Force levels 0–3) need comments.
@@ -57,5 +57,5 @@ State on 26 Nov 2026. All 12 sources reassemble byte-identical (`tools/verify.py
 ## 6. Tooling
 
 - [ ] **Makefile / build script** that assembles every source and rebuilds `files/` from them.
-- [ ] **Listing-based cross-reference** (which routines read and write each variable) to speed up naming.
+- [x] **Cross-reference**: `tools/xref.py` (which routines read/write each label).
 - [ ] Retire `work`-style one-off generators once all sources are hand-maintained (`bootstrap_source.py`, `gen_source.py`, `trace68k.py` are kept only for reference).
