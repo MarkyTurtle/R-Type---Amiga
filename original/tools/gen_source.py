@@ -10,9 +10,9 @@ from trace68k import Tracer
 
 BRANCH = re.compile(r'^(b(ra|sr|hi|ls|cc|cs|ne|eq|vc|vs|pl|mi|ge|lt|gt|le)|db\w+)(\.[bsw])?$')
 
-def generate(mem, lo, hi, entries, org, names=None, extra_labels=()):
+def generate(mem, lo, hi, entries, org, names=None, extra_labels=(), force_ptrs=(), code_hi=None):
     names = names or {}
-    T = Tracer(mem, lo, hi)
+    T = Tracer(mem, lo, code_hi or hi)
     T.trace(entries)
     code = T.ins
     labels = set(entries) | set(extra_labels)
@@ -44,6 +44,10 @@ def generate(mem, lo, hi, entries, org, names=None, extra_labels=()):
             if v in code:
                 ptrs.add(a); labels.add(v)
         a += 2
+    for a in force_ptrs:
+        ptrs.add(a)
+        v = struct.unpack('>I', mem[a:a + 4])[0]
+        if inrange(v): labels.add(v)
     labels = {l for l in labels if inrange(l) and (l in code or l not in T.owner)}
 
     def name(v):
@@ -84,7 +88,7 @@ def generate(mem, lo, hi, entries, org, names=None, extra_labels=()):
             a += i.size
         elif a in ptrs:
             v = struct.unpack('>I', mem[a:a + 4])[0]
-            out.append(f'                dc.l    {name(v)}')
+            out.append(f'                dc.l    {name(v) if v in labels else "$%X" % v}')
             a += 4
         else:
             n = a + 1

@@ -85,9 +85,33 @@ A state machine in `ForceState` (`$5164`): Idle → Enter (flies on-screen) → 
 
 Enter **`sumita.`** as your high-score name. `CheatMode` (`$56FF`) is then set: no score, no lives lost, high scores not saved, and the title's "freeplay" line reads "trainer". The game hides both the name (`$E6EADAD2 >> 1` = "sumi", `$74612E20` = "ta. ") and the string pointer (stored halved). See `St_HighScore`.
 
+## Level code (`src/levels/levelN.s`)
+
+Each level A file is an ST program: a 28-byte header, then TEXT starting at `$4A300` and DATA straight after it. TEXT opens with the level interface table, then the level's data tables (wave list, palette, scroll script), then its code. DATA holds the object definitions, animation sequences and tables that the code and the engine's object system use. Whatever follows DATA in the file is unused padding to the track boundary.
+
+| Level | TEXT tables | Code | DATA |
+|---|---|---|---|
+| 1 | `$4A300–$4A74D` | `$4A74E–$4B8E3` | `$4B8E4–$4C2DD` |
+| 2 | `$4A300–$4A537` | `$4A538–$4AF13` | `$4AF14–$4B68F` |
+| 3 | `$4A300–$4A6FF` | `$4A700–$4B3DB` | `$4B3DC–$4C393` |
+| 4 | `$4A300–$4AA23` | `$4AA24–$4B6A1` | `$4B6A2–$4BE8F` |
+| 5 | `$4A300–$4A807` | `$4A808–$4B00F` | `$4B010–$4B665` |
+| 6 | `$4A300–$4A939` | `$4A93A–$4AD29` | `$4AD2A–$4AF8F` |
+| 7 | `$4A300–$4A927` | `$4A928–$4B799` | `$4B79A–$4C191` |
+| 8 | `$4A300–$4A3CD` | `$4A3CE–$4A971` | `$4A972–$4B067` (table at `$4A972`) |
+
+The code was found by tracing from `LevelInit` and `LevelFrame` and from every pointer in DATA (enemy update and spawn routines are only reached that way). Levels 1, 4, 5 and 6 also contain a few routines that nothing calls: dead code left in the build. They are kept as code in the sources.
+
+Engine calls in the level sources use the names in `src/engine.i` (for example `jsr (jt_ObjCreate).w`, `move.w (ShipPos).w,d0`).
+
+## Shared title file (`src/shared.s`)
+
+`$4A300–$4A615` is a small position-independent sample sequencer (`JinglePlayer`) that drives all four audio channels; `$4A616` on is its state and data: the jingle sequence, `NoteTable` (`$4A78E`), `SampleTable` (`$4B430`), `PeriodTable` (`$4B480`) and the 8-bit samples (`$4B4D6` on). The engine calls it from the VBL (`UpdateJingle`) for the title and high-score screens. The in-game music players are separate: each one sits in its level's part B and is reached through `LV_Music`.
+
 ## Still to do
 
-- Comment the routines line by line; name the remaining `L_`/`D_` labels.
-- Disassemble the level A code (8 files) and the shared file's jingle player.
-- Map the `$6000` data block (sprite and BOB sheets) and the level B contents.
-- Work out the formats of the wave list, scroll script, map and tiles.
+- Comment `src/game.s` routine by routine; name the remaining `L_`/`D_` labels.
+- Name and comment the level routines (enemy behaviours, bosses) and the object definitions.
+- The level B files: map, tile graphics, music player and tunes.
+- Map the `$6000` graphics block (sprite and BOB sheets, font, HUD).
+- Work out the formats of the wave list, the scroll script and the map.

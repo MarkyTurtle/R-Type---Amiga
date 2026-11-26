@@ -17,7 +17,8 @@ Start with [`original/docs/DISK_FORMAT.md`](original/docs/DISK_FORMAT.md) for th
 - [x] Stage-2 loader / credits – [`original/src/stage2.s`](original/src/stage2.s)
 - [x] Game program – [`original/src/game.s`](original/src/game.s): first pass, byte-identical, code and data separated, main systems named
 - [ ] Game program: line-by-line comments
-- [ ] Level code (level A files, 8 levels) and the shared title file
+- [x] Level code – [`original/src/levels/`](original/src/levels/) (8 levels) and the shared title file [`original/src/shared.s`](original/src/shared.s): first pass, byte-identical
+- [ ] Level code: name enemy routines and object definitions
 - [ ] Data formats: the $6000 graphics block, level B (tiles, map), waves, scroll script
 
 ## Game data

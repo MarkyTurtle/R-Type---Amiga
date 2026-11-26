@@ -1,0 +1,1092 @@
+;==============================================================================
+; R-Type (Amiga) - level 2 code and data (level part A)
+; Tracks 84.., loaded to $4A2E4 (Atari ST program header first)
+;
+; Assembles byte-identical to files/level2_a_4a2e4.bin with:
+;   vasmm68k_mot -Fbin -m68000 -no-opt -I src -o level2_a.bin src/levels/level2.s
+;
+; TEXT $4A300-$4AF13: level table, wave list, palette, scroll script, code
+; DATA $4AF14-$4B68F: object definitions, animations, tables
+; $4B690 on: unused track padding (only $4A2E4-$4CAFF survives the load
+; of part B to $4CB00)
+;
+; First pass: code and data separated, entry points from the level table
+; named.  L_xxxxx = code, D_xxxxx = data, still to be named.
+;==============================================================================
+                include "engine.i"
+
+                org     $4A2E4
+LevelHeader:
+                dc.w    $601A,$0000,$0C14,$0000,$077C,$0000,$0000,$0000
+                dc.w    $0000,$0000,$0000,$0004,$A300,$0001
+LevelInterface:
+                dc.w    $0301,$1969
+                dc.l    WaveList
+                dc.l    LevelPalette
+                dc.l    $5D700
+                dc.l    $4D300
+                dc.l    ScrollScript
+                dc.l    $0
+                dc.l    $0
+                dc.l    LevelFrame
+                dc.l    LevelInit
+                dc.l    $5E948
+ScrollScript:
+                dc.w    $000B,$0000,$0064,$0000,$0000,$FFFF
+WaveList:
+                dc.w    $0472,$0004,$A464,$0000,$0004,$A344,$0092,$0170
+                dc.w    $00C3,$0001,$0000,$0000,$0000,$0004,$AF24,$00F8
+                dc.w    $0170,$0001,$0002,$0000,$0000,$0000,$0004,$AF24
+                dc.w    $0111,$0170,$0064,$0003,$FFFC,$0000,$0000,$FFFF
+                dc.w    $FFFF,$0141,$0170,$0001,$0003,$0000,$0000,$0000
+                dc.w    $0004,$AF24,$0187,$0170,$00C3,$0000,$0000,$0000
+                dc.w    $0000,$0004,$AF24,$01F0,$0170,$0001,$0003,$0000
+                dc.w    $0000,$0000,$0004,$AF24,$0244,$0170,$00C3,$0001
+                dc.w    $0000,$0000,$0000,$0004,$AF24,$0248,$0170,$0001
+                dc.w    $0002,$0000,$0000,$0000,$0004,$AF24,$029E,$0170
+                dc.w    $00C3,$0000,$0000,$0000,$0000,$0004,$AF24,$0310
+                dc.w    $0170,$0001,$0003,$0000,$0000,$0000,$0004,$AF24
+                dc.w    $033E,$0000,$0000,$000A,$0000,$0000,$0000,$0004
+                dc.w    $AFA4,$0384,$0170,$0001,$0002,$0000,$0000,$0000
+                dc.w    $0004,$AF24,$0399,$0170,$0050,$0002,$FFFC,$0000
+                dc.w    $0000,$FFFF,$FFFF,$03A2,$0170,$00C3,$0000,$0000
+                dc.w    $0000,$0000,$0004,$AF24,$0406,$0000,$0000,$0011
+                dc.w    $0000,$0000,$0000,$0004,$AFA4,$0426,$0170,$0001
+                dc.w    $0002,$0000,$0000,$0000,$0004,$AF24,$04AE,$0170
+                dc.w    $0001,$0003,$0000,$0000,$0000,$0004,$AF24,$04B2
+                dc.w    $0170,$00C3,$0000,$0000,$0000,$0000,$0004,$AF24
+                dc.w    $0578,$0170,$00C3,$0001,$0000,$0000,$0000,$0004
+                dc.w    $AF24,$05F6,$0170,$00C3,$0001,$0000,$0000,$0000
+                dc.w    $0004,$AF24,$0622,$0170,$005A,$0000,$FFFC,$0000
+                dc.w    $0000,$FFFF,$FFFF,$0684,$0170,$0001,$0003,$0000
+                dc.w    $0000,$0000,$0004,$AF24,$0685,$0170,$00C3,$0001
+                dc.w    $0000,$0000,$0000,$0004,$AF24,$06B3,$0170,$0001
+                dc.w    $0002,$0000,$0000,$0000,$0004,$AF24,$07BD,$0000
+                dc.w    $0000,$0000,$0000,$0000,$0000,$0004,$B1CC,$0802
+                dc.w    $0170,$005A,$0000,$FFFC,$0000,$0000,$FFFF,$FFFF
+                dc.w    $76A0
+LevelPalette:
+                dc.w    $0555,$0BBB,$0777,$0500,$005F,$00F0,$0050,$0955
+                dc.w    $0B00,$09BF,$000B,$0F77,$0B70,$0FF0,$0FFF
+L_4A538:
+                move.w  $2(a1),d0
+                move.w  $4(a1),d1
+                move.w  $8(a2),d2
+                jsr     (jt_ObjCreate).w
+                clr.w   $32(a0)
+                moveq   #0,d0
+                move.w  $6(a1),d0
+                move.w  d0,$34(a0)
+                move.l  #D_4AF4C,d1
+                add.l   d0,d1
+                add.l   d0,d1
+                add.l   d0,d1
+                move.l  d1,$2A(a0)
+                clr.w   $3A(a0)
+                clr.b   $22(a0)
+                move.b  #$2,$21(a0)
+                jmp     (jt_ObjInsert).w
+L_4A578:
+                cmpi.w  #$170,$A(a0)
+                bhi.b   L_4A588
+                cmpi.w  #$C4,$C(a0)
+                blt.b   L_4A58C
+L_4A588:
+                jmp     (jt_ObjKillSelf).w
+L_4A58C:
+                tst.b   $32(a0)
+                bmi.b   L_4A5EE
+                subq.w  #$1,$A(a0)
+                move.w  $A(a0),d0
+                sub.w   (ShipPos).w,d0
+                tst.w   $34(a0)
+                beq.b   L_4A5AC
+                cmpi.w  #$3,$34(a0)
+                bne.b   L_4A5B8
+L_4A5AC:
+                cmp.w   #$50,d0
+                ble.b   L_4A5C2
+                tst.w   d0
+                bmi.b   L_4A5C2
+                rts
+L_4A5B8:
+                neg.w   d0
+                cmp.w   #$50,d0
+                bgt.b   L_4A5C2
+                rts
+L_4A5C2:
+                lea.l   (D_4AF14).l,a1
+                move.w  $34(a0),d2
+                lsl.w   #$2,d2
+                move.w  (a1,d2.w),d0
+                move.w  $2(a1,d2.w),d1
+                movem.w d0-d1,$36(a0)
+                st.b    $32(a0)
+                st.b    $22(a0)
+                clr.b   $20(a0)
+                clr.w   $1E(a0)
+                rts
+L_4A5EE:
+                movem.w $36(a0),d0-d1
+                clr.b   $22(a0)
+                cmpi.w  #$A0,$C(a0)
+                bhi.b   L_4A608
+                cmpi.w  #$2D,$C(a0)
+                bhi.b   L_4A61A
+L_4A608:
+                asr.w   #$1,d0
+                asr.w   #$1,d1
+                st.b    $22(a0)
+                cmpi.w  #$2,$34(a0)
+                bne.b   L_4A61A
+                moveq   #0,d0
+L_4A61A:
+                tst.b   $28(a0)
+                beq.b   L_4A626
+                st.b    $22(a0)
+                rts
+L_4A626:
+                add.w   d0,$A(a0)
+                bmi.w   L_4A588
+                add.w   d1,$C(a0)
+                bmi.w   L_4A588
+                rts
+L_4A638:
+                move.w  $6(a1),d7
+                moveq   #0,d6
+                moveq   #4,d5
+L_4A640:
+                subq.w  #$1,d5
+                bpl.b   L_4A64C
+                move.w  (ShipPos).w,d1
+                moveq   #4,d5
+                bra.b   L_4A658
+L_4A64C:
+                moveq   #105,d0
+                jsr     (jt_Random).w
+                add.w   #$50,d0
+                move.w  d0,d1
+L_4A658:
+                move.w  #$174,d0
+                moveq   #1,d2
+                jsr     (jt_ObjCreate).w
+                move.w  d6,$32(a0)
+                move.b  #$1,$21(a0)
+                move.b  #$1,$34(a0)
+                moveq   #7,d0
+                jsr     (jt_Random).w
+                move.b  d0,$35(a0)
+                clr.w   $38(a0)
+                move.w  #$7FFF,$36(a0)
+                moveq   #100,d0
+                jsr     (jt_Random).w
+                cmp.w   #$46,d0
+                bcs.b   L_4A6A0
+                moveq   #33,d0
+                jsr     (jt_Random).w
+                add.w   #$19,d0
+                move.w  d0,$36(a0)
+L_4A6A0:
+                jsr     (jt_ObjInsert).w
+                add.w   #$14,d6
+                dbra    d7,L_4A640
+                rts
+L_4A6AE:
+                tst.w   $32(a0)
+                bmi.b   L_4A6BA
+                subq.w  #$1,$32(a0)
+                rts
+L_4A6BA:
+                moveq   #0,d0
+                move.b  $38(a0),d0
+                bne.b   L_4A6E4
+                eori.b  #$FF,$39(a0)
+                beq.b   L_4A6E4
+                move.b  $34(a0),d1
+                ext.w   d1
+                add.w   d1,$C(a0)
+                subq.b  #$1,$35(a0)
+                bpl.b   L_4A6E4
+                neg.b   $34(a0)
+                move.b  #$6,$35(a0)
+L_4A6E4:
+                lsl.w   #$2,d0
+                lea.l   (D_4AF98).l,a1
+                movem.w (a1,d0.w),d1-d2
+                add.w   d1,$A(a0)
+                add.w   d2,$C(a0)
+                move.w  $A(a0),d0
+                cmp.w   #$10,d0
+                bcs.b   L_4A750
+                cmp.w   #$173,d0
+                bhi.b   L_4A750
+                cmpi.w  #$C4,$C(a0)
+                bhi.b   L_4A750
+                subq.w  #$1,$36(a0)
+                bpl.b   L_4A740
+                add.w   #$14,d0
+                cmp.w   (ShipPos).w,d0
+                bhi.b   L_4A742
+                move.b  #$2,$38(a0)
+                lea.l   (D_4AFD4).l,a1
+L_4A72E:
+                move.l  a1,$2A(a0)
+                move.w  #$7FFF,$36(a0)
+                clr.b   $20(a0)
+                clr.w   $1E(a0)
+L_4A740:
+                rts
+L_4A742:
+                move.b  #$1,$38(a0)
+                lea.l   (D_4AFD0).l,a1
+                bra.b   L_4A72E
+L_4A750:
+                jmp     (jt_ObjKillSelf).w
+LevelInit:
+                clr.w   (D_4B030).l
+                clr.b   (D_4B032).l
+                clr.b   (D_4B020).l
+                move.l  #L_4A7E8,(D_4B028).l
+                lea.l   (D_4B034).l,a0
+                move.l  a0,(D_4B024).l
+                bsr.w   L_4A8B6
+                bra.w   L_4AB4C
+LevelFrame:
+                tst.b   (D_4B020).l
+                bne.b   L_4A7D6
+                cmpi.w  #$A0A,(ScrollX).w
+                bcs.w   L_4AB90
+                st.b    (D_4B020).l
+                clr.b   (ScrollActive).w
+                move.w  #$B3,d0
+                move.w  #$80,d1
+                moveq   #-1,d2
+                lea.l   (D_4B074).l,a2
+                jsr     (jt_ObjCreate).w
+                clr.w   $32(a0)
+                jsr     (jt_ObjInsert).w
+                move.w  #$64,(D_4B02C).l
+                clr.w   (D_4B022).l
+                clr.w   (D_4B02E).l
+                st.b    (MusicFadeReq).w
+                rts
+L_4A7D6:
+                tst.b   (D_4B030).l
+                bne.w   L_4A8CE
+                movea.l (D_4B028).l,a1
+                jmp     (a1)
+L_4A7E8:
+                subq.w  #$1,(D_4B022).l
+                bpl.b   L_4A802
+                move.l  #L_4A804,(D_4B028).l
+                move.b  #$3,(D_4B021).l
+L_4A802:
+                rts
+L_4A804:
+                subq.w  #$1,(D_4B022).l
+                bpl.b   L_4A85A
+                tst.b   (D_4B021).l
+                bne.b   L_4A828
+                move.l  #L_4A85C,(D_4B028).l
+                move.b  #$3,(D_4B021).l
+                rts
+L_4A828:
+                move.w  #$2,(D_4B022).l
+                addi.l  #$10,(D_4B024).l
+                addq.w  #$1,(D_4B02E).l
+                movea.l (D_4B024).l,a0
+                bsr.w   L_4A8B6
+                subq.b  #$1,(D_4B021).l
+                bne.b   L_4A85A
+                move.w  #$14,(D_4B022).l
+L_4A85A:
+                rts
+L_4A85C:
+                subq.w  #$1,(D_4B022).l
+                bpl.b   L_4A8B4
+                move.w  #$2,(D_4B022).l
+                subi.l  #$10,(D_4B024).l
+                subq.w  #$1,(D_4B02E).l
+                movea.l (D_4B024).l,a0
+                bsr.w   L_4A8B6
+                subq.b  #$1,(D_4B021).l
+                bne.b   L_4A8B4
+                move.w  (D_4B02C).l,d0
+                cmp.w   #$A,d0
+                bls.b   L_4A8A4
+                sub.w   #$A,d0
+                move.w  d0,(D_4B02C).l
+L_4A8A4:
+                move.w  d0,(D_4B022).l
+                move.l  #L_4A7E8,(D_4B028).l
+L_4A8B4:
+                rts
+L_4A8B6:
+                lea.l   ($5E0C0).l,a1
+                move.l  (a0)+,(a1)
+                move.l  (a0)+,$4(a1)
+                adda.l  (MapRowBytes).w,a1
+                move.l  (a0)+,(a1)
+                move.l  (a0)+,$4(a1)
+                rts
+L_4A8CE:
+                move.l  a0,-(a7)
+                moveq   #100,d0
+                jsr     (jt_Random).w
+                move.w  d0,d1
+                add.w   #$64,d1
+                moveq   #126,d0
+                jsr     (jt_Random).w
+                add.w   #$78,d0
+                moveq   #-1,d2
+                lea.l   (D_4B074).l,a2
+                jsr     (jt_ObjCreate).w
+                move.b  #$1,$5(a0)
+                clr.l   $6(a0)
+                moveq   #3,d0
+                jsr     (jt_Random).w
+                move.b  d0,$21(a0)
+                jsr     (jt_ObjInsert).w
+                movea.l (a7)+,a0
+                rts
+L_4A90E:
+                movea.l (ScoreToAddEnd).w,a1
+                tst.b   (D_4B032).l
+                beq.b   L_4A922
+                clr.b   (D_4B032).l
+                bsr.b   L_4A982
+L_4A922:
+                move.w  (D_4B02E).l,$1E(a0)
+                clr.b   $20(a0)
+                move.w  $26(a0),d0
+                cmp.w   $32(a0),d0
+                beq.b   L_4A980
+                move.w  d0,$32(a0)
+                move.w  #$64,(D_4B02C).l
+                move.w  #$FFF,d1
+                move.w  d1,$2(a1)
+                move.w  d1,$6(a1)
+                move.w  d1,$A(a1)
+                move.w  d1,$36(a1)
+                st.b    (D_4B032).l
+                move.b  #$3,$28(a0)
+                cmp.w   #$1E,d0
+                bcs.b   L_4A980
+                bsr.b   L_4A982
+                st.b    (D_4B030).l
+                st.b    (LevelComplete).w
+                move.l  #$9000,d0
+                jmp     (jt_AddScore).w
+L_4A980:
+                rts
+L_4A982:
+                move.w  #$555,$2(a1)
+                move.w  #$BBB,$6(a1)
+                move.w  #$777,$A(a1)
+                move.w  #$FF0,$36(a1)
+                rts
+L_4A99C:
+                moveq   #10,d7
+                moveq   #0,d6
+                moveq   #11,d5
+                lea.l   (D_4B174).l,a3
+L_4A9A8:
+                move.w  #$160,d0
+                moveq   #60,d1
+                moveq   #-1,d2
+                movea.l (a3)+,a2
+                jsr     (jt_ObjCreate).w
+                clr.b   $22(a0)
+                move.b  d7,$4(a0)
+                movea.l (a3)+,a2
+                move.l  a2,$2A(a0)
+                cmpa.l  #D_4B386,a2
+                bne.b   L_4A9D0
+                st.b    $22(a0)
+L_4A9D0:
+                move.w  d6,$34(a0)
+                clr.w   $32(a0)
+                clr.w   $3A(a0)
+                clr.b   $3C(a0)
+                move.b  d5,$3D(a0)
+                cmp.w   #$A,d7
+                bne.b   L_4A9F0
+                move.b  #$1,$32(a0)
+L_4A9F0:
+                jsr     (jt_ObjInsert).w
+                addq.w  #$5,d6
+                subq.w  #$1,d5
+                dbra    d7,L_4A9A8
+                move.l  #D_4B0CE,(D_4B170).l
+                rts
+L_4AA08:
+                tst.b   (D_4B030).l
+                beq.b   L_4AA22
+                subq.b  #$1,$3D(a0)
+                bpl.b   L_4AA22
+                move.b  #$1,$5(a0)
+                clr.l   $6(a0)
+                rts
+L_4AA22:
+                tst.b   $32(a0)
+                bmi.w   L_4AB1E
+L_4AA2A:
+                tst.w   $34(a0)
+                bmi.b   L_4AA36
+                subq.w  #$1,$34(a0)
+                rts
+L_4AA36:
+                tst.b   $33(a0)
+                bne.b   L_4AA5A
+                movea.l (D_4B170).l,a1
+                move.w  (a1)+,$A(a0)
+                move.w  (a1)+,$C(a0)
+                move.l  a1,$36(a0)
+                clr.w   $3A(a0)
+                clr.w   $26(a0)
+                st.b    $33(a0)
+L_4AA5A:
+                movea.l $36(a0),a1
+                move.w  $3A(a0),d0
+                move.w  (a1)+,d1
+                bsr.w   L_4AB14
+                add.w   d2,$A(a0)
+                bsr.w   L_4AB14
+                add.w   d2,$C(a0)
+                tst.b   $22(a0)
+                bne.b   L_4AA84
+                bsr.w   L_4AB14
+                move.b  d2,$1F(a0)
+                bra.b   L_4AADC
+L_4AA84:
+                tst.b   $3C(a0)
+                bne.b   L_4AADC
+                tst.w   $26(a0)
+                beq.b   L_4AADC
+                movem.l d0-d1/a0,-(a7)
+                move.l  #D_4B38A,$2A(a0)
+                clr.b   $20(a0)
+                clr.w   $1E(a0)
+                movem.w $A(a0),d0-d1
+                moveq   #-1,d2
+                lea.l   (D_4B33E).l,a2
+                jsr     (jt_ObjCreate).w
+                move.b  #$1,$5(a0)
+                clr.l   $6(a0)
+                move.b  #$1E,$4(a0)
+                jsr     (jt_ObjInsert).w
+                move.l  #$200,d0
+                jsr     (jt_AddScore).w
+                movem.l (a7)+,d0-d1/a0
+                st.b    $3C(a0)
+L_4AADC:
+                cmp.w   d1,d0
+                bcc.b   L_4AAE6
+                addq.w  #$1,$3A(a0)
+                rts
+L_4AAE6:
+                move.w  #$FFFF,$A(a0)
+                tst.b   $3C(a0)
+                beq.b   L_4AAFE
+                move.l  #D_4B386,$2A(a0)
+                clr.b   $3C(a0)
+L_4AAFE:
+                clr.b   $33(a0)
+                move.w  #$55,$34(a0)
+                tst.b   $32(a0)
+                beq.b   L_4AB12
+                st.b    $32(a0)
+L_4AB12:
+                rts
+L_4AB14:
+                movea.l (a1)+,a2
+                move.b  (a2,d0.w),d2
+                ext.w   d2
+                rts
+L_4AB1E:
+                move.b  #$1,$32(a0)
+                movea.l (D_4B170).l,a1
+                adda.l  #$12,a1
+                cmpa.l  #D_4B170,a1
+                bcs.b   L_4AB42
+                lea.l   (D_4B0E0).l,a1
+                st.b    (LevelComplete).w
+L_4AB42:
+                move.l  a1,(D_4B170).l
+                bra.w   L_4AA2A
+L_4AB4C:
+                lea.l   (D_4B38C).l,a0
+                lea.l   (D_4B450).l,a1
+                bsr.b   L_4AB66
+                lea.l   (D_4B3AC).l,a0
+                lea.l   (D_4B4E0).l,a1
+L_4AB66:
+                move.l  a1,$1C(a0)
+                move.l  #L_4ABB4,(a0)
+                move.w  $10(a0),$12(a0)
+                clr.b   $4(a0)
+L_4AB7A:
+                moveq   #2,d0
+                movea.l $14(a0),a0
+L_4AB80:
+                move.l  (a1)+,(a0)
+                move.l  (a1)+,$4(a0)
+                adda.l  (MapRowBytes).w,a0
+                dbra    d0,L_4AB80
+                rts
+L_4AB90:
+                lea.l   (D_4B38C).l,a0
+                bsr.b   L_4AB9E
+                lea.l   (D_4B3AC).l,a0
+L_4AB9E:
+                tst.b   $4(a0)
+                beq.b   L_4ABAC
+                movea.l $18(a0),a1
+                clr.l   (a0)
+                bra.b   L_4AB7A
+L_4ABAC:
+                move.l  (a0),d0
+                beq.b   L_4AC02
+                movea.l d0,a1
+                jmp     (a1)
+L_4ABB4:
+                move.w  $8(a0),d0
+                cmp.w   (ScrollX).w,d0
+                bne.b   L_4AC02
+                move.w  $E(a0),d1
+                move.w  #$16B,d0
+                move.w  #$1388,d2
+                lea.l   (D_4B3CC).l,a2
+                movea.l a0,a3
+                jsr     (jt_ObjCreate).w
+                clr.b   $22(a0)
+                move.b  #$2,$21(a0)
+                move.l  a3,$32(a0)
+                move.w  $10(a3),$1E(a0)
+                move.w  #$7D,$3A(a0)
+                move.w  #$AF,$3C(a0)
+                jsr     (jt_ObjInsert).w
+                movea.l a3,a0
+                move.l  #L_4AC04,(a0)
+L_4AC02:
+                rts
+L_4AC04:
+                move.w  $A(a0),d0
+                cmp.w   (ScrollX).w,d0
+                bne.b   L_4AC02
+                clr.b   $6(a0)
+                move.b  #$4,$7(a0)
+                move.l  #L_4AC20,(a0)
+                rts
+L_4AC20:
+                subq.b  #$1,$6(a0)
+                bpl.b   L_4AC50
+                move.b  #$5,$6(a0)
+                addi.l  #$18,$1C(a0)
+                addq.w  #$1,$12(a0)
+                movea.l a0,a3
+                movea.l $1C(a0),a1
+                bsr.w   L_4AB7A
+                movea.l a3,a0
+                subq.b  #$1,$7(a0)
+                bne.b   L_4AC50
+                move.l  #L_4AC52,(a0)
+L_4AC50:
+                rts
+L_4AC52:
+                move.w  $C(a0),d0
+                cmp.w   (ScrollX).w,d0
+                bne.b   L_4AC50
+                clr.b   $6(a0)
+                move.b  #$4,$7(a0)
+                move.l  #L_4AC6E,(a0)
+                rts
+L_4AC6E:
+                subq.b  #$1,$6(a0)
+                bpl.b   L_4AC9A
+                move.b  #$5,$6(a0)
+                subi.l  #$18,$1C(a0)
+                subq.w  #$1,$12(a0)
+                movea.l a0,a3
+                movea.l $1C(a0),a1
+                bsr.w   L_4AB7A
+                movea.l a3,a0
+                subq.b  #$1,$7(a0)
+                bne.b   L_4AC9A
+                clr.l   (a0)
+L_4AC9A:
+                rts
+L_4AC9C:
+                tst.w   $3A(a0)
+                beq.b   L_4ACAE
+                subq.w  #$1,$3A(a0)
+                bne.b   L_4ACAE
+                nop
+                bsr.w   L_4AD0E
+L_4ACAE:
+                tst.w   $3C(a0)
+                beq.b   L_4ACC0
+                subq.w  #$1,$3C(a0)
+                bne.b   L_4ACC0
+                nop
+                bsr.w   L_4AD0E
+L_4ACC0:
+                move.w  $A(a0),d0
+                subq.w  #$1,d0
+                cmp.w   #$10,d0
+                bhi.b   L_4ACD0
+                jmp     (jt_ObjKillSelf).w
+L_4ACD0:
+                move.w  d0,$A(a0)
+                movea.l $32(a0),a1
+                move.w  $12(a1),d0
+                move.w  d0,$1E(a0)
+                cmpi.w  #$23,$26(a0)
+                bcs.b   L_4AD0C
+                st.b    $4(a1)
+                move.b  #$1,$5(a0)
+                clr.l   $6(a0)
+                cmp.w   #$5,d0
+                bcs.b   L_4AD02
+                subi.w  #$2B,$C(a0)
+L_4AD02:
+                move.l  #$700,d0
+                jmp     (jt_AddScore).w
+L_4AD0C:
+                rts
+L_4AD0E:
+                movea.l a0,a1
+                movem.w $A(a1),d0-d1
+                add.w   #$A,d0
+                addq.w  #$8,d1
+                cmp.w   #$64,d1
+                bhi.b   L_4AD26
+                sub.w   #$18,d1
+L_4AD26:
+                moveq   #5,d2
+                lea.l   (D_4B610).l,a2
+                jsr     (jt_ObjCreate).w
+                cmpi.w  #$5A,$C(a0)
+                bhi.b   L_4AD40
+                st.b    $32(a0)
+                bra.b   L_4AD44
+L_4AD40:
+                clr.b   $32(a0)
+L_4AD44:
+                moveq   #100,d0
+                jsr     (jt_Random).w
+                moveq   #0,d2
+                cmp.w   #$46,d0
+                bhi.b   L_4AD54
+                moveq   #1,d2
+L_4AD54:
+                moveq   #37,d1
+                move.b  d2,$33(a0)
+                bne.b   L_4AD5E
+                moveq   #78,d1
+L_4AD5E:
+                clr.w   $34(a0)
+                move.w  d1,$38(a0)
+                clr.b   $36(a0)
+                clr.w   $3C(a0)
+                move.w  $26(a0),$3A(a0)
+                jsr     (jt_ObjInsert).w
+                movea.l a1,a0
+                rts
+L_4AD7C:
+                tst.b   $36(a0)
+                bne.w   L_4AE1A
+                move.w  $26(a0),d0
+                cmp.w   $3A(a0),d0
+                bne.b   L_4ADE8
+                lea.l   ($7252F).l,a1
+                lea.l   $26(a1),a2
+                tst.b   $33(a0)
+                bne.b   L_4ADA8
+                lea.l   ($72496).l,a1
+                lea.l   $4E(a1),a2
+L_4ADA8:
+                move.w  $34(a0),d2
+                addq.w  #$1,$34(a0)
+                movem.w $A(a0),d0-d1
+                move.b  (a1,d2.w),d3
+                move.b  (a2,d2.w),d4
+                cmp.b   #$7F,d4
+                beq.b   L_4ADE8
+                ext.w   d3
+                ext.w   d4
+                tst.b   $32(a0)
+                bmi.b   L_4ADD0
+                neg.w   d4
+L_4ADD0:
+                add.w   d3,d0
+                add.w   d4,d1
+                cmp.w   #$20,d0
+                bcs.b   L_4ADE8
+                cmp.w   #$12E,d0
+                bhi.b   L_4ADE8
+                movem.w d0-d1,$A(a0)
+                rts
+L_4ADE8:
+                move.b  #$1,$36(a0)
+                move.l  #D_4B63B,$2A(a0)
+                st.b    $22(a0)
+                clr.b   $20(a0)
+                move.w  #$5,$1E(a0)
+                clr.w   $32(a0)
+                clr.w   $34(a0)
+                move.w  #$F,$38(a0)
+                move.w  $26(a0),$3A(a0)
+                rts
+L_4AE1A:
+                subq.w  #$1,$38(a0)
+                bmi.w   L_4AEB0
+                tst.b   $3D(a0)
+                beq.b   L_4AE7E
+                move.w  $26(a0),d0
+                cmp.w   $3A(a0),d0
+                beq.b   L_4AE50
+                move.w  d0,$3A(a0)
+                clr.w   $32(a0)
+                move.w  #$8,$34(a0)
+                move.w  #$C0,d0
+                sub.w   $C(a0),d0
+                lsr.w   #$3,d0
+                subq.w  #$2,d0
+                move.w  d0,$38(a0)
+L_4AE50:
+                movem.w $32(a0),d0-d1
+                movem.w $A(a0),d2-d3
+                add.w   d0,d2
+                add.w   d1,d3
+                cmp.w   #$30,d2
+                blt.b   L_4AE80
+                cmp.w   #$12E,d2
+                bhi.b   L_4AE80
+                cmp.w   #$30,d3
+                blt.b   L_4AE80
+                cmp.w   #$C0,d3
+                bhi.b   L_4AE80
+                movem.w d2-d3,$A(a0)
+L_4AE7E:
+                rts
+L_4AE80:
+                lsr.w   $38(a0)
+                moveq   #0,d0
+                moveq   #0,d1
+                move.b  $37(a0),d1
+                lea.l   (D_4B580).l,a1
+                move.b  (a1,d1.w),d0
+                move.b  d0,$37(a0)
+                lsl.w   #$2,d0
+                lea.l   (D_4B590).l,a1
+                movem.w (a1,d0.w),d2-d3
+                movem.w d2-d3,$32(a0)
+                bra.b   L_4AE50
+L_4AEB0:
+                st.b    $3D(a0)
+                subq.b  #$1,$3C(a0)
+                bpl.b   L_4AED2
+                move.b  #$4,$3C(a0)
+                movem.w $A(a0),d0-d1
+                movem.w (ShipPos).w,d2-d3
+                jsr     (jt_DirectionTo).w
+                bra.b   L_4AED8
+L_4AED2:
+                moveq   #16,d0
+                jsr     (jt_Random).w
+L_4AED8:
+                move.b  d0,$37(a0)
+                move.w  d0,d1
+                moveq   #100,d0
+                jsr     (jt_Random).w
+                cmp.w   #$5A,d0
+                bhi.b   L_4AEEE
+                add.w   #$10,d1
+L_4AEEE:
+                lsl.w   #$2,d1
+                lea.l   (D_4B590).l,a1
+                movem.w (a1,d1.w),d2-d3
+                movem.w d2-d3,$32(a0)
+                moveq   #100,d0
+                jsr     (jt_Random).w
+                add.w   #$14,d0
+                move.w  d0,$38(a0)
+                bra.w   L_4AE50
+D_4AF14:
+                dc.w    $FFFC,$FFFC,$0004,$FFFC,$0004,$0004,$FFFC,$0004
+                dc.w    $3B04,$002C,$0B10,$0001,$000A,$0000,$0006,$1C96
+                dc.w    $0000,$0588,$0004,$AF4C,$0004,$AF58
+                dc.l    L_4A578
+                dc.l    L_4A538
+                dc.w    $0000,$0500
+D_4AF4C:
+                dc.w    $0001,$FF02,$03FF,$0405,$FF06,$07FF,$0006,$000D
+                dc.w    $0023,$0024,$0006,$000D,$0023,$0024,$0006,$000D
+                dc.w    $0023,$0024,$0006,$000D,$0023,$0024,$0006,$000D
+                dc.w    $0023,$0024,$0006,$000D,$0023,$0024,$0006,$000D
+                dc.w    $0023,$0024,$0006,$000D,$0023,$0024
+D_4AF98:
+                dc.w    $FFFB,$0000,$FFFC,$0004,$0004,$0004,$0D02,$0030
+                dc.w    $00D0,$0002,$0001,$0000,$0006,$7516,$0000,$0068
+                dc.w    $0004,$AFCC,$0004,$AFD8
+                dc.l    L_4A6AE
+                dc.l    L_4A638
+                dc.w    $0000,$0100,$0001,$02FF
+D_4AFD0:
+                dc.w    $0304,$05FF
+D_4AFD4:
+                dc.w    $0607,$08FF,$0000,$0000,$0010,$0009,$0000,$0000
+                dc.w    $0010,$0009,$0000,$0000,$0010,$0009,$0000,$0002
+                dc.w    $000E,$000B,$0000,$0002,$000E,$000B,$0000,$0002
+                dc.w    $000E,$000B,$0004,$0001,$000B,$000C,$0004,$0001
+                dc.w    $000B,$000C,$0004,$0001,$000B,$000C
+D_4B020:
+                dc.b    $00
+D_4B021:
+                dc.b    $00
+D_4B022:
+                dc.w    $0000
+D_4B024:
+                dc.w    $0000,$0000
+D_4B028:
+                dc.w    $0000,$0000
+D_4B02C:
+                dc.w    $0000
+D_4B02E:
+                dc.w    $0000
+D_4B030:
+                dc.w    $0000
+D_4B032:
+                dc.w    $0000
+D_4B034:
+                dc.w    $00B8,$00B9,$00BA,$00BB,$80CC,$80CD,$80CE,$80CF
+                dc.w    $00BC,$00BD,$00BE,$00BF,$80D0,$80D1,$80D2,$80D3
+                dc.w    $00C0,$00C1,$00C2,$00C3,$80D4,$80D5,$80D6,$80D7
+                dc.w    $00C4,$00C5,$00C6,$00C7,$80D8,$80D9,$80DA,$80DB
+D_4B074:
+                dc.w    $0101,$0032,$0000,$0000,$0000,$0000,$0004,$B0C2
+                dc.w    $0000,$0000,$0004,$B09C,$0004,$B0A2
+                dc.l    L_4A90E
+                dc.w    $0000,$0000,$0000,$2000,$0001,$0203,$04FF,$0008
+                dc.w    $0023,$0013,$000C,$000C,$000B,$000F,$0007,$0008
+                dc.w    $0008,$0017,$000B,$000C,$0006,$0014,$0011,$0000
+                dc.w    $0000,$0000,$0000,$0000,$0000
+D_4B0CE:
+                dc.w    $0160,$003C,$0236,$0007,$16A6,$0007,$18E8,$0007
+                dc.w    $1B2A
+D_4B0E0:
+                dc.w    $0064,$00B4,$00F2,$0007,$1D6C,$0007,$1E62,$0007
+                dc.w    $1F58,$010E,$00B9,$005E,$0007,$204E,$0007,$20AF
+                dc.w    $0007,$2110,$00EC,$007D,$007C,$0007,$2171,$0007
+                dc.w    $21EE,$0007,$226B,$0085,$007D,$008B,$0007,$22E8
+                dc.w    $0007,$2376,$0007,$2404,$010E,$00B9,$005E,$0007
+                dc.w    $204E,$0007,$20AF,$0007,$2110,$0064,$00B4,$00F2
+                dc.w    $0007,$1D6C,$0007,$1E62,$0007,$1F58,$0085,$007D
+                dc.w    $008B,$0007,$22E8,$0007,$2376,$0007,$2404,$00EC
+                dc.w    $007D,$007C,$0007,$2171,$0007,$21EE,$0007,$226B
+D_4B170:
+                dc.w    $0000,$0000
+D_4B174:
+                dc.w    $0004,$B1CC,$0004,$B1F4,$0004,$B296,$0004,$B1F4
+                dc.w    $0004,$B33E,$0004,$B386,$0004,$B33E,$0004,$B386
+                dc.w    $0004,$B33E,$0004,$B386,$0004,$B33E,$0004,$B386
+                dc.w    $0004,$B33E,$0004,$B386,$0004,$B33E,$0004,$B386
+                dc.w    $0004,$B33E,$0004,$B386,$0004,$B296,$0004,$B205
+                dc.w    $0004,$B1CC,$0004,$B205,$1D03,$002E,$03A0,$0000
+                dc.w    $0000,$0000,$0006,$99A6,$0000,$01D0,$0004,$B1F4
+                dc.w    $0004,$B216
+                dc.l    L_4AA08
+                dc.l    L_4A99C
+                dc.w    $0000,$1000,$0001,$0203,$0405,$0607,$0809,$0A0B
+                dc.w    $0C0D,$0E0F,$FF08,$090A,$0B0C,$0D0E,$0F00,$0102
+                dc.w    $0304,$0506,$07FF,$0006,$0002,$0013,$0017,$0006
+                dc.w    $0002,$0014,$0018,$0004,$0003,$0017,$0017,$0005
+                dc.w    $0002,$0017,$0018,$0003,$0004,$0019,$0015,$0005
+                dc.w    $0004,$0017,$0016,$0005,$0003,$0015,$0016,$0006
+                dc.w    $0004,$0015,$0017,$0005,$0003,$0015,$0017,$0005
+                dc.w    $0003,$0016,$0017,$0005,$0003,$0016,$0016,$0004
+                dc.w    $0004,$0017,$0016,$0004,$0004,$0017,$0015,$0003
+                dc.w    $0003,$0017,$0017,$0004,$0003,$0016,$0017,$0004
+                dc.w    $0002,$0016,$0018,$1B03,$002E,$0360,$0000,$0000
+                dc.w    $0000,$0006,$D3A6,$0000,$01B0,$0004,$B1F4,$0004
+                dc.w    $B2BE
+                dc.l    L_4AA08
+                dc.l    L_4A99C
+                dc.w    $0000,$1000,$0006,$0002,$0013,$0017,$0006,$0001
+                dc.w    $0014,$0018,$0006,$0002,$0015,$0016,$0004,$0003
+                dc.w    $0018,$0015,$0004,$0004,$0019,$0014,$0005,$0003
+                dc.w    $0017,$0015,$0006,$0003,$0014,$0015,$0007,$0002
+                dc.w    $0013,$0018,$0007,$0002,$0013,$0018,$0006,$0002
+                dc.w    $0014,$0017,$0007,$0003,$0013,$0015,$0005,$0003
+                dc.w    $0016,$0014,$0003,$0003,$0018,$0014,$0005,$0004
+                dc.w    $0015,$0014,$0005,$0003,$0014,$0014,$0006,$0001
+                dc.w    $0014,$0018
+D_4B33E:
+                dc.w    $1A03,$002E,$0340,$0003,$0000,$0000,$0007,$09A6
+                dc.w    $0000,$01A0,$0004,$B386,$0004,$B366
+                dc.l    L_4AA08
+                dc.l    L_4A99C
+                dc.w    $0000,$1000,$0002,$0002,$0017,$0016,$0002,$0002
+                dc.w    $0017,$0016,$0002,$0002,$0017,$0016,$0002,$0002
+                dc.w    $0017,$0016
+D_4B386:
+                dc.w    $0001,$02FF
+D_4B38A:
+                dc.w    $03FF
+D_4B38C:
+                dc.w    $0000,$0000,$0000,$0000,$02C8,$0331,$0398,$00A9
+                dc.w    $0000,$0000,$0005,$E428,$0004,$B4C8,$0000,$0000
+D_4B3AC:
+                dc.w    $0000,$0000,$0000,$0000,$03C8,$0430,$0492,$004D
+                dc.w    $0005,$0000,$0005,$D7A0,$0004,$B558,$0000,$0000
+D_4B3CC:
+                dc.w    $0101,$0032,$0000,$0000,$0000,$0000,$0004,$B570
+                dc.w    $0000,$0000,$0004,$B3F4,$0004,$B400
+                dc.l    L_4AC9C
+                dc.w    $0000,$0000,$0000,$1000,$0001,$0203,$0405,$0607
+                dc.w    $0809,$0AFF,$0008,$0018,$0035,$0018,$0009,$0013
+                dc.w    $0029,$0022,$0008,$000F,$002B,$0027,$0008,$000E
+                dc.w    $002C,$0029,$0004,$0008,$0036,$002D,$0009,$FFCC
+                dc.w    $0032,$0025,$000B,$FFD1,$0028,$0024,$000A,$FFD3
+                dc.w    $0028,$0025,$0008,$FFD5,$002B,$0026,$0003,$FFD5
+                dc.w    $0036,$002B
+D_4B450:
+                dc.w    $019C,$019D,$019E,$019F,$00DC,$00DD,$00DE,$00DF
+                dc.w    $80F0,$80F1,$80F2,$80F3,$00E0,$00E1,$00E2,$00E3
+                dc.w    $00F4,$00F5,$00F6,$00F7,$8108,$8109,$810A,$810B
+                dc.w    $00E4,$00E5,$00E6,$00E7,$00F8,$00F9,$00FA,$00FB
+                dc.w    $810C,$810D,$810E,$810F,$00E8,$00E9,$00EA,$00EB
+                dc.w    $00FC,$00FD,$00FE,$00FF,$8110,$8111,$8112,$8113
+                dc.w    $00EC,$00ED,$00EE,$00EF,$0100,$0101,$0102,$0103
+                dc.w    $8114,$8115,$8116,$8117,$019C,$019D,$019E,$019F
+                dc.w    $8010,$8011,$8012,$8013,$8024,$8025,$8026,$8027
+D_4B4E0:
+                dc.w    $8104,$8105,$8106,$8107,$0118,$0119,$011A,$011B
+                dc.w    $0180,$0181,$0182,$0183,$811C,$811D,$811E,$811F
+                dc.w    $0130,$0131,$0132,$0133,$0144,$0145,$0146,$0147
+                dc.w    $8120,$8121,$8122,$8123,$0134,$0135,$0136,$0137
+                dc.w    $0148,$0149,$014A,$014B,$8124,$8125,$8126,$8127
+                dc.w    $0138,$0139,$013A,$013B,$014C,$014D,$014E,$014F
+                dc.w    $8128,$8129,$812A,$812B,$013C,$013D,$013E,$013F
+                dc.w    $0150,$0151,$0152,$0153,$800C,$800D,$800E,$800F
+                dc.w    $8020,$8021,$8022,$8023,$0180,$0181,$0182,$0183
+                dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+D_4B580:
+                dc.w    $0809,$0A0B,$0C0D,$0E0F,$0001,$0203,$0405,$0607
+D_4B590:
+                dc.w    $0000,$FFFC,$0002,$FFFC,$0004,$FFFC,$0004,$FFFE
+                dc.w    $0004,$0000,$0004,$0002,$0004,$0004,$0002,$0004
+                dc.w    $0000,$0004,$FFFE,$0004,$FFFC,$0004,$FFFC,$0002
+                dc.w    $FFFC,$0000,$FFFC,$FFFE,$FFFC,$FFFC,$FFFE,$FFFC
+                dc.w    $0000,$FFFE,$0001,$FFFE,$0002,$FFFE,$0002,$FFFF
+                dc.w    $0002,$0000,$0002,$0001,$0002,$0002,$0001,$0002
+                dc.w    $0000,$0002,$FFFF,$0002,$FFFE,$0002,$FFFE,$0001
+                dc.w    $FFFE,$0000,$FFFE,$FFFF,$FFFE,$FFFE,$FFFF,$FFFE
+D_4B610:
+                dc.w    $1A03,$002E,$0340,$0002,$0000,$0000,$0006,$7C66
+                dc.w    $0000,$01A0,$0004,$B638,$0004,$B646
+                dc.l    L_4AD7C
+                dc.b    $00,$00,$00,$00,$00,$00,$05,$00,$00,$01,$FF
+D_4B63B:
+                dc.b    $06,$07,$08,$07,$FF,$02,$03,$04,$05,$FF,$00,$00,$05,$00,$02,$00
+                dc.b    $16,$00,$15,$00,$04,$00,$02,$00,$18,$00,$16,$00,$02,$00,$05,$00
+                dc.b    $1D,$00,$15,$00,$03,$00,$02,$00,$1A,$00,$16,$00,$08,$00,$04,$00
+                dc.b    $14,$00,$12,$00,$09,$00,$05,$00,$13,$00,$11,$00,$05,$00,$01,$00
+                dc.b    $19,$00,$21,$00,$05,$00,$01,$00,$1A,$00,$16,$00,$05,$00,$01,$00
+                dc.b    $1A,$00,$16,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $00
