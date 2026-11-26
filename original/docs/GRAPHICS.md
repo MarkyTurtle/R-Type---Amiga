@@ -16,7 +16,7 @@ All findings come from the drawing code in `src/game.s`. The same notes are in t
 
 The extra 96 pixels per line and 32 lines on top are margin: the 20 × 13 tile background is redrawn in full every frame (`DrawMap`), and BOBs can be clipped by simply drawing into the margin (x range −16…`$170`).
 
-**Double buffering:** the game draws into `DrawBuffer`, and the copper interrupt (`SwapScreens` → `SetBitplanes`) switches the bitplane pointers once `FrameReady` is set. A countdown (`D_05136`, reloaded with 0 or 1 depending on `D_0513C`) limits the flip rate to every VBL or every second VBL; what selects the mode is still to be confirmed.
+**Double buffering:** the game draws into `DrawBuffer`, and the copper interrupt (`SwapScreens` → `SetBitplanes`) switches the bitplane pointers once `FrameReady` is set and `FlipCountdown` has run out. The countdown is reloaded with 0 when `Flip50Hz` is set (title and high-score screens, 50 Hz) or 1 during play (25 Hz); see GAME.md, *Frame pacing*.
 
 ## HUD
 

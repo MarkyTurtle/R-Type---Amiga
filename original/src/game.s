@@ -59,7 +59,8 @@ TRACK_BUFFER    equ     $7C400          ; raw MFM buffer
 ;   $17AD0-$189CF power-up items          $189D0-$19B8F wave cannon shots
 ;   $19B90-$19D8F lasers                  $19D90-$1A2CF enemy bullets
 ;   $1A2D0-$1C2CF homing missiles (16 directions x 2 frames)
-;   $1C2D0-$1C64F laser frames            $1C68A-$2C7AF sound effect samples
+;   $1C2D0-$1C64F laser frames            $1C650-$1C689 walker jump arc
+;   $1C68A-$2C7AF sound effect samples
 ;   $2C7B0-$2CEB7 HUD bitplanes (3 x $258)
 ; Details: docs/GRAPHICS.md, rendered in gfx/engine_bobs.png and gfx/sprites_*
 
@@ -170,14 +171,11 @@ Init:
                 move.l  a0,-(a7)
                 move.l  d0,(CacheBase).l
                 move.l  d1,(CacheLimit).l
-L_00122:
                 move.l  d2,(MusicCopy).l
                 move.w  d3,(CurrentTrack).l
-L_0012E:
                 move.l  (CacheBase).l,(CacheNext).l
                 bsr.w   LoadHighScores
                 bsr.w   FormatScores
-L_00140:
                 bsr.w   LoadShared
                 movea.l (a7)+,a0
                 st.b    (a0)
@@ -193,13 +191,9 @@ L_00140:
                 move.l  #Force_Idle,(ForceState).l
                 clr.l   (Score).l
                 clr.b   (ForceActive).l
-L_00188:
                 st.b    (TitleMusicOn).l
-L_0018E:
                 move.l  #Level3Int,($6C).w
-L_00196:
                 move.l  #Level4Int,($70).w
-L_0019E:
                 move.l  #CopperList,$80(a6)
                 clr.w   $88(a6)
                 move.w  #$87F0,$96(a6)
@@ -223,17 +217,16 @@ NewGame:
                 move.w  #$780,$9C(a6)
                 move.w  #$8600,$9A(a6)
                 bsr.w   TimerCheck
-                move.l  (D_05764).l,d0
+                move.l  (TopScore).l,d0
                 lea.l   ($2C905).l,a0
                 bsr.w   DrawDigits
                 move.w  #$FCC1,$90(a6)
-L_00218:
                 moveq   #0,d0
                 lea.l   ($2C8F9).l,a0
                 bsr.w   DrawDigits
                 clr.l   (Score).l
                 clr.l   (Bonus).l
-                addq.b  #$1,(D_04221).l
+                addq.b  #$1,(GamesPlayed).l
                 clr.b   (Flip50Hz).l
                 clr.w   (EndSequence).l
                 move.l  #ExtraLifeTable,(ExtraLifePtr).l
@@ -278,7 +271,7 @@ LoadLevel:
                 clr.w   (ScrollY).l
                 clr.b   (ScrollActive).l
                 clr.b   (LevelComplete).l
-                clr.b   (D_0420D).l
+                clr.b   (StageEndStarted).l
                 clr.b   (StageFlags).l
                 clr.b   (Paused).l
 StartLevel:
@@ -351,14 +344,13 @@ CheckEndOfGame:
                 lea.l   (TxtEnding).l,a4
                 bsr.w   PrintList
                 clr.l   (VblCount).l
-L_00402:
                 move.w  (VblCountLo).l,d0
                 add.w   #$20D,d0
 .0040c:
                 cmp.w   (VblCountLo).l,d0
                 bhi.b   .0040c
                 clr.b   (JinglePlaying).l
-                clr.b   (D_056FD).l
+                clr.b   (JingleCmd).l
                 move.w  #$F,$96(a6)
                 moveq   #0,d7
                 bra.w   NewGame
@@ -369,14 +361,14 @@ St_StageClear:
                 lea.l   (TextPalette).l,a1
                 bsr.w   SetPalette
                 move.w  #$1000,d1
-                lea.l   (D_04748).l,a0
+                lea.l   (TxtStageCleared).l,a0
                 move.b  (Level).l,d0
                 add.b   #$31,d0
                 move.b  d0,$C(a0)
                 lea.l   ($2FC05).l,a1
                 bsr.w   PrintString
                 move.w  #$1000,d1
-                lea.l   (D_04766).l,a0
+                lea.l   (TxtStageScore).l,a0
                 lea.l   ($31AEA).l,a1
                 bsr.w   PrintString
                 bsr.w   CountBonus
@@ -392,7 +384,7 @@ St_StageClear:
 ;==============================================================================
 SpawnShip:
                 tst.b   (ShipSpawned).l
-                bne.w   L_0052A
+                bne.w   SpawnShipDone
                 st.b    (ShipSpawned).l
                 move.w  #$2,(ShipSpeed).l
                 move.w  #$76,(ShipY).l
@@ -400,7 +392,6 @@ SpawnShip:
                 bsr.w   ResetShipWeapons
                 tst.b   (NewLifeFlag).l
                 bne.b   ShipRespawn
-L_004C8:
                 st.b    (NewLifeFlag).l
                 move.b  #$3,(JingleState).l
                 moveq   #10,d0
@@ -409,7 +400,7 @@ L_004C8:
                 bsr.w   ObjAlloc
                 move.l  #DefSpeedFlash,$12(a0)
                 move.l  #ObjUpd_FlyInShip,$6(a0)
-                move.l  #D_0427A,$2A(a0)
+                move.l  #SpeedFlashAnim,$2A(a0)
                 move.w  #$2D,$32(a0)
                 bsr.w   ObjInsert
                 move.b  #$1,(ShipMode).l
@@ -417,7 +408,7 @@ L_004C8:
                 move.w  #$75,(ShipX).l
                 move.b  #$10,(ShipTiltFrame).l
                 move.l  #$6400,(ShipSpriteFrame).l
-L_0052A:
+SpawnShipDone:
                 rts
 ShipRespawn:
                 clr.b   (ShipAlive).l
@@ -462,14 +453,14 @@ InitLevelScroll:
                 clr.w   (ScrollYRate).l
                 clr.w   (ScrollScriptTimer).l
                 move.l  #St_LevelFadeIn,(GameState).l
-                move.b  #$E,(D_0420A).l
+                move.b  #$E,(FadeSteps).l
                 clr.b   (ShipIntroTimer).l
                 movea.l (LV_Init).l,a0
                 jsr     (a0)
                 clr.b   (ShipHit).l
                 clr.b   (LaserCount).l
                 clr.b   (SpaceKey).l
-                clr.b   (D_0514C).l
+                clr.b   (Fire2Latch).l
                 clr.b   (FireHeld).l
                 clr.b   (BeamCharge).l
                 st.b    (ScrollActive).l
@@ -500,7 +491,7 @@ LevelFadeInStep:
                 move.b  #$2,(ShipIntroTimer).l
                 movea.l (LV_Palette).l,a0
                 bsr.w   PaletteFadeIn
-                subq.b  #$1,(D_0420A).l
+                subq.b  #$1,(FadeSteps).l
                 bpl.b   .006ac
                 st.b    (ShipAlive).l
                 bset.b  #$6,(StageFlags).l
@@ -537,15 +528,15 @@ ShipDied:
                 bsr.w   ObjInsert
                 clr.w   (ForcePos).l
                 clr.b   (ForceActive).l
-                move.b  #$1E,(D_04209).l
-                move.b  #$F,(D_0420A).l
+                move.b  #$1E,(DeathTimer).l
+                move.b  #$F,(FadeSteps).l
                 move.w  #$14,(ShipX).l
                 move.w  (ScrollX).l,(Checkpoint).l
                 rts
 DeathWait:
-                tst.b   (D_04209).l
+                tst.b   (DeathTimer).l
                 beq.b   .00770
-                subq.b  #$1,(D_04209).l
+                subq.b  #$1,(DeathTimer).l
                 bne.b   .0076e
                 tst.w   (Lives).l
                 bpl.b   .0076e
@@ -561,7 +552,7 @@ DeathWait:
                 bpl.b   .0076e
                 move.b  #$2,(ShipIntroTimer).l
                 bsr.w   PaletteFadeOut
-                subq.b  #$1,(D_0420A).l
+                subq.b  #$1,(FadeSteps).l
                 bne.b   .0076e
                 addq.l  #$4,a7
                 bsr.w   PaletteBlack
@@ -572,18 +563,18 @@ DeathWait:
                 bhi.b   .0079e
                 bra.w   StartLevel
 StageEndSequence:
-                tst.b   (D_0420D).l
+                tst.b   (StageEndStarted).l
                 bne.b   .007d0
                 bsr.w   ClearBeamMeter
                 clr.b   (ShipAlive).l
-                move.b  #$24,(D_0420A).l
+                move.b  #$24,(FadeSteps).l
                 clr.b   (ShipIntroTimer).l
-                st.b    (D_0420D).l
+                st.b    (StageEndStarted).l
 .007d0:
                 subq.b  #$1,(ShipIntroTimer).l
                 bpl.b   .00830
                 move.b  #$2,(ShipIntroTimer).l
-                subq.b  #$1,(D_0420A).l
+                subq.b  #$1,(FadeSteps).l
                 bne.b   .00822
                 bsr.w   PaletteBlack
                 bclr.b  #$7,(StageFlags).l
@@ -595,7 +586,7 @@ StageEndSequence:
                 clr.b   (MusicFadeReq).l
                 rts
 .00822:
-                cmpi.b  #$F,(D_0420A).l
+                cmpi.b  #$F,(FadeSteps).l
                 bhi.b   .00830
                 bra.w   PaletteFadeOut
 .00830:
@@ -640,13 +631,13 @@ GameOver:
                 lea.l   (TextPalette).l,a1
                 bsr.w   SetPalette
                 moveq   #0,d1
-                lea.l   (D_04772).l,a0
+                lea.l   (TxtContinue).l,a0
                 lea.l   ($2FA6D).l,a1
                 bsr.w   PrintString
-                lea.l   (D_04782).l,a0
+                lea.l   (TxtPushFire).l,a0
                 lea.l   ($3640D).l,a1
                 bsr.w   PrintString
-                lea.l   (D_04793).l,a0
+                lea.l   (TxtCredit).l,a0
                 move.b  (Continues).l,d0
                 add.b   #$30,d0
                 move.b  d0,$D(a0)
@@ -660,7 +651,7 @@ GameOver:
 .008e6:
                 move.b  (a4,d7.w),d6
                 moveq   #7,d5
-                lea.l   (D_04702).l,a3
+                lea.l   (BigDigitLine).l,a3
                 movea.l a3,a0
 .008f4:
                 move.b  #$20,(a3)
@@ -691,7 +682,7 @@ GameOver:
 .00944:
                 clr.l   (Score).l
                 clr.l   (Bonus).l
-                addq.b  #$1,(D_04221).l
+                addq.b  #$1,(GamesPlayed).l
                 move.l  #ExtraLifeTable,(ExtraLifePtr).l
                 clr.l   (ScoreToAdd).l
                 clr.b   (ShipSpawned).l
@@ -769,11 +760,11 @@ PaletteFadeOut:
 ; Score
 ;==============================================================================
 CountBonus:
-                lea.l   (D_0473E).l,a2
+                lea.l   (BonusText).l,a2
                 move.l  #$20202020,(a2)
                 move.l  #$20202020,$4(a2)
                 move.l  (Bonus).l,d0
-                lea.l   (D_04720).l,a1
+                lea.l   (BonusDigitsTable).l,a1
 .00a2c:
                 cmp.l   (a1)+,d0
                 bcc.b   .00a34
@@ -783,10 +774,10 @@ CountBonus:
                 lea.l   ($31AF5).l,a5
                 move.w  (a1),d7
                 move.w  d7,d6
-                move.b  #$12,(D_04210).l
+                move.b  #$12,(BonusRollDelay).l
 .00a46:
                 move.w  d7,d5
-                lea.l   (D_04746).l,a2
+                lea.l   (BonusTextEnd).l,a2
                 move.l  (Bonus).l,d4
 .00a54:
                 move.l  d4,d0
@@ -805,16 +796,16 @@ CountBonus:
                 lsr.l   #$4,d4
                 dbra    d5,.00a54
                 moveq   #0,d1
-                lea.l   (D_0473E).l,a0
+                lea.l   (BonusText).l,a0
                 movea.l a5,a1
                 bsr.w   PrintString
                 st.b    (FrameReady).l
 .00a8c:
                 tst.b   (FrameReady).l
                 bne.b   .00a8c
-                subq.b  #$1,(D_04210).l
+                subq.b  #$1,(BonusRollDelay).l
                 bpl.b   .00a46
-                move.b  #$12,(D_04210).l
+                move.b  #$12,(BonusRollDelay).l
                 subq.w  #$1,d6
                 cmp.w   #$FFFE,d6
                 bne.b   .00a46
@@ -824,7 +815,7 @@ CountBonus:
 ; AddScore: d0 = BCD points (ignored in cheat mode)
 AddScore:
                 tst.b   (CheatMode).l
-                bne.b   L_00AF2
+                bne.b   AddScoreDone
 AddScoreAlways:
                 move.l  d0,(ScoreToAdd).l
                 lea.l   (Bonus).l,a1
@@ -841,29 +832,28 @@ AddScoreAlways:
                 abcd.b  -(a2),-(a1)
                 abcd.b  -(a2),-(a1)
                 abcd.b  -(a2),-(a1)
-L_00AF2:
+AddScoreDone:
                 rts
 
 ; UpdateScore: redraw score, award extra lives
 UpdateScore:
                 move.l  (Score).l,d0
                 cmp.l   (ScoreShown).l,d0
-                beq.b   L_00B38
-L_00B02:
+                beq.b   UpdateScoreDone
                 move.l  d0,(ScoreShown).l
                 lea.l   ($2C8F9).l,a0
                 bsr.b   DrawDigits
                 movea.l (ExtraLifePtr).l,a0
                 move.l  (a0)+,d1
-                beq.b   L_00B38
+                beq.b   UpdateScoreDone
                 cmp.l   d1,d0
-                bcs.b   L_00B38
+                bcs.b   UpdateScoreDone
                 move.l  a0,(ExtraLifePtr).l
                 cmpi.w  #$4,(Lives).l
-                bge.b   L_00B38
+                bge.b   UpdateScoreDone
                 addq.w  #$1,(Lives).l
                 bra.w   DrawLives
-L_00B38:
+UpdateScoreDone:
                 rts
 
 ; DrawDigits: d0 = 6-digit BCD, a0 = screen
@@ -929,7 +919,7 @@ DrawLives:
 .00bca:
                 moveq   #5,d1
                 movea.l a0,a2
-                lea.l   (D_0470E).l,a1
+                lea.l   (LifeIcon).l,a1
 .00bd4:
                 move.b  $C(a1),$4B0(a2)
                 move.b  $6(a1),$258(a2)
@@ -971,7 +961,7 @@ InitObjects:
                 dbra    d0,.00c08
                 clr.l   (a0)
                 moveq   #13,d0
-                lea.l   (D_04B76).l,a0
+                lea.l   (ShotX).l,a0
 .00c20:
                 clr.w   (a0)+
                 dbra    d0,.00c20
@@ -1061,10 +1051,10 @@ InitMapOffsets:
                 move.l  d1,$6(a0)
                 move.l  (MapRowBytes).l,d0
                 lea.l   (GroundLaserMoves).l,a0
-                lea.l   (StackTop).l,a1
+                lea.l   (GroundLaserRowDown).l,a1
                 bsr.b   .00d6c
                 neg.l   d0
-                lea.l   (D_04688).l,a1
+                lea.l   (GroundLaserRowUp).l,a1
 .00d6c:
                 move.w  (a1)+,d1
                 bmi.b   .00d76
@@ -1403,9 +1393,9 @@ ObjCreate:
 UpdateObjects:
                 move.l  (ActiveObjects).l,d7        ; walk the active list (sorted by priority)
                 move.l  #ActiveObjects,(PrevObject).l
-L_010F6:
+UpdateObjectsLoop:
                 tst.l   d7
-                beq.w   L_0111C
+                beq.w   UpdateObjectsDone
                 movea.l d7,a0
                 move.l  $6(a0),d0                   ; object's own routine (movement, AI)
                 beq.b   .01108
@@ -1418,8 +1408,8 @@ L_010F6:
 NextObject:
                 move.l  (a0),d7
                 move.l  a0,(PrevObject).l
-                bne.b   L_010F6
-L_0111C:
+                bne.b   UpdateObjectsLoop
+UpdateObjectsDone:
                 rts
 ; State $05: 0 = alive (just draw), 1 = killed this frame, $FF = exploding.
 ; On the first explosion frame the object is switched to an explosion
@@ -1719,7 +1709,7 @@ UpdateEnemyBullets:
 ; DirectionTo: (d0,d1) -> (d2,d3): d0 = direction 0-15
 DirectionTo:
                 movem.l d1-d3/d5-d6/a1,-(a7)
-                lea.l   (D_04A1C).l,a2
+                lea.l   (DirectionOctants).l,a2
                 sub.w   d3,d1
                 bpl.b   .0146e
                 neg.w   d1
@@ -1735,7 +1725,7 @@ DirectionTo:
                 lsl.l   #$4,d1
                 lsl.l   #$5,d1
                 divu.w  d0,d1
-                lea.l   (D_04A30).l,a1
+                lea.l   (SlopeThresholds).l,a1
                 clr.w   d0
 .01490:
                 cmp.w   (a1),d1
@@ -2043,7 +2033,7 @@ CollectSpeedUp:
                 bsr.w   ObjAlloc
                 move.l  #DefSpeedFlash,$12(a0)
                 move.l  #ObjUpd_SpeedFlash,$6(a0)
-                move.l  #D_0427A,$2A(a0)
+                move.l  #SpeedFlashAnim,$2A(a0)
                 move.w  #$6,$32(a0)
                 bsr.w   ObjInsert
                 movem.l (a7)+,a0
@@ -2120,7 +2110,7 @@ ShipFire:
                 st.b    (FireHeld).l
                 bsr.w   FireForce
                 moveq   #3,d7
-                lea.l   (D_04B7C).l,a0
+                lea.l   (ShotX3).l,a0
 .018a4:
                 tst.w   (a0)
                 bne.b   .018d2
@@ -2144,7 +2134,7 @@ ShipFire:
 .018da:
                 move.b  (BeamCharge).l,d0
                 btst.b  #$7,(CIAA_PRA).l
-                beq.b   L_01914
+                beq.b   ShipFireHeld
                 cmp.b   #$6,d0
                 bls.b   .018f2
                 bsr.b   FireWaveCannon
@@ -2152,13 +2142,13 @@ ShipFire:
                 clr.b   (FireHeld).l
                 clr.b   (BeamCharge).l
 ClearBeamMeter:
-                clr.l   (D_04B72).l
-                clr.w   (D_04B70).l
+                clr.l   (BeamMeterBits).l
+                clr.w   (BeamMeterLevel).l
                 moveq   #0,d0
                 moveq   #0,d1
                 moveq   #0,d2
                 bra.w   DrawBeamMeter
-L_01914:
+ShipFireHeld:
                 move.w  d0,d1
                 cmp.b   #$18,d1
                 bcc.b   .01938
@@ -2271,7 +2261,7 @@ BlitBob:
 UpdateWaveBeam:
                 move.w  (WaveBeamX).l,d6
                 beq.w   .01b14
-                move.w  (D_04BAC).l,d7
+                move.w  (WaveBeamY).l,d7
                 movea.l (WaveBeamGfx).l,a1
                 move.l  (WaveBeamFrameSize).l,d0
                 eori.b  #$FF,(WaveBeamToggle).l
@@ -2327,7 +2317,7 @@ UpdateWaveBeam:
                 move.w  #$2E,$60(a6)
                 move.w  #$2E,$66(a6)
                 lea.l   ($15650).l,a1           ; shot stream A graphics
-                lea.l   (D_04B8A).l,a0
+                lea.l   (BitShotX).l,a0
                 bsr.b   UpdateShotStream
                 lea.l   ($15850).l,a1
                 addq.w  #$2,a0
@@ -2380,9 +2370,9 @@ UpdateShotStream:
 .01ba4:
                 rts
 UpdateAntiAirLaser:
-                move.w  (D_04B8E).l,d6
+                move.w  (AntiAirLaserX).l,d6
                 beq.w   UpdateLasers
-                move.w  (D_04BAA).l,d1
+                move.w  (AntiAirLaserY).l,d1
                 move.w  #$2A,$60(a6)
                 move.w  #$2A,$66(a6)
                 moveq   #10,d5
@@ -2396,7 +2386,7 @@ UpdateAntiAirLaser:
 .01bd6:
                 move.w  d6,d0
                 move.w  d1,d3
-                move.w  (D_04BC6).l,d4
+                move.w  (AntiAirLaserFrame).l,d4
                 add.w   d2,d4
                 bmi.b   .01bee
                 cmp.w   #$14,d4
@@ -2406,7 +2396,7 @@ UpdateAntiAirLaser:
 .01bee:
                 moveq   #20,d4
 .01bf0:
-                move.w  d4,(D_04BC6).l
+                move.w  d4,(AntiAirLaserFrame).l
                 lea.l   (AntiAirLaserFrames).l,a0
                 movea.l (a0,d4.w),a1
                 movea.l a1,a2
@@ -2432,7 +2422,7 @@ UpdateAntiAirLaser:
 .01c38:
                 clr.w   d6
 .01c3a:
-                move.w  d6,(D_04B8E).l
+                move.w  d6,(AntiAirLaserX).l
 ; The two segmented lasers (LaserSegments: 8 parallel word arrays, x +0,
 ; y +$14, steps left +$28, delay +$3C, direction +$50):
 ;   blue reflect laser: 16x16 segments ($19B90, 2 frames: diagonal up /
@@ -2587,7 +2577,7 @@ ClipLaser:
 .01dd6:
                 clr.w   d0
                 subq.b  #$1,(LaserCount).l
-L_01DDE:
+FireForceDone:
                 rts
 ; Called with every fire-button press.  What the Force fires:
 ;   free (ForceSide 0): its own shots (ShotTypes) - level 0: one forward
@@ -2602,7 +2592,7 @@ L_01DDE:
 ;      fired forwards or backwards by the docking side (LaserSide).
 FireForce:
                 tst.b   (ForceActive).l
-                beq.b   L_01DDE
+                beq.b   FireForceDone
                 movem.w (ForcePos).l,d0-d1
                 sub.w   #$5F,d0
                 sub.w   #$C,d1
@@ -2613,7 +2603,7 @@ FireForce:
                 add.w   #$A,d0
                 tst.b   d6
                 bne.b   .01e26
-                lea.l   (D_04B84).l,a0
+                lea.l   (ShotX7).l,a0
                 moveq   #0,d3
                 moveq   #3,d7
                 moveq   #0,d2
@@ -2624,13 +2614,13 @@ FireForce:
                 moveq   #2,d2
                 moveq   #8,d4
                 moveq   #9,d5
-                lea.l   (D_04B80).l,a0
+                lea.l   (ShotX5).l,a0
                 moveq   #1,d3
                 moveq   #1,d7
                 bsr.w   .0202e
                 moveq   #2,d3
                 moveq   #1,d7
-                lea.l   (D_04B84).l,a0
+                lea.l   (ShotX7).l,a0
                 bsr.w   .0202e
                 cmp.b   #$3,d6
                 bne.b   .01e70
@@ -2643,7 +2633,7 @@ FireForce:
                 bsr.w   .0202e
                 moveq   #0,d7
                 moveq   #4,d3
-                lea.l   (D_04B86).l,a0
+                lea.l   (ShotX8).l,a0
                 bra.w   .0202e
 .01e70:
                 rts
@@ -2752,7 +2742,7 @@ FireForce:
                 cmp.b   #$2,d6
                 bhi.b   .01fce
                 add.w   d2,d0
-                lea.l   (D_04B8A).l,a0
+                lea.l   (BitShotX).l,a0
                 bsr.b   .01fbe
                 add.w   #$C,d1
                 addq.l  #$2,a0
@@ -2770,7 +2760,7 @@ FireForce:
                 movem.w d0-d1/d3/d5,-(a7)
                 btst.b  #$0,(BitsFlags).l
                 beq.b   .01ff4
-                lea.l   (D_04B8A).l,a0
+                lea.l   (BitShotX).l,a0
                 movem.w (UpperBitHitPos).l,d0-d1
                 addq.w  #$2,d1
                 move.w  d4,-(a7)
@@ -2787,7 +2777,7 @@ FireForce:
                 bsr.b   .01fbe
 .0200e:
                 movem.w (a7)+,d0-d1/d3/d5
-                lea.l   (D_04B8E).l,a0
+                lea.l   (AntiAirLaserX).l,a0
                 tst.w   (a0)
                 bne.b   .01fcc
                 subq.w  #$5,d1
@@ -2817,22 +2807,22 @@ FireForce:
                 dbra    d7,.0202e
                 rts
 ChargeBeam:
-                move.l  (D_04B72).l,d5
+                move.l  (BeamMeterBits).l,d5
                 lsr.l   #$4,d5
                 or.l    #$F0000000,d5
-                move.l  d5,(D_04B72).l
+                move.l  d5,(BeamMeterBits).l
                 cmp.b   #$FF,d5
                 bne.b   .02096
                 moveq   #0,d5
-                move.l  d5,(D_04B72).l
-                addq.w  #$1,(D_04B70).l
-                cmpi.w  #$3,(D_04B70).l
+                move.l  d5,(BeamMeterBits).l
+                addq.w  #$1,(BeamMeterLevel).l
+                cmpi.w  #$3,(BeamMeterLevel).l
                 blt.b   .02096
-                subq.w  #$1,(D_04B70).l
+                subq.w  #$1,(BeamMeterLevel).l
                 moveq   #-1,d5
-                move.l  d5,(D_04B72).l
+                move.l  d5,(BeamMeterBits).l
 .02096:
-                move.w  (D_04B70).l,d7
+                move.w  (BeamMeterLevel).l,d7
                 bne.b   .020a6
                 move.l  d5,d0
                 moveq   #0,d1
@@ -2913,7 +2903,7 @@ Level3Int:
                 move.w  #$60,(CUSTOM+INTREQ).l      ; acknowledge VERTB and BLIT
                 movem.l (a7)+,d0-d7/a0-a6
                 rte
-L_02198:
+ShipNoControl:
                 rts
 
 ;==============================================================================
@@ -2921,7 +2911,7 @@ L_02198:
 ;==============================================================================
 ShipControl:
                 tst.b   (ShipHit).l                 ; no control while exploding
-                bne.b   L_02198
+                bne.b   ShipNoControl
                 tst.b   (ShipMode).l                ; -1: stage-end autopilot, 1: fly-in
                 bmi.w   ShipAutoPilot
                 bne.w   ShipFlyIn
@@ -2946,19 +2936,19 @@ ShipControl:
                 btst    #$9,d1                      ; up
                 beq.b   .02212
                 cmpi.w  #$30,(ShipY).l              ; top limit
-                bls.w   L_02234
+                bls.w   ShipTiltLevel
                 sub.w   d2,(ShipY).l
                 move.b  #$FF,(ShipTiltInput).l      ; tilt towards frame 0 (nose up)
                 bra.b   ShipTilt
 .02212:
                 btst    #$1,d1                      ; down
-                beq.b   L_02234
+                beq.b   ShipTiltLevel
                 cmpi.w  #$DC,(ShipY).l              ; bottom limit
-                bcc.w   L_02234
+                bcc.w   ShipTiltLevel
                 add.w   d2,(ShipY).l
                 move.b  #$1,(ShipTiltInput).l       ; tilt towards frame 16
                 bra.b   ShipTilt
-L_02234:
+ShipTiltLevel:
                 cmpi.b  #$8,(ShipTiltFrame).l       ; no vertical input: drift back to level (8)
                 bhi.b   .0224a
                 beq.b   .02254
@@ -2995,7 +2985,7 @@ ShipTilt:
                 lsl.w   #$8,d0                      ; frame * $100
                 add.l   #$6000,d0               ; ship sprite frames
                 move.l  d0,(ShipSpriteFrame).l
-L_022AA:
+ShipTiltDone:
                 rts
 ; Level start: StageFlags bit 0 = intro running.  The ship flies right to
 ; x $186 (bit 2), waits ShipIntroTimer (bit 3), flies back to x $C8 and
@@ -3003,7 +2993,7 @@ L_022AA:
 ShipFlyIn:
                 move.b  (StageFlags).l,d7
                 btst    #$0,d7
-                beq.b   L_022AA
+                beq.b   ShipTiltDone
                 btst    #$2,d7
                 bne.b   .022ee
                 move.b  #$FF,(ShipTiltInput).l
@@ -3011,24 +3001,24 @@ ShipFlyIn:
                 bsr.b   .02334
                 addq.w  #$2,(ShipX).l
                 cmpi.w  #$186,(ShipX).l
-                bcs.b   L_022AA
+                bcs.b   ShipTiltDone
                 bset.b  #$2,(StageFlags).l
                 move.b  #$F,(ShipIntroTimer).l
                 rts
 .022ee:
                 btst    #$3,d7
                 beq.b   .0231a
-                lea.l   L_02234(pc),a0
+                lea.l   ShipTiltLevel(pc),a0
                 bsr.b   .02334
                 subq.w  #$2,(ShipX).l
                 cmpi.w  #$C8,(ShipX).l
-                bhi.b   L_022AA
+                bhi.b   ShipTiltDone
                 bset.b  #$1,(StageFlags).l
                 clr.b   (ShipMode).l
                 rts
 .0231a:
                 subq.b  #$1,(ShipIntroTimer).l
-                bpl.b   L_022AA
+                bpl.b   ShipTiltDone
                 bset.b  #$3,(StageFlags).l
                 move.b  #$A,(ShipIntroTimer).l
                 rts
@@ -3063,7 +3053,7 @@ ShipAutoPilot:
                 move.w  #$C8,(AutoPilotX).l
                 btst    #$1,d0
                 beq.b   .023bc
-                move.b  #$FF,(D_056FD).l
+                move.b  #$FF,(JingleCmd).l
                 st.b    (JinglePlaying).l
                 bset.b  #$7,(EndSequenceFlags).l
                 bra.b   .023bc
@@ -3096,9 +3086,9 @@ ShipAutoPilot:
                 bra.w   ShipTilt
 .02408:
                 tst.b   d4
-                bne.w   L_02234
+                bne.w   ShipTiltLevel
                 bset.b  #$7,(StageFlags).l
-                bra.w   L_02234
+                bra.w   ShipTiltLevel
 
 ;==============================================================================
 ; Bits (the two satellites)
@@ -3112,12 +3102,12 @@ InitBits:
                 clr.b   (BitsFlags).l
                 clr.w   (UpperBitPos).l
                 clr.w   (LowerBitPos).l
-                move.w  #$1E,(D_05128).l
-                move.w  #$10E,(D_0512C).l
+                move.w  #$1E,(UpperBitY).l
+                move.w  #$10E,(LowerBitY).l
                 clr.w   (UpperBitTrail).l
                 clr.w   (LowerBitTrail).l
-                move.w  #$1,(D_05114).l
-                move.w  #$1,(D_0511E).l
+                move.w  #$1,(UpperBitTrailOut).l
+                move.w  #$1,(LowerBitTrailOut).l
                 lea.l   ($49342).l,a0
                 moveq   #2,d0
 .02470:
@@ -3136,7 +3126,6 @@ InitBits:
 UpdateBits:
                 move.b  (BitsFlags).l,d7
                 lsr.b   #$1,d7
-L_02490:
                 bcc.b   .024ba
                 lea.l   ($49342).l,a0
                 lea.l   (UpperBitTrail).l,a1
@@ -3392,11 +3381,11 @@ UpdateForce:
                 move.b  (ForceAnimLevel).l,d1
                 move.w  d1,d2
                 lsl.w   #$2,d2
-                lea.l   (D_051CC).l,a0
-                move.w  (a0,d2.w),(D_0514E).l
-                move.w  $2(a0,d2.w),(D_05150).l
+                lea.l   (ForceSpriteOffsets).l,a0
+                move.w  (a0,d2.w),(ForceOfsX).l
+                move.w  $2(a0,d2.w),(ForceOfsY).l
                 lsl.w   #$1,d2
-                lea.l   (D_051DC).l,a0
+                lea.l   (ForceHitboxes).l,a0
                 lea.l   (a0,d2.w),a0
                 movem.w (a0),d4-d7
                 movem.w d4-d7,(ForceHitbox).l
@@ -3404,7 +3393,7 @@ UpdateForce:
                 bmi.b   .027a0
                 addq.w  #$4,d2
 .027a0:
-                lea.l   (D_051AC).l,a0
+                lea.l   (ForceDockOffsets).l,a0
                 move.w  (a0,d2.w),(ForceDockOfsX).l
                 move.w  $2(a0,d2.w),(ForceDockOfsY).l
                 lsl.w   #$4,d1
@@ -3464,12 +3453,12 @@ UpdateForce:
 .02862:
                 sub.w   #$5F,d0
                 sub.w   #$C,d1
-                add.w   (D_0514E).l,d0
-                add.w   (D_05150).l,d1
+                add.w   (ForceOfsX).l,d0
+                add.w   (ForceOfsY).l,d1
                 tst.b   (ShipAlive).l
                 beq.b   .02860
                 tst.b   (ForceSide).l
-                bne.w   L_029E0
+                bne.w   ForceDockedTouch
                 movem.w d0-d1,-(a7)
                 tst.w   d6
                 beq.b   .02898
@@ -3529,26 +3518,26 @@ UpdateForce:
                 beq.b   .0294a
                 bpl.b   .0293a
                 addq.l  #$2,a3
-                bsr.w   L_029C2
+                bsr.w   ForceTouchCell
                 beq.b   .02970
                 add.w   d6,(ForcePos).l
                 bra.b   .02970
 .0293a:
                 subq.l  #$2,a3
-                bsr.w   L_029C2
+                bsr.w   ForceTouchCell
                 beq.b   .02970
                 add.w   d6,(ForcePos).l
                 bra.b   .02970
 .0294a:
                 addq.l  #$2,a3
-                bsr.b   L_029C2
+                bsr.b   ForceTouchCell
                 beq.b   .0295e
                 subq.w  #$1,(ForcePos).l
                 clr.b   (ForceParkSide).l
                 bra.b   .02970
 .0295e:
                 subq.l  #$4,a3
-                bsr.b   L_029C2
+                bsr.b   ForceTouchCell
                 beq.b   .02970
                 addq.w  #$1,(ForcePos).l
                 clr.b   (ForceParkSide).l
@@ -3558,33 +3547,33 @@ UpdateForce:
                 beq.b   .0299c
                 bpl.b   .0298a
                 adda.l  (MapRowBytes).l,a3
-                bsr.b   L_029C2
+                bsr.b   ForceTouchCell
                 beq.b   .029c0
                 add.w   d7,(ForceY).l
                 bra.b   .029c0
 .0298a:
                 suba.l  (MapRowBytes).l,a3
-                bsr.b   L_029C2
+                bsr.b   ForceTouchCell
                 beq.b   .029c0
                 add.w   d7,(ForceY).l
                 bra.b   .029c0
 .0299c:
                 adda.l  (MapRowBytes).l,a3
-                bsr.b   L_029C2
+                bsr.b   ForceTouchCell
                 beq.b   .029ae
                 subq.w  #$1,(ForceY).l
                 bra.b   .029c0
 .029ae:
                 movea.l a4,a3
                 suba.l  (MapRowBytes).l,a3
-                bsr.b   L_029C2
+                bsr.b   ForceTouchCell
                 beq.b   .029c0
                 addq.w  #$1,(ForceY).l
 .029c0:
                 rts
-L_029C2:
+ForceTouchCell:
                 btst.b  #$7,(a3)
-                beq.b   L_029DE
+                beq.b   ForceTouchDone
                 bset.b  #$5,(a3)
                 btst.b  #$4,(a3)
                 beq.b   .029d6
@@ -3592,15 +3581,15 @@ L_029C2:
                 rts
 .029d6:
                 move.b  #$FF,(ForceHalt).l
-L_029DE:
+ForceTouchDone:
                 rts
-L_029E0:
+ForceDockedTouch:
                 addq.w  #$3,d0
                 bsr.w   GetMapCell
                 movea.l a4,a3
-                bsr.b   L_029C2
+                bsr.b   ForceTouchCell
                 adda.l  (MapRowBytes).w,a3
-                bra.b   L_029C2
+                bra.b   ForceTouchCell
 ; Force state machine (ForceState, run from the copper interrupt):
 ;   Force_Idle      not collected yet (ForceActive clear)
 ;   Force_Reset     -> Force_Enter: flies in from the left to x $C0
@@ -3616,7 +3605,7 @@ L_029E0:
 ; ForcePos/ForceY are its position; ForceHitbox* its collision box.
 Force_Idle:
                 tst.b   (ForceActive).l
-                beq.b   L_029DE
+                beq.b   ForceTouchDone
                 clr.b   (ForceLevel).l
                 move.l  #$6A40,(ForceFrame).l      ; Force sprite frames ($6000 block)
                 move.b  #$1,(ForceAnimDir).l
@@ -3775,7 +3764,7 @@ Force_Attached:
                 add.w   (ForceDockOfsY).l,d0
                 move.w  d0,(ForceY).l
                 bsr.w   ReadFire2
-                beq.b   L_02C7E
+                beq.b   ForceStateDone
                 moveq   #8,d0
                 tst.b   (ForceSide).l
                 bpl.b   .02c52
@@ -3787,31 +3776,31 @@ Force_Attached:
                 move.l  #Force_Launched,(ForceState).l
                 clr.b   (ForceSide).l
                 cmpi.b  #$2,(ForceLevel).l
-                bne.b   L_02C7E
+                bne.b   ForceStateDone
                 subq.b  #$1,(ForceLevel).l
-L_02C7E:
+ForceStateDone:
                 rts
 Force_Launched:
                 move.w  (ForceLaunchSpeed).l,d0
                 move.w  d0,d7
                 neg.w   d7
                 tst.b   (ForceHalt).l
-                bne.b   L_02CBE
+                bne.b   ForceHaltedToFree
                 move.w  (ForcePos).l,d1
                 add.w   d0,d1
                 move.w  d1,(ForcePos).l
 Force_Bounds:
                 cmp.w   #$86,d1
-                bls.b   L_02CAC
+                bls.b   ForceToFree
                 cmp.w   #$1A6,d1
-                bcs.b   L_02C7E
-L_02CAC:
+                bcs.b   ForceStateDone
+ForceToFree:
                 clr.b   (ForceParkSide).l
                 move.l  #Force_Free,(ForceState).l
                 rts
-L_02CBE:
+ForceHaltedToFree:
                 moveq   #0,d7
-                bra.b   L_02CAC
+                bra.b   ForceToFree
 ForceFollowY:
                 moveq   #1,d1
                 moveq   #-2,d7
@@ -3834,13 +3823,13 @@ ForceFollowY:
 ReadFire2:
                 move.w  #$FF00,$34(a6)
                 move.w  $16(a6),d0
-                tst.b   (D_0514C).l
+                tst.b   (Fire2Latch).l
                 beq.b   .02d14
                 btst    #$E,d0
                 beq.b   .02d34
                 tst.b   (SpaceKey).l
                 bne.b   .02d34
-                clr.b   (D_0514C).l
+                clr.b   (Fire2Latch).l
                 rts
 .02d14:
                 btst    #$E,d0
@@ -3850,7 +3839,7 @@ ReadFire2:
 .02d22:
                 tst.b   (ShipAlive).l
                 beq.b   .02d32
-                move.b  #$1,(D_0514C).l
+                move.b  #$1,(Fire2Latch).l
 .02d32:
                 rts
 .02d34:
@@ -3892,10 +3881,10 @@ SpawnWalker:
                 jsr     (ObjCreate).l
                 bset.b  #$1,$23(a0)
                 move.b  $7(a1),$32(a0)
-                move.l  #D_05233,$2A(a0)
+                move.l  #WalkerJumpRight,$2A(a0)
                 move.b  $9(a1),$33(a0)
                 bpl.b   .02dc4
-                move.l  #D_0522E,$2A(a0)
+                move.l  #WalkerJumpLeft,$2A(a0)
 .02dc4:
                 move.b  #$2B,$34(a0)
                 move.l  #Walker_Walk,$36(a0)
@@ -3917,7 +3906,7 @@ ObjUpd_Walker:
                 movea.l $36(a0),a1
                 jmp     (a1)
 Walker_Walk:
-                lea.l   ($1C650).l,a1           ; walker graphics
+                lea.l   ($1C650).l,a1           ; jump arc: 58 signed y steps
                 movem.w $A(a0),d0-d1
                 move.b  $33(a0),d2
                 ext.w   d2
@@ -3970,10 +3959,10 @@ Walker_Walk:
                 neg.b   $33(a0)
 .02eb8:
                 move.l  #Walker_Walk,$36(a0)
-                lea.l   (D_05233).l,a1
+                lea.l   (WalkerJumpRight).l,a1
                 tst.b   $33(a0)
                 bpl.b   .02ed2
-                lea.l   (D_0522E).l,a1
+                lea.l   (WalkerJumpLeft).l,a1
 .02ed2:
                 move.l  a1,$2A(a0)
                 move.b  #$10,$34(a0)
@@ -4014,10 +4003,10 @@ Walker_Walk:
                 clr.w   $1E(a0)
                 tst.b   $33(a0)
                 bpl.w   .02f54
-                lea.l   (D_05224).l,a1
+                lea.l   (WalkerAnimLeft).l,a1
                 bra.b   .02f5a
 .02f54:
-                lea.l   (D_05229).l,a1
+                lea.l   (WalkerAnimRight).l,a1
 .02f5a:
                 move.l  a1,$2A(a0)
                 rts
@@ -4103,13 +4092,13 @@ UpdateMissiles:
                 bra.w   BlitBob
 .03048:
                 tst.b   (MissilesEnabled).l
-                beq.b   L_030B6
+                beq.b   MissilesDone
                 tst.b   (ShipAlive).l
-                beq.b   L_030B6
+                beq.b   MissilesDone
                 tst.w   (MissileReload).l
-                bne.b   L_030B6
+                bne.b   MissilesDone
                 btst.b  #$7,(CIAA_PRA).l
-                bne.b   L_030B6
+                bne.b   MissilesDone
                 movem.w (ShipPos).l,d0-d1
                 addq.w  #$5,d0
                 movem.w d0-d1,$4(a0)
@@ -4120,10 +4109,10 @@ UpdateMissiles:
                 move.l  #$C0006,$14(a0)
                 move.l  #Missile_Launch,(a0)
                 tst.b   $19(a0)
-                bmi.b   L_030B6
+                bmi.b   MissilesDone
                 move.b  #$2,(MissilesInFlight).l
                 move.w  #$38,(MissileReload).l
-L_030B6:
+MissilesDone:
                 rts
 ; Missile states: Launch - drift up/down for 9 frames; Forward - 6 pixels
 ; right for 7 frames; Seek - pick the nearest live, destructible enemy
@@ -4136,14 +4125,14 @@ Missile_Launch:
                 ext.w   d0
                 add.w   d0,$6(a0)
                 subq.b  #$1,$18(a0)
-                bpl.b   L_030B6
+                bpl.b   MissilesDone
                 move.l  #Missile_Forward,(a0)
                 move.b  #$6,$18(a0)
                 rts
 Missile_Forward:
                 addq.w  #$6,$4(a0)
                 subq.b  #$1,$18(a0)
-                bpl.b   L_030B6
+                bpl.b   MissilesDone
                 move.l  #Missile_Seek,(a0)
                 rts
 Missile_Seek:
@@ -4360,9 +4349,9 @@ InitTitleLetters:
                 bsr.w   InitObjects
                 st.b    (Flip50Hz).l
                 clr.b   (TitleLettersDone).l
-                move.b  #$1,(D_056F4).l
+                move.b  #$1,(TitleLetterPhase).l
                 moveq   #6,d7
-                lea.l   (D_055AC).l,a4
+                lea.l   (TitleLetterList).l,a4
 .033fe:
                 move.w  #$17A,d0
                 move.w  #$64,d1
@@ -4379,17 +4368,17 @@ InitTitleLetters:
                 move.w  #$6E,$C(a0)
 .03432:
                 move.l  #ObjUpd_TitleLetter,$6(a0)
-                move.l  #D_055E4,$2A(a0)
+                move.l  #TitleLetterAnim,$2A(a0)
                 move.l  (a4)+,$12(a0)
                 move.l  (a4)+,$34(a0)
                 bsr.w   ObjInsert
                 dbra    d7,.033fe
                 rts
 DrawTitle:
-                move.w  (D_056F8).l,d0
+                move.w  (TitleWipeTop).l,d0
                 move.w  #$2A1A,d1
                 bsr.w   ClearLines
-                move.w  (D_056FA).l,d0
+                move.w  (TitleWipeBottom).l,d0
                 move.w  #$51A,d1
                 bsr.w   ClearLines
                 lea.l   ($48C62).l,a5
@@ -4440,7 +4429,7 @@ St_HighScore:
                 bsr.w   InsertScore
                 move.l  a0,-(a7)
                 beq.b   .0357a
-                move.b  #$FF,(D_056FD).l
+                move.b  #$FF,(JingleCmd).l
                 st.b    (JinglePlaying).l
                 bsr.w   DrawScoreTable
                 movea.l (a7),a0
@@ -4467,7 +4456,7 @@ St_HighScore:
 .03556:
                 move.b  #$F,(TitleFadeSteps).l
                 move.l  #St_ShowTitle,(TitleState).l
-                move.b  #$1,(D_056FD).l
+                move.b  #$1,(JingleCmd).l
                 st.b    (TitleAbort).l
                 bra.w   TitleNextFrame
 .0357a:
@@ -4484,10 +4473,10 @@ ObjUpd_TitleLetter:
                 move.w  $C(a0),d0
                 tst.b   $32(a0)
                 bpl.b   .035aa
-                move.w  d0,(D_056FA).l
+                move.w  d0,(TitleWipeBottom).l
                 bra.b   .035b0
 .035aa:
-                move.w  d0,(D_056F8).l
+                move.w  d0,(TitleWipeTop).l
 .035b0:
                 tst.b   $33(a0)
                 bmi.b   .03604
@@ -4505,7 +4494,7 @@ ObjUpd_TitleLetter:
                 bne.b   .035e8
                 st.b    $33(a0)
                 move.b  #$10,$38(a0)
-                st.b    (D_056F4).l
+                st.b    (TitleLetterPhase).l
 .035e8:
                 rts
 .035ea:
@@ -4517,7 +4506,7 @@ ObjUpd_TitleLetter:
 .03602:
                 rts
 .03604:
-                tst.b   (D_056F4).l
+                tst.b   (TitleLetterPhase).l
                 bne.b   .03620
                 addq.w  #$3,$C(a0)
                 subq.b  #$1,$38(a0)
@@ -4527,14 +4516,14 @@ ObjUpd_TitleLetter:
 .03620:
                 rts
 .03622:
-                move.w  $C(a0),(D_056FA).l
-                tst.b   (D_056F4).l
+                move.w  $C(a0),(TitleWipeBottom).l
+                tst.b   (TitleLetterPhase).l
                 bpl.b   .03620
                 addq.w  #$6,$A(a0)
                 addq.w  #$3,$C(a0)
                 cmpi.w  #$96,$C(a0)
                 bcs.b   .03620
-                clr.b   (D_056F4).l
+                clr.b   (TitleLetterPhase).l
                 st.b    $32(a0)
                 st.b    $33(a0)
                 move.b  #$10,$38(a0)
@@ -4567,7 +4556,7 @@ InsertScore:
                 suba.l  a0,a0
                 rts
 .03698:
-                lea.l   (D_057C8).l,a1
+                lea.l   (LowestScoreEntry).l,a1
                 move.l  $4(a1),d2
                 lea.l   -$C(a1),a0
                 bra.b   .036c0
@@ -4588,7 +4577,7 @@ InsertScore:
                 move.l  #$20202020,(a1)+
 FormatScores:
                 lea.l   (HighScores).l,a1
-                lea.l   (D_05700).l,a2
+                lea.l   (ScoreDigitChars).l,a2
                 moveq   #9,d0
 .036fa:
                 movea.l $4(a1),a3
@@ -4657,7 +4646,7 @@ DrawScoreTable:
 ; "sumita. " switches the trainer on - see St_HighScore.)
 EnterName:
                 move.l  a0,-(a7)
-                lea.l   (D_0573C).l,a0
+                lea.l   (TxtEnterName).l,a0
                 lea.l   ($37E05).l,a1
                 move.w  #$1000,d1
                 bsr.w   PrintString
@@ -4856,8 +4845,8 @@ DrawChar:
 ; Music and sound effects
 ;==============================================================================
 UpdateJingle:
-                move.b  (D_056FD).l,d0
-                move.b  #$2,(D_056FD).l
+                move.b  (JingleCmd).l,d0
+                move.b  #$2,(JingleCmd).l
                 ext.w   d0
                 btst.b  #$1,(EndSequenceFlags).l
                 beq.b   .039fc
@@ -4927,7 +4916,7 @@ UpdateMusic:
                 moveq   #0,d1
                 moveq   #0,d4
                 move.b  (MusicRequest).l,d1
-                beq.b   L_03AE4
+                beq.b   UpdateMusicDone
                 bmi.b   .03ac4
                 subq.w  #$1,d1
                 moveq   #-1,d3
@@ -4942,9 +4931,9 @@ UpdateMusic:
                 movea.l (LV_Music).l,a0
                 jsr     (a0)
                 tst.b   d0
-                bne.b   L_03AE4
+                bne.b   UpdateMusicDone
                 clr.b   (MusicRequest).l
-L_03AE4:
+UpdateMusicDone:
                 rts
 
 ; PlaySound: d0 = effect number (priority-based on two channels)
@@ -4953,7 +4942,7 @@ L_03AE4:
 ; jingle plays.  UpdateSound starts queued effects from the VBL.
 PlaySound:
                 tst.b   (JingleState).l
-                bne.b   L_03AE4
+                bne.b   UpdateMusicDone
                 movem.l d1-d2/a0-a1,-(a7)
                 lea.l   (SoundTable).l,a0
                 move.w  d0,d1
@@ -4982,7 +4971,7 @@ PlaySound:
                 move.b  d1,$1(a0)
 .03b38:
                 movem.l (a7)+,d1-d2/a0-a1
-L_03B3C:
+PlaySoundDone:
                 rts
 UpdateSound:
                 lea.l   (SoundChannels).l,a6
@@ -4992,7 +4981,7 @@ UpdateSound:
                 adda.w  #$10,a5
 UpdateChannel:
                 move.b  $2(a6),d0
-                bmi.b   L_03B3C
+                bmi.b   PlaySoundDone
                 tst.b   (a6)
                 beq.b   .03b76
                 bmi.b   .03b76
@@ -5118,20 +5107,19 @@ LoadTracks:
                 bsr.w   SeekTrack
                 move.w  d1,d3
                 movea.l d2,a1
-L_03CD4:
+LoadTracksNext:
                 move.l  d2,(LoadDest).l
                 movem.l d0-d7/a0-a6,-(a7)
                 bsr.w   ReadTrack
                 bsr.w   DecodeTrack
                 movem.l (a7)+,d0-d7/a0-a6
                 add.l   #$1998,d2
-L_03CF0:
                 moveq   #0,d0
                 move.w  (CurrentTrack).l,d0
                 addq.w  #$1,d0
                 bsr.w   SeekTrack
                 subq.w  #$1,d1
-                bne.b   L_03CD4
+                bne.b   LoadTracksNext
                 bra.w   MotorOff
 DecodeTrack:
                 lea.l   (TRACK_BUFFER+2).l,a0
@@ -5562,21 +5550,21 @@ ShipAlive:
                 dc.b    $00
 ShipHit:
                 dc.b    $00
-D_04209:
+DeathTimer:
                 dc.b    $00
-D_0420A:
+FadeSteps:
                 dc.b    $00
 ShipIntroTimer:
                 dc.b    $00
 SpaceKey:
                 dc.b    $00
-D_0420D:
+StageEndStarted:
                 dc.b    $00
 Continues:
                 dc.b    $00
 Paused:
                 dc.b    $00
-D_04210:
+BonusRollDelay:
                 dc.w    $0000
 Score:
                 dc.w    $0000,$0000
@@ -5586,7 +5574,7 @@ ExtraLifePtr:
                 dc.w    $0000,$0000
 ScoreShown:
                 dc.b    $00,$00,$00
-D_04221:
+GamesPlayed:
                 dc.b    $00
 LevelTablePtr:
                 dc.w    $0000,$0000
@@ -5606,7 +5594,7 @@ DefSpeedFlash:
                 dc.w    $1303,$002E,$0260,$0003,$FFFF,$0000,$0001,$2490
                 dc.w    $0000,$0130,$0000,$427A,$0000,$427E,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000
-D_0427A:
+SpeedFlashAnim:
                 dc.w    $0001,$FF00,$0000,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
@@ -5671,10 +5659,13 @@ D_0427A:
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000
-StackTop:
+StackTop:                               ; the stack grows down from here
+; InitMapOffsets: offsets into GroundLaserMoves that get +MapRowBytes
+; (GroundLaserRowDown) and -MapRowBytes (GroundLaserRowUp), $FFFF ends
+GroundLaserRowDown:
                 dc.w    $001A,$0042,$0060,$00BA,$00CE,$00F6,$015A,$01A0
                 dc.w    $01D2,$01FA,$0236,$025E,$FFFF
-D_04688:
+GroundLaserRowUp:
                 dc.w    $0006,$002E,$006A,$00B0,$00E2,$010A,$0146,$01AA
                 dc.w    $01BE,$01F0,$024A,$0272,$FFFF
 ExtraLifeTable:
@@ -5686,29 +5677,29 @@ DigitFont:
                 dc.w    $FEFE,$84FE,$FE02,$FEFE,$8210,$8002,$FE02,$8202
                 dc.w    $8202,$8610,$8002,$0402,$8202,$8202,$FE10,$FEFE
                 dc.w    $04FE,$FE02,$FEFE,$0000
-D_04702:
+BigDigitLine:
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000
-D_0470E:
+LifeIcon:
                 dc.w    $0818,$4040,$6828,$1020,$4040,$6828,$3838,$3C3C
                 dc.w    $3C28
-D_04720:
+BonusDigitsTable:
                 dc.w    $0010,$0000,$0005,$0001,$0000,$0004,$0000,$1000
                 dc.w    $0003,$0000,$0100,$0002,$0000,$0000,$0000
-D_0473E:
+BonusText:
                 dc.w    $2020,$2020,$2020,$2020
-D_04746:
+BonusTextEnd:
                 dc.w    $0000
-D_04748:
+TxtStageCleared:
                 dc.w    $7320,$7420,$6120,$6720,$6520,$2020,$7820,$2020
                 dc.w    $6320,$6C20,$6520,$6120,$7220,$6520,$6400
-D_04766:
+TxtStageScore:
                 dc.w    $7374,$6167,$6520,$7363,$6F72,$6500
-D_04772:
+TxtContinue:
                 dc.w    $6320,$6F20,$6E20,$7420,$6920,$6E20,$7520,$6500
-D_04782:
+TxtPushFire:
                 dc.w    $7075,$7368,$2066,$6972,$6520,$6275,$7474,$6F6E
                 dc.b    $00
-D_04793:
+TxtCredit:
                 dc.b    $63,$20,$72,$20,$65,$20,$64,$20,$69,$20,$74,$20,$20,$78,$00
 ; Ending text, shown when the game is finished after level 8
 ; (CheckEndOfGame): screen position.l, string.l pairs, $FFFFFFFF ends.
@@ -5785,7 +5776,7 @@ DefExplosion2:
 DefExplosionLarge:
                 dc.w    $3304
                 dc.w    $002C,$0990,$0000,$FFFF,$0000,$0000,$B440
-                dc.l    L_004C8
+                dc.l    $000004C8
                 dc.w    $0000,$49D0,$0000,$427E,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0001,$0201,$0102,$0203,$0304,$0405
                 dc.w    $0506,$0607,$0708,$0805,$0506,$0607,$0708,$08FF
@@ -5794,10 +5785,10 @@ DefRingBurst:
                 dc.w    $1E03,$002E,$03C0,$0001,$FFFF,$0000,$0001,$0A50
                 dc.w    $0000,$01E0,$0000,$4A14,$0000,$427E,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000,$0001,$0203,$0405,$06FF
-D_04A1C:
+DirectionOctants:
                 dc.w    $000F,$0E0D,$0C08,$090A,$0B0C,$0001,$0203,$0408
                 dc.w    $0706,$0504
-D_04A30:
+SlopeThresholds:
                 dc.w    $0600,$02FE,$0156,$00AA,$0000
 EnemyBullets:
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
@@ -5843,35 +5834,35 @@ WaveBeamGfx:
                 dc.w    $0000,$0000
 WaveBeamFrameSize:
                 dc.w    $0000,$0000
-D_04B70:
+BeamMeterLevel:
                 dc.w    $0000
-D_04B72:
+BeamMeterBits:
                 dc.w    $0000,$0000
-D_04B76:
+ShotX:
                 dc.w    $0000,$0000,$0000
-D_04B7C:
+ShotX3:
                 dc.w    $0000,$0000
-D_04B80:
+ShotX5:
                 dc.w    $0000,$0000
-D_04B84:
+ShotX7:
                 dc.w    $0000
-D_04B86:
+ShotX8:
                 dc.w    $0000
 ShotsX:
                 dc.w    $0000
-D_04B8A:
+BitShotX:
                 dc.w    $0000,$0000
-D_04B8E:
+AntiAirLaserX:
                 dc.w    $0000
 WaveBeamX:
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000,$0000
-D_04BAA:
+AntiAirLaserY:
                 dc.w    $0000
-D_04BAC:
+WaveBeamY:
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000,$0000
-D_04BC6:
+AntiAirLaserFrame:
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
@@ -5914,7 +5905,7 @@ WaveCannonShots:
                 dc.w    $0E04,$0009,$0001,$8E50,$0000,$0150,$000C,$0011
                 dc.w    $0003,$000A,$0002,$0016,$0008,$0006,$002E,$0C03
                 dc.w    $0007,$0001,$8B50
-                dc.l    GameEntry
+                dc.l    $000000C0
                 dc.w    $0006,$001B,$0003,$0002,$0001,$000D,$000A,$0006
                 dc.w    $0030,$0C02,$0005,$0001,$89D0,$0000,$0060
 ReflectLaserMoves:
@@ -5924,7 +5915,7 @@ ReflectLaserMoves:
                 dc.w    $FE6E,$FFF0,$0000,$0002,$FFFF,$FFFE,$0000,$FFF0
                 dc.w    $0000,$FFFF,$FE70,$0000,$0000,$0003,$0000,$0000
                 dc.w    $FFF1,$000F,$0002
-                dc.l    L_0018E
+                dc.l    $0000018E
                 dc.w    $FFF0,$0000,$0001,$FFFF,$FFFE,$0000,$0010,$0003
                 dc.w    $0000,$0190,$0000,$0000,$0000,$0000,$0000,$000F
                 dc.w    $000F,$0003,$0000,$0192,$0010,$0000,$0000,$0000
@@ -5948,14 +5939,14 @@ GroundLaserFrames:
 GroundLaserMoves:
                 dc.w    $0000,$FFF2,$0000,$FFFF,$FDE8,$000E,$0000,$0001
                 dc.w    $0000,$0002,$0000,$000E,$0002
-                dc.l    L_00218
+                dc.l    $00000218
                 dc.w    $0000,$0000,$FFFF,$0000,$0000,$0000,$FFF2,$0000
                 dc.w    $FFFF,$FDE8,$000E,$0000,$0001,$0000,$0002,$0000
                 dc.w    $000E,$0002
-                dc.l    L_00218
+                dc.l    $00000218
                 dc.w    $0000,$0000,$FFFF,$0000,$0000,$000E,$0000,$0001
                 dc.w    $0000,$0002,$0000,$000E,$0002
-                dc.l    L_00218
+                dc.l    $00000218
                 dc.w    $0000,$0000,$FFFF,$0000,$0000,$0000,$0000,$FFFF
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
@@ -5963,11 +5954,11 @@ GroundLaserMoves:
                 dc.w    $0001,$0000,$0002,$0000,$FFF2,$0000,$FFFF,$FDE8
                 dc.w    $0000,$0000,$FFFF,$0000,$0000,$0000,$0000,$FFFF
                 dc.w    $0000,$0000,$0000,$000E,$0002
-                dc.l    L_00218
+                dc.l    $00000218
                 dc.w    $000E,$0000,$0001,$0000,$0002,$0000,$FFF2,$0000
                 dc.w    $FFFF,$FDE8,$0000,$0000,$FFFF,$0000,$0000,$0000
                 dc.w    $000E,$0002
-                dc.l    L_00218
+                dc.l    $00000218
                 dc.w    $000E,$0000,$0001,$0000,$0002,$0000,$FFF2,$0000
                 dc.w    $FFFF,$FDE8,$0000,$0000,$FFFF,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
@@ -6027,23 +6018,23 @@ ShipTiltTable:
                 dc.w    $0505,$0404,$0406,$0606,$0606
 UpperBitTrail:
                 dc.w    $0000
-D_05114:
+UpperBitTrailOut:
                 dc.w    $0000,$0000
 UpperBitFrame:
                 dc.w    $0000,$0000
 LowerBitTrail:
                 dc.w    $0000
-D_0511E:
+LowerBitTrailOut:
                 dc.w    $0000,$0000
 LowerBitFrame:
                 dc.w    $0000,$0000
 UpperBitPos:
                 dc.w    $0000
-D_05128:
+UpperBitY:
                 dc.w    $0000
 LowerBitPos:
                 dc.w    $0000
-D_0512C:
+LowerBitY:
                 dc.w    $0000
 UpperBitHitPos:
                 dc.w    $0000,$0000
@@ -6081,11 +6072,11 @@ ForceHalt:
                 dc.b    $00
 ForceYDir:
                 dc.b    $00
-D_0514C:
+Fire2Latch:
                 dc.w    $0000
-D_0514E:
+ForceOfsX:
                 dc.w    $0000
-D_05150:
+ForceOfsY:
                 dc.w    $0000
 ForceHitbox:
                 dc.w    $0000
@@ -6112,12 +6103,12 @@ ForceAnimTable:
                 dc.w    $0000,$7040,$0000,$7630,$0000,$0130,$0003,$0011
                 dc.w    $0000,$7760,$0000,$7D50,$0000,$0130,$0003,$0011
                 dc.w    $0000,$7E80,$0000,$8300,$0000,$0180,$0004,$0016
-D_051AC:
+ForceDockOffsets:
                 dc.w    $FFED,$0000,$0018,$0001,$0000,$0000,$001A,$0001
                 dc.w    $FFE0,$FFFE,$0000,$0000,$FFE7,$FFFC,$0014,$FFFD
-D_051CC:
+ForceSpriteOffsets:
                 dc.w    $000A,$0006,$0007,$0008,$0000,$0000,$0011,$000B
-D_051DC:
+ForceHitboxes:
                 dc.w    $0000,$0000,$0015,$000E,$0000,$0000,$0015,$0011
                 dc.w    $000C,$0000,$0014,$0011,$0005,$0001,$0017,$0014
 ; object definition: cannon walker, 10 frames ($15A50) - default wave object
@@ -6127,13 +6118,13 @@ DefWalker:
                 dc.l    ObjUpd_Walker
                 dc.l    SpawnWalker
                 dc.w    $0000,$0200
-D_05224:
+WalkerAnimLeft:
                 dc.b    $01,$00,$02,$00,$FF
-D_05229:
+WalkerAnimRight:
                 dc.b    $03,$05,$04,$05,$FF
-D_0522E:
+WalkerJumpLeft:
                 dc.b    $07,$FF,$00,$06,$FF
-D_05233:
+WalkerJumpRight:
                 dc.b    $09,$FF,$00,$08,$FF,$00,$03,$00,$04,$00,$12,$00,$16,$00,$02,$00
                 dc.b    $07,$00,$15,$00,$12,$00,$02,$00,$07,$00,$15,$00,$11,$00,$03,$00
                 dc.b    $07,$00,$15,$00,$12,$00,$03,$00,$07,$00,$14,$00,$12,$00,$03,$00
@@ -6143,7 +6134,7 @@ D_05233:
 ; object definition: power-up items - blue/red/yellow laser crystal, speed, missiles, bit ($17AD0)
 DefPowerUp:
                 dc.w    $1403,$002E,$0280,$0000,$FFFF,$0000,$0001,$7AD0
-                dc.l    L_00140
+                dc.l    $00000140
                 dc.w    $0000,$52B0,$0000,$52B8
                 dc.l    ObjUpd_ScrollOff
                 dc.w    $0000,$0000,$0000,$0000,$0001,$0203,$0405,$FF00
@@ -6158,45 +6149,96 @@ DefPowerUp:
 ; interleaved 40-byte lines at $2C7B0/$2CA08/$2CC60 ($258 each, 15 lines),
 ; its own colours, then COLOR01 changes on lines $EE-$F3 (gradient).
 CopperList:
-                dc.w    $0180,$0000,$0100,$0000,$00E0
+                dc.w    $0180,$0000             ; COLOR00
+                dc.w    $0100,$0000             ; BPLCON0
+                dc.w    $00E0                   ; BPL1PTH
 CopBplPtrs:
-                dc.l    jt_TurnTowards
-                dc.w    $0000,$00E4
-                dc.l    jt_AddScore
-                dc.w    $0000,$00E8
-                dc.l    jt_AdjustForScroll
-                dc.w    $0000,$00EC,$0000,$00EE,$0000,$00F0,$0000,$00F2
-                dc.w    $0000,$0130,$0004,$0132,$90A2,$0134,$0004,$0136
-                dc.w    $914A,$0138,$0004,$013A,$91F2,$013C,$0004,$013E
-                dc.w    $929A,$0120
+                dc.w    $0000
+                dc.w    $00E2,$0000             ; BPL1PTL
+                dc.w    $00E4,$0000             ; BPL2PTH
+                dc.w    $00E6,$0000             ; BPL2PTL
+                dc.w    $00E8,$0000             ; BPL3PTH
+                dc.w    $00EA,$0000             ; BPL3PTL
+                dc.w    $00EC,$0000             ; BPL4PTH
+                dc.w    $00EE,$0000             ; BPL4PTL
+                dc.w    $00F0,$0000             ; BPL5PTH
+                dc.w    $00F2,$0000             ; BPL5PTL
+                dc.w    $0130,$0004             ; SPR4PTH
+                dc.w    $0132,$90A2             ; SPR4PTL
+                dc.w    $0134,$0004             ; SPR5PTH
+                dc.w    $0136,$914A             ; SPR5PTL
+                dc.w    $0138,$0004             ; SPR6PTH
+                dc.w    $013A,$91F2             ; SPR6PTL
+                dc.w    $013C,$0004             ; SPR7PTH
+                dc.w    $013E,$929A             ; SPR7PTL
+                dc.w    $0120                   ; SPR0PTH
 CopForceSprites:
-                dc.l    L_00122
-                dc.w    $0004,$0124,$0000,$0126,$0004,$0128,$0000,$012A
-                dc.w    $0004,$012C
-                dc.l    L_0012E
-                dc.w    $0004,$0108,$00A8,$010A,$00A8,$0182
+                dc.w    $0000
+                dc.w    $0122,$0004             ; SPR0PTL
+                dc.w    $0124,$0000             ; SPR1PTH
+                dc.w    $0126,$0004             ; SPR1PTL
+                dc.w    $0128,$0000             ; SPR2PTH
+                dc.w    $012A,$0004             ; SPR2PTL
+                dc.w    $012C,$0000             ; SPR3PTH
+                dc.w    $012E,$0004             ; SPR3PTL
+                dc.w    $0108,$00A8             ; BPL1MOD
+                dc.w    $010A,$00A8             ; BPL2MOD
+                dc.w    $0182                   ; COLOR01
 CopColours:
-                dc.w    $0000,$0184,$0000,$0186
-                dc.l    L_00188
-                dc.w    $0000,$018A,$0000,$018C
-                dc.l    L_0018E
-                dc.w    $0000,$0190,$0000,$0192,$0000,$0194
-                dc.l    L_00196
-                dc.w    $0000,$0198,$0000,$019A,$0000,$019C
-                dc.l    L_0019E
-                dc.w    $0000,$0102
+                dc.w    $0000
+                dc.w    $0184,$0000             ; COLOR02
+                dc.w    $0186,$0000             ; COLOR03
+                dc.w    $0188,$0000             ; COLOR04
+                dc.w    $018A,$0000             ; COLOR05
+                dc.w    $018C,$0000             ; COLOR06
+                dc.w    $018E,$0000             ; COLOR07
+                dc.w    $0190,$0000             ; COLOR08
+                dc.w    $0192,$0000             ; COLOR09
+                dc.w    $0194,$0000             ; COLOR10
+                dc.w    $0196,$0000             ; COLOR11
+                dc.w    $0198,$0000             ; COLOR12
+                dc.w    $019A,$0000             ; COLOR13
+                dc.w    $019C,$0000             ; COLOR14
+                dc.w    $019E,$0000             ; COLOR15
+                dc.w    $0102                   ; BPLCON1
 CopBplcon1:
-                dc.w    $0000,$0104,$0024,$0100,$4200,$EC01,$FFFE,$009C
-                dc.w    $8010,$0100,$0000,$0102,$0000,$00E0,$0002,$00E2
-                dc.w    $C7B0,$00E4,$0002,$00E6,$CA08,$00E8,$0002,$00EA
-                dc.w    $CC60,$0108
-                dc.l    jt_PlaySound
-                dc.w    $0000,$0184,$0999,$0186,$0ACD,$0188,$0FFF,$018A
-                dc.w    $089F,$018C,$000C,$018E,$0E00,$ED01,$FFFE,$0100
-                dc.w    $3200,$EE01,$FFFE,$0182,$0006,$EF01,$FFFE,$0182
-                dc.w    $000A,$F001,$FFFE,$0182,$000E,$F101,$FFFE,$0182
-                dc.w    $000A,$F201,$FFFE,$0182,$0006,$F301,$FFFE,$0182
-                dc.w    $0FFF,$FFFF,$FFFE
+                dc.w    $0000
+                dc.w    $0104,$0024             ; BPLCON2
+                dc.w    $0100,$4200             ; BPLCON0
+                dc.w    $EC01,$FFFE             ; wait for line $EC
+                dc.w    $009C,$8010             ; INTREQ: copper interrupt (CopperInt)
+                dc.w    $0100,$0000             ; BPLCON0: blank while the HUD is set up
+                dc.w    $0102,$0000             ; BPLCON1
+                dc.w    $00E0,$0002             ; BPL1PTH: HUD planes, 40-byte lines
+                dc.w    $00E2,$C7B0             ; BPL1PTL
+                dc.w    $00E4,$0002             ; BPL2PTH
+                dc.w    $00E6,$CA08             ; BPL2PTL
+                dc.w    $00E8,$0002             ; BPL3PTH
+                dc.w    $00EA,$CC60             ; BPL3PTL
+                dc.w    $0108,$0000             ; BPL1MOD
+                dc.w    $010A,$0000             ; BPL2MOD
+                dc.w    $0184,$0999             ; COLOR02
+                dc.w    $0186,$0ACD             ; COLOR03
+                dc.w    $0188,$0FFF             ; COLOR04
+                dc.w    $018A,$089F             ; COLOR05
+                dc.w    $018C,$000C             ; COLOR06
+                dc.w    $018E,$0E00             ; COLOR07
+                dc.w    $ED01,$FFFE             ; wait for line $ED
+                dc.w    $0100,$3200             ; BPLCON0: 3 planes (HUD)
+                                                ; then a COLOR01 gradient:
+                dc.w    $EE01,$FFFE             ; wait for line $EE
+                dc.w    $0182,$0006             ; COLOR01
+                dc.w    $EF01,$FFFE             ; wait for line $EF
+                dc.w    $0182,$000A             ; COLOR01
+                dc.w    $F001,$FFFE             ; wait for line $F0
+                dc.w    $0182,$000E             ; COLOR01
+                dc.w    $F101,$FFFE             ; wait for line $F1
+                dc.w    $0182,$000A             ; COLOR01
+                dc.w    $F201,$FFFE             ; wait for line $F2
+                dc.w    $0182,$0006             ; COLOR01
+                dc.w    $F301,$FFFE             ; wait for line $F3
+                dc.w    $0182,$0FFF             ; COLOR01
+                dc.w    $FFFF,$FFFE             ; end of list
 MissileVelocities:
                 dc.w    $0000,$FFFA,$0004,$FFFA,$0006,$FFFA,$0006,$FFFC
                 dc.w    $0006,$0000,$0006,$0004,$0006,$0006,$0004,$0006
@@ -6235,12 +6277,12 @@ MissileReload:
                 dc.w    $0000
 MissilesInFlight:
                 dc.w    $0000
-D_055AC:
+TitleLetterList:
                 dc.w    $0000,$55E6,$0000,$0000,$0000,$5602,$0005,$0E62
                 dc.w    $0000,$561E,$0005,$0E8F,$0000,$563A,$0005,$0EBC
                 dc.w    $0000,$5656,$0005,$0EE9,$0000,$5672,$0005,$0F16
                 dc.w    $0000,$568E,$0000,$0000
-D_055E4:
+TitleLetterAnim:
                 dc.w    $00FF,$2A04,$002C,$07E0,$0000,$0000,$0000,$0004
                 dc.w    $D792,$0000,$03F0,$0000,$0000,$0000,$56AA,$1A03
                 dc.w    $002E,$0340,$0000,$0000,$0000,$0004,$FEF2,$0000
@@ -6270,62 +6312,63 @@ TitleLettersDone:
                 dc.b    $00
 TitleFadeSteps:
                 dc.b    $00
-D_056F4:
+TitleLetterPhase:
                 dc.b    $00
 TitleMusicOn:
                 dc.b    $00
 TitleDelay:
                 dc.w    $0000
-D_056F8:
+TitleWipeTop:
                 dc.w    $0000
-D_056FA:
+TitleWipeBottom:
                 dc.w    $0000
 JinglePlaying:
                 dc.b    $00
-D_056FD:
+JingleCmd:
                 dc.b    $00
 TitleAbort:
                 dc.b    $00
 CheatMode:
                 dc.b    $00
-D_05700:
+ScoreDigitChars:
                 dc.b    $30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$20
 CharSet:
                 dc.b    $61,$62,$63,$64,$65,$66,$67,$68,$69,$6A,$6B,$6C,$6D,$6E,$6F,$70
                 dc.b    $71,$72,$73,$74,$75,$76,$77,$78,$79,$7A,$30,$31,$32,$33,$34,$35
                 dc.b    $36,$37,$38,$39,$2E,$2C,$2D,$5F,$21,$3F,$48,$43,$3C,$53,$45,$20
                 dc.b    $00
-D_0573C:
+TxtEnterName:
                 dc.w    $706C,$6561,$7365,$2065,$6E74,$6572,$2079,$6F75
                 dc.w    $7220,$6E61,$6D65,$2070,$6C61,$7965,$7220,$3100
+; High-score table (LoadHighScores/SaveHighScores keep it on track 68).
+; 10 entries, best first, 12 bytes each: screen offset of the line on the
+; score screen.l, name.l, score.l (6-digit BCD).  The default table names
+; the Amiga conversion team.
 HighScores:
-                dc.l    L_02490
-                dc.w    $0000,$57D4
-D_05764:
-                dc.w    $0018,$0000,$0000,$30C0,$0000,$57EC,$0017,$0000
-                dc.l    L_03CF0
-                dc.w    $0000,$5804,$0016,$0000,$0000,$4920,$0000,$581C
-                dc.w    $0015,$0000,$0000,$5550,$0000,$5834,$0009,$0000
-                dc.w    $0000,$6180,$0000,$584C,$0007,$0000,$0000,$6DB0
-                dc.w    $0000,$5864,$0005,$0000,$0000,$79E0,$0000,$587C
-                dc.w    $0004,$0000,$0000,$8610,$0000,$5894,$0003,$5000
-D_057C8:
-                dc.w    $0000,$9240,$0000,$58AC,$0003,$0000,$6163,$6869
-                dc.w    $6D20,$6D6F,$6C6C,$6572,$2020,$2020,$0030,$3030
-                dc.w    $3030,$3000,$686F,$6C67,$6572,$2073,$6368,$6D69
-                dc.w    $6474,$2020,$0030,$3030,$3030,$3000,$6C75,$747A
-                dc.w    $206F,$7374,$6572,$6B6F,$726E,$2020,$0030,$3030
-                dc.w    $3030,$3000,$7374,$6566,$616E,$2074,$736F,$7570
-                dc.w    $6172,$692E,$0030,$3030,$3030,$3000,$7769,$6C6C
-                dc.w    $6920,$6261,$6563,$6B65,$7220,$2020,$0030,$3030
-                dc.w    $3030,$3000,$6461,$7269,$7573,$207A,$656E,$6465
-                dc.w    $6820,$2020,$0030,$3030,$3030,$3000,$7465,$7574
-                dc.w    $2077,$6569,$6465,$6D61,$6E6E,$2020,$0030,$3030
-                dc.w    $3030,$3000,$726F,$6265,$7274,$2067,$7261,$756C
-                dc.w    $6963,$6820,$0030,$3030,$3030,$3000,$7468,$6F6D
-                dc.w    $6173,$2066,$616E,$736C,$6175,$2020,$0030,$3030
-                dc.w    $3030,$3000,$6865,$696B,$6F20,$7363,$6872,$6F65
-                dc.w    $6465,$7220,$0030,$3030,$3030,$3000
+                dc.l    $00002490,HighScoreText+0*24,$00180000
+                dc.l    $000030C0,HighScoreText+1*24,$00170000
+                dc.l    $00003CF0,HighScoreText+2*24,$00160000
+                dc.l    $00004920,HighScoreText+3*24,$00150000
+                dc.l    $00005550,HighScoreText+4*24,$00090000
+                dc.l    $00006180,HighScoreText+5*24,$00070000
+                dc.l    $00006DB0,HighScoreText+6*24,$00050000
+                dc.l    $000079E0,HighScoreText+7*24,$00040000
+                dc.l    $00008610,HighScoreText+8*24,$00035000
+                dc.l    $00009240,HighScoreText+9*24,$00030000
+TopScore        equ     HighScores+8            ; best score (shown on the HUD)
+LowestScoreEntry equ    HighScores+9*12
+; Names: 16 characters and a 0, then the score as text (FormatScores) and a 0.
+HighScoreText:
+                dc.b    "achim moller    ",0,"000000",0
+                dc.b    "holger schmidt  ",0,"000000",0
+                dc.b    "lutz osterkorn  ",0,"000000",0
+                dc.b    "stefan tsoupari.",0,"000000",0
+                dc.b    "willi baecker   ",0,"000000",0
+                dc.b    "darius zendeh   ",0,"000000",0
+                dc.b    "teut weidemann  ",0,"000000",0
+                dc.b    "robert graulich ",0,"000000",0
+                dc.b    "thomas fanslau  ",0,"000000",0
+                dc.b    "heiko schroeder ",0,"000000",0
 TitleTextList:
                 dc.w    $0002,$F251,$0000,$58F8,$0002,$F9A1,$0000,$590D
                 dc.w    $0003,$0C51,$0000,$5923,$0003,$1FDC
