@@ -40,102 +40,184 @@ LevelInterface:
                 dc.l    $5C9A8               ; LvMusic: player in level B; samples $5F0EE (8), data $5F184, periods $5F12E
 ScrollScript:
                 dc.w    $000B,$0000,$0064,$0000,$0000,$FFFF
+; Checkpoint list (LV_Waves): scroll x reached, where to resume in the
+; wave list.  Highest first; the 0 entry is the level start.
 WaveList:
-                dc.w    $057F,$0004,$A680,$0000,$0004,$A344,$0064,$0168
-                dc.w    $0028,$0000,$0014,$0000,$0000,$0004,$AEFE,$0065
-                dc.w    $0167,$00B8,$0002,$0014,$0000,$0000,$0004,$AEFE
-                dc.w    $00B4,$0170,$003C,$0000,$FFFC,$0000,$0000,$FFFF
-                dc.w    $FFFF,$00E1,$015D,$0070,$0003,$0201,$FF00,$0000
-                dc.w    $0004,$ADBC,$00FA,$015D,$0030,$0003,$0201,$FF00
-                dc.w    $0000,$0004,$ADBC,$0122,$015D,$0030,$0003,$0201
-                dc.w    $FF00,$0000,$0004,$ADBC,$0127,$0167,$00CC,$0001
-                dc.w    $0028,$0000,$0000,$0004,$AEFE,$0152,$015D,$0030
-                dc.w    $0003,$0201,$FF00,$0000,$0004,$ADBC,$0153,$0167
-                dc.w    $005C,$0001,$001E,$0000,$0000,$0004,$AEFE,$0176
-                dc.w    $015D,$0030,$0003,$0201,$FF00,$0000,$0004,$ADBC
-                dc.w    $0190,$0167,$009C,$0001,$001E,$0000,$0000,$0004
-                dc.w    $AEFE,$01E0,$0130,$0000,$0002,$03FF,$0000,$0000
-                dc.w    $0004,$ADBC,$01E1,$0167,$00CC,$0001,$0028,$0000
-                dc.w    $0000,$0004,$AEFE,$01FE,$00A1,$00E0,$0000,$03FF
-                dc.w    $0000,$0000,$0004,$ADBC,$0226,$00EA,$0000,$0002
-                dc.w    $03FF,$0000,$0000,$0004,$ADBC,$0230,$015D,$0030
-                dc.w    $0003,$FF00,$0000,$0000,$0004,$ADBC,$028A,$0000
-                dc.w    $00B0,$0001,$0003,$FF00,$0000,$0004,$ADBC,$0294
-                dc.w    $0163,$0045,$FFFE,$0000,$0000,$0000,$0004,$AE1E
-                dc.w    $029C,$0074,$0000,$0002,$00FF,$0000,$0000,$0004
-                dc.w    $ADBC,$02A2,$0163,$0045,$FFFE,$0000,$0000,$0000
-                dc.w    $0004,$AE1E,$02BC,$0000,$00B0,$0001,$0003,$FF00
-                dc.w    $0000,$0004,$ADBC,$02D0,$015D,$0030,$0003,$FF00
-                dc.w    $0000,$0000,$0004,$ADBC,$02EE,$0000,$00B0,$0001
-                dc.w    $0003,$FF00,$0000,$0004,$ADBC,$02EF,$0167,$005C
-                dc.w    $0001,$001E,$0000,$0000,$0004,$AEFE,$0311,$015D
-                dc.w    $00B0,$0003,$0001,$0201,$02FF,$0004,$ADBC,$0334
-                dc.w    $015D,$00B0,$0003,$0001,$0203,$00FF,$0004,$ADBC
-                dc.w    $0335,$015D,$0030,$0003,$FF00,$0000,$0000,$0004
-                dc.w    $ADBC,$0336,$0167,$001D,$0001,$001E,$0000,$0000
-                dc.w    $0004,$AEFE,$0346,$0000,$00B0,$0101,$0003,$FF00
-                dc.w    $0000,$0004,$ADBC,$0352,$0000,$0030,$0001,$0203
-                dc.w    $0001,$02FF,$0004,$ADBC,$0366,$015D,$00B0,$0003
-                dc.w    $0001,$0203,$00FF,$0004,$ADBC,$03A2,$0000,$0030
-                dc.w    $0001,$0203,$0001,$02FF,$0004,$ADBC,$03F2,$015D
-                dc.w    $0030,$0003,$0203,$FF00,$0000,$0004,$ADBC,$042C
-                dc.w    $0167,$001D,$0001,$001E,$0000,$0000,$0004,$AEFE
-                dc.w    $0438,$0000,$00B0,$0001,$0003,$0203,$FF00,$0004
-                dc.w    $ADBC,$0460,$015C,$0072,$0000,$0023,$0000,$0000
-                dc.w    $0004,$AEFE,$0492,$00BE,$00E0,$0000,$0302,$03FF
-                dc.w    $0000,$0004,$ADBC,$049C,$00F5,$00E0,$0000,$0102
-                dc.w    $FF00,$0000,$0004,$ADBC,$04CE,$0110,$0000,$0002
-                dc.w    $FF00,$0000,$0000,$0004,$ADBC,$052F,$00FA,$0003
-                dc.w    $FFFE,$0000,$0000,$0000,$0004,$AE1E,$053C,$00FA
-                dc.w    $00E0,$0000,$01FF,$0000,$0000,$0004,$ADBC,$058C
-                dc.w    $00C8,$0003,$FFFE,$0000,$0000,$0000,$0004,$AE1E
-                dc.w    $0591,$0064,$0003,$0002,$0000,$0000,$0000,$0004
-                dc.w    $AE1E,$05A3,$0104,$0003,$FFFE,$0000,$0000,$0000
-                dc.w    $0004,$AE1E,$05A4,$006E,$0003,$0002,$0000,$0000
-                dc.w    $0000,$0004,$AE1E,$05AA,$0064,$0003,$0002,$0000
-                dc.w    $0000,$0000,$0004,$AE1E,$05BB,$0064,$0003,$0002
-                dc.w    $0000,$0000,$0000,$0004,$AE1E,$05C5,$005F,$0003
-                dc.w    $0002,$0000,$0000,$0000,$0004,$AE1E,$05CF,$005A
-                dc.w    $0003,$0002,$0000,$0000,$0000,$0004,$AE1E,$05D9
-                dc.w    $0055,$0003,$0002,$0000,$0000,$0000,$0004,$AE1E
-                dc.w    $05E1,$015D,$0084,$0002,$FFFC,$0000,$0000,$FFFF
-                dc.w    $FFFF,$05E3,$0050,$0003,$0002,$0000,$0000,$0000
-                dc.w    $0004,$AE1E,$05ED,$004B,$0003,$0002,$0000,$0000
-                dc.w    $0000,$0004,$AE1E,$05F7,$0046,$0003,$0002,$0000
-                dc.w    $0000,$0000,$0004,$AE1E,$0601,$0041,$0003,$0002
-                dc.w    $0000,$0000,$0000,$0004,$AE1E,$060B,$003C,$0003
-                dc.w    $0002,$0000,$0000,$0000,$0004,$AE1E,$0615,$0037
-                dc.w    $0003,$0002,$0000,$0000,$0000,$0004,$AE1E,$061F
-                dc.w    $0032,$0003,$0002,$0000,$0000,$0000,$0004,$AE1E
-                dc.w    $0640,$0082,$0003,$FFFE,$0000,$0000,$0000,$0004
-                dc.w    $AE1E,$064A,$00AF,$0018,$0002,$0000,$0000,$0000
-                dc.w    $0004,$AE1E,$066D,$015D,$00B0,$0003,$0001,$0203
-                dc.w    $00FF,$0004,$ADBC,$0688,$015D,$00B0,$0003,$0001
-                dc.w    $0203,$00FF,$0004,$ADBC,$06A4,$015D,$00B0,$0003
-                dc.w    $0001,$0203,$00FF,$0004,$ADBC,$06A6,$0170,$0084
-                dc.w    $0000,$FFFC,$0000,$0000,$FFFF,$FFFF,$06AE,$0167
-                dc.w    $005C,$0001,$0028,$0000,$0000,$0004,$AEFE,$06BC
-                dc.w    $015D,$00B0,$0003,$0001,$0203,$00FF,$0004,$ADBC
-                dc.w    $06BE,$015E,$008C,$0001,$0028,$0000,$0000,$0004
-                dc.w    $AEFE,$06D6,$015D,$00B0,$0003,$0001,$0203,$00FF
-                dc.w    $0004,$ADBC,$071C,$0167,$001D,$0001,$0032,$0000
-                dc.w    $0000,$0004,$AEFE,$0753,$0167,$005C,$0001,$001E
-                dc.w    $0000,$0000,$0004,$AEFE,$0754,$0167,$008C,$0001
-                dc.w    $001E,$0000,$0000,$0004,$AEFE,$0780,$015D,$0070
-                dc.w    $0003,$0201,$FF00,$0000,$0004,$ADBC,$07B0,$015D
-                dc.w    $0030,$0003,$0201,$0003,$FF00,$0004,$ADBC,$07B1
-                dc.w    $015C,$00B0,$0003,$0001,$02FF,$0000,$0004,$ADBC
-                dc.w    $07C3,$0168,$0028,$0000,$0014,$0000,$0000,$0004
-                dc.w    $AEFE,$07C4,$0167,$00B4,$0002,$000A,$0000,$0000
-                dc.w    $0004,$AEFE,$07F3,$015D,$0070,$0003,$FF00,$0000
-                dc.w    $0000,$0004,$ADBC,$082A,$015E,$001D,$0001,$001E
-                dc.w    $0000,$0000,$0004,$AEFE,$082F,$00A0,$0000,$0002
-                dc.w    $03FF,$0000,$0000,$0004,$ADBC,$0834,$0170,$00B0
-                dc.w    $0003,$FFFC,$0000,$0000,$FFFF,$FFFF,$0889,$0000
-                dc.w    $0070,$0001,$0203,$FF00,$0000,$0004,$ADBC,$08DE
-                dc.w    $015E,$001D,$0001,$0023,$0000,$0000,$0004,$AEFE
-                dc.w    $08DF,$015E,$00CC,$0001,$0078,$0000,$0000,$0004
-                dc.w    $AEFE,$7530
+                dc.w    $057F
+                dc.l    WavesFrom_057F
+                dc.w    $0000
+                dc.l    Waves
+; Wave list: trigger (scroll x; level 3: frame count), x, y, 8 bytes
+; for the spawn routine, definition (-1 = POW Armor, the default).
+Waves:
+                dc.w    $0064,$0168,$0028
+                dc.l    $00000014,$00000000,Def_4AEFE
+                dc.w    $0065,$0167,$00B8
+                dc.l    $00020014,$00000000,Def_4AEFE
+                dc.w    $00B4,$0170,$003C
+                dc.l    $0000FFFC,$00000000,$FFFFFFFF ; POW Armor
+                dc.w    $00E1,$015D,$0070
+                dc.l    $00030201,$FF000000,Def_4ADBC
+                dc.w    $00FA,$015D,$0030
+                dc.l    $00030201,$FF000000,Def_4ADBC
+                dc.w    $0122,$015D,$0030
+                dc.l    $00030201,$FF000000,Def_4ADBC
+                dc.w    $0127,$0167,$00CC
+                dc.l    $00010028,$00000000,Def_4AEFE
+                dc.w    $0152,$015D,$0030
+                dc.l    $00030201,$FF000000,Def_4ADBC
+                dc.w    $0153,$0167,$005C
+                dc.l    $0001001E,$00000000,Def_4AEFE
+                dc.w    $0176,$015D,$0030
+                dc.l    $00030201,$FF000000,Def_4ADBC
+                dc.w    $0190,$0167,$009C
+                dc.l    $0001001E,$00000000,Def_4AEFE
+                dc.w    $01E0,$0130,$0000
+                dc.l    $000203FF,$00000000,Def_4ADBC
+                dc.w    $01E1,$0167,$00CC
+                dc.l    $00010028,$00000000,Def_4AEFE
+                dc.w    $01FE,$00A1,$00E0
+                dc.l    $000003FF,$00000000,Def_4ADBC
+                dc.w    $0226,$00EA,$0000
+                dc.l    $000203FF,$00000000,Def_4ADBC
+                dc.w    $0230,$015D,$0030
+                dc.l    $0003FF00,$00000000,Def_4ADBC
+                dc.w    $028A,$0000,$00B0
+                dc.l    $00010003,$FF000000,Def_4ADBC
+                dc.w    $0294,$0163,$0045
+                dc.l    $FFFE0000,$00000000,Def_4AE1E
+                dc.w    $029C,$0074,$0000
+                dc.l    $000200FF,$00000000,Def_4ADBC
+                dc.w    $02A2,$0163,$0045
+                dc.l    $FFFE0000,$00000000,Def_4AE1E
+                dc.w    $02BC,$0000,$00B0
+                dc.l    $00010003,$FF000000,Def_4ADBC
+                dc.w    $02D0,$015D,$0030
+                dc.l    $0003FF00,$00000000,Def_4ADBC
+                dc.w    $02EE,$0000,$00B0
+                dc.l    $00010003,$FF000000,Def_4ADBC
+                dc.w    $02EF,$0167,$005C
+                dc.l    $0001001E,$00000000,Def_4AEFE
+                dc.w    $0311,$015D,$00B0
+                dc.l    $00030001,$020102FF,Def_4ADBC
+                dc.w    $0334,$015D,$00B0
+                dc.l    $00030001,$020300FF,Def_4ADBC
+                dc.w    $0335,$015D,$0030
+                dc.l    $0003FF00,$00000000,Def_4ADBC
+                dc.w    $0336,$0167,$001D
+                dc.l    $0001001E,$00000000,Def_4AEFE
+                dc.w    $0346,$0000,$00B0
+                dc.l    $01010003,$FF000000,Def_4ADBC
+                dc.w    $0352,$0000,$0030
+                dc.l    $00010203,$000102FF,Def_4ADBC
+                dc.w    $0366,$015D,$00B0
+                dc.l    $00030001,$020300FF,Def_4ADBC
+                dc.w    $03A2,$0000,$0030
+                dc.l    $00010203,$000102FF,Def_4ADBC
+                dc.w    $03F2,$015D,$0030
+                dc.l    $00030203,$FF000000,Def_4ADBC
+                dc.w    $042C,$0167,$001D
+                dc.l    $0001001E,$00000000,Def_4AEFE
+                dc.w    $0438,$0000,$00B0
+                dc.l    $00010003,$0203FF00,Def_4ADBC
+                dc.w    $0460,$015C,$0072
+                dc.l    $00000023,$00000000,Def_4AEFE
+                dc.w    $0492,$00BE,$00E0
+                dc.l    $00000302,$03FF0000,Def_4ADBC
+                dc.w    $049C,$00F5,$00E0
+                dc.l    $00000102,$FF000000,Def_4ADBC
+                dc.w    $04CE,$0110,$0000
+                dc.l    $0002FF00,$00000000,Def_4ADBC
+                dc.w    $052F,$00FA,$0003
+                dc.l    $FFFE0000,$00000000,Def_4AE1E
+                dc.w    $053C,$00FA,$00E0
+                dc.l    $000001FF,$00000000,Def_4ADBC
+                dc.w    $058C,$00C8,$0003
+                dc.l    $FFFE0000,$00000000,Def_4AE1E
+                dc.w    $0591,$0064,$0003
+                dc.l    $00020000,$00000000,Def_4AE1E
+                dc.w    $05A3,$0104,$0003
+                dc.l    $FFFE0000,$00000000,Def_4AE1E
+                dc.w    $05A4,$006E,$0003
+                dc.l    $00020000,$00000000,Def_4AE1E
+                dc.w    $05AA,$0064,$0003
+                dc.l    $00020000,$00000000,Def_4AE1E
+WavesFrom_057F:
+                dc.w    $05BB,$0064,$0003
+                dc.l    $00020000,$00000000,Def_4AE1E
+                dc.w    $05C5,$005F,$0003
+                dc.l    $00020000,$00000000,Def_4AE1E
+                dc.w    $05CF,$005A,$0003
+                dc.l    $00020000,$00000000,Def_4AE1E
+                dc.w    $05D9,$0055,$0003
+                dc.l    $00020000,$00000000,Def_4AE1E
+                dc.w    $05E1,$015D,$0084
+                dc.l    $0002FFFC,$00000000,$FFFFFFFF ; POW Armor
+                dc.w    $05E3,$0050,$0003
+                dc.l    $00020000,$00000000,Def_4AE1E
+                dc.w    $05ED,$004B,$0003
+                dc.l    $00020000,$00000000,Def_4AE1E
+                dc.w    $05F7,$0046,$0003
+                dc.l    $00020000,$00000000,Def_4AE1E
+                dc.w    $0601,$0041,$0003
+                dc.l    $00020000,$00000000,Def_4AE1E
+                dc.w    $060B,$003C,$0003
+                dc.l    $00020000,$00000000,Def_4AE1E
+                dc.w    $0615,$0037,$0003
+                dc.l    $00020000,$00000000,Def_4AE1E
+                dc.w    $061F,$0032,$0003
+                dc.l    $00020000,$00000000,Def_4AE1E
+                dc.w    $0640,$0082,$0003
+                dc.l    $FFFE0000,$00000000,Def_4AE1E
+                dc.w    $064A,$00AF,$0018
+                dc.l    $00020000,$00000000,Def_4AE1E
+                dc.w    $066D,$015D,$00B0
+                dc.l    $00030001,$020300FF,Def_4ADBC
+                dc.w    $0688,$015D,$00B0
+                dc.l    $00030001,$020300FF,Def_4ADBC
+                dc.w    $06A4,$015D,$00B0
+                dc.l    $00030001,$020300FF,Def_4ADBC
+                dc.w    $06A6,$0170,$0084
+                dc.l    $0000FFFC,$00000000,$FFFFFFFF ; POW Armor
+                dc.w    $06AE,$0167,$005C
+                dc.l    $00010028,$00000000,Def_4AEFE
+                dc.w    $06BC,$015D,$00B0
+                dc.l    $00030001,$020300FF,Def_4ADBC
+                dc.w    $06BE,$015E,$008C
+                dc.l    $00010028,$00000000,Def_4AEFE
+                dc.w    $06D6,$015D,$00B0
+                dc.l    $00030001,$020300FF,Def_4ADBC
+                dc.w    $071C,$0167,$001D
+                dc.l    $00010032,$00000000,Def_4AEFE
+                dc.w    $0753,$0167,$005C
+                dc.l    $0001001E,$00000000,Def_4AEFE
+                dc.w    $0754,$0167,$008C
+                dc.l    $0001001E,$00000000,Def_4AEFE
+                dc.w    $0780,$015D,$0070
+                dc.l    $00030201,$FF000000,Def_4ADBC
+                dc.w    $07B0,$015D,$0030
+                dc.l    $00030201,$0003FF00,Def_4ADBC
+                dc.w    $07B1,$015C,$00B0
+                dc.l    $00030001,$02FF0000,Def_4ADBC
+                dc.w    $07C3,$0168,$0028
+                dc.l    $00000014,$00000000,Def_4AEFE
+                dc.w    $07C4,$0167,$00B4
+                dc.l    $0002000A,$00000000,Def_4AEFE
+                dc.w    $07F3,$015D,$0070
+                dc.l    $0003FF00,$00000000,Def_4ADBC
+                dc.w    $082A,$015E,$001D
+                dc.l    $0001001E,$00000000,Def_4AEFE
+                dc.w    $082F,$00A0,$0000
+                dc.l    $000203FF,$00000000,Def_4ADBC
+                dc.w    $0834,$0170,$00B0
+                dc.l    $0003FFFC,$00000000,$FFFFFFFF ; POW Armor
+                dc.w    $0889,$0000,$0070
+                dc.l    $00010203,$FF000000,Def_4ADBC
+                dc.w    $08DE,$015E,$001D
+                dc.l    $00010023,$00000000,Def_4AEFE
+                dc.w    $08DF,$015E,$00CC
+                dc.l    $00010078,$00000000,Def_4AEFE
+                dc.w    $7530   ; end: never reached
 LevelPalette:
                 dc.w    $0555,$0BBB,$0777,$0500,$005F,$0066,$0044,$0955
                 dc.w    $0B00,$09BF,$000B,$0F77,$0C70,$0FF0,$0FFF
@@ -145,25 +227,25 @@ LevelInit:
                 rts
 LevelFrame:
                 cmpi.w  #$8FC,(ScrollX).w
-                bne.b   L_4A958
+                bne.b   .4A958
                 st.b    (MusicFadeReq).w
-L_4A958:
+.4A958:
                 cmpi.w  #$900,(ScrollX).w
-                beq.b   L_4A962
-L_4A960:
+                beq.b   .4A962
+.4A960:
                 rts
-L_4A962:
+.4A962:
                 clr.b   (ScrollActive).w
                 subq.w  #$1,(D_4AD2E).l
-                bpl.b   L_4A960
+                bpl.b   .4A960
                 move.w  #$32,(D_4AD2E).l
                 movea.l (D_4AD2A).l,a1
                 move.l  (a1)+,d0
-                bmi.b   L_4A9AA
+                bmi.b   .4A9AA
                 tst.w   (a1)
-                bpl.b   L_4A98C
+                bpl.b   .4A98C
                 move.w  #$D2,(D_4AD2E).l
-L_4A98C:
+.4A98C:
                 move.l  a1,(D_4AD2A).l
                 movea.l d0,a1
                 move.w  #$B1,d0
@@ -172,7 +254,7 @@ L_4A98C:
                 lea.l   (Def_4ADBC).l,a2
                 jsr     (jt_ObjCreate).w
                 bra.w   L_4A9C0
-L_4A9AA:
+.4A9AA:
                 st.b    (LevelComplete).w
                 rts
 Spawn_4A9B0:
@@ -183,9 +265,9 @@ Spawn_4A9B0:
 L_4A9C0:
                 moveq   #0,d0
                 move.b  (a1)+,d0
-                bne.b   L_4A9CE
+                bne.b   .4A9CE
                 move.l  #D_4AE19,$2A(a0)
-L_4A9CE:
+.4A9CE:
                 move.b  d0,$33(a0)
                 move.b  (a1)+,$32(a0)
                 clr.w   $34(a0)
@@ -198,29 +280,29 @@ Upd_4A9EE:
                 move.w  $26(a0),d1
                 clr.w   $26(a0)
                 tst.b   $33(a0)
-                bne.b   L_4AA1A
+                bne.b   .4AA1A
                 add.w   #$30,d0
                 move.w  #$7D0,$24(a0)
                 sub.w   (ShipPos).w,d0
-                bmi.b   L_4AA18
+                bmi.b   .4AA18
                 move.w  #$FFFF,$24(a0)
                 moveq   #0,d1
-L_4AA18:
-                bra.b   L_4AA2E
-L_4AA1A:
+.4AA18:
+                bra.b   .4AA2E
+.4AA1A:
                 move.w  #$7D0,$24(a0)
                 sub.w   (ShipPos).w,d0
-                bpl.b   L_4AA2E
+                bpl.b   .4AA2E
                 moveq   #0,d1
                 move.w  #$FFFF,$24(a0)
-L_4AA2E:
+.4AA2E:
                 add.w   d1,$34(a0)
                 cmpi.w  #$4,$34(a0)
-                blt.b   L_4AA46
+                blt.b   .4AA46
                 move.b  #$1,$5(a0)
                 clr.l   $6(a0)
                 rts
-L_4AA46:
+.4AA46:
                 movem.w $A(a0),d0-d1
                 jsr     (jt_AdjustForScroll).w
                 moveq   #0,d2
@@ -231,39 +313,39 @@ L_4AA46:
                 lsl.w   #$2,d2
                 adda.l  d2,a1
                 add.w   (a1)+,d0
-                bmi.b   L_4AA98
+                bmi.b   .4AA98
                 cmp.w   #$15E,d0
-                bhi.b   L_4AA98
+                bhi.b   .4AA98
                 add.w   (a1)+,d1
-                bmi.b   L_4AA98
+                bmi.b   .4AA98
                 cmp.w   #$E1,d1
-                bhi.b   L_4AA98
+                bhi.b   .4AA98
                 movem.w d0-d1,-(a7)
                 add.w   (a1)+,d0
                 add.w   (a1)+,d1
                 jsr     (jt_GetMapCell).w
-                bne.b   L_4AA9C
+                bne.b   .4AA9C
                 move.w  (a1)+,d2
                 lea.l   (a4,d2.w),a4
                 btst.b  #$F,(a4)
-                bne.b   L_4AA9C
+                bne.b   .4AA9C
                 move.l  (a7)+,$A(a0)
                 rts
-L_4AA98:
+.4AA98:
                 jmp     (jt_ObjKillSelf).w
-L_4AA9C:
+.4AA9C:
                 clr.l   (a7)+
                 movea.l $36(a0),a1
                 moveq   #0,d2
                 move.b  (a1),d2
-                bpl.b   L_4AABA
+                bpl.b   .4AABA
                 subq.l  #$1,$36(a0)
                 move.b  $32(a0),d2
                 addq.w  #$2,d2
                 cmp.w   #$3,d2
-                bls.b   L_4AABA
+                bls.b   .4AABA
                 subq.w  #$4,d2
-L_4AABA:
+.4AABA:
                 move.b  d2,$32(a0)
                 addq.l  #$1,$36(a0)
                 bra.w   Upd_4A9EE
@@ -274,9 +356,9 @@ Spawn_4AAC6:
                 jsr     (jt_ObjCreate).w
                 move.l  #D_4AE50,$2A(a0)
                 move.w  $6(a1),$32(a0)
-                bpl.b   L_4AAEE
+                bpl.b   .4AAEE
                 move.l  #D_4AE46,$2A(a0)
-L_4AAEE:
+.4AAEE:
                 move.w  $32(a0),d2
                 bsr.w   L_4AB9E
                 move.w  #$200,$34(a0)
@@ -285,48 +367,48 @@ L_4AAEE:
                 jmp     (jt_ObjInsert).w
 Upd_4AB08:
                 cmpi.w  #$10,$A(a0)
-                bcs.b   L_4AB20
+                bcs.b   .4AB20
                 cmpi.w  #$170,$A(a0)
-                bhi.b   L_4AB20
+                bhi.b   .4AB20
                 cmpi.w  #$D6,$C(a0)
-                bcs.b   L_4AB24
-L_4AB20:
+                bcs.b   .4AB24
+.4AB20:
                 jmp     (jt_ObjKillSelf).w
-L_4AB24:
+.4AB24:
                 move.b  $34(a0),d0
-                beq.b   L_4AB70
+                beq.b   .4AB70
                 cmp.b   #$1,d0
                 beq.w   L_4ABD2
                 cmp.b   #$2,d0
                 beq.w   L_4AC08
                 subq.w  #$1,$A(a0)
                 subq.b  #$1,$35(a0)
-                bmi.b   L_4AB56
+                bmi.b   .4AB56
                 rts
-L_4AB46:
+.4AB46:
                 st.b    $34(a0)
                 clr.b   $22(a0)
                 move.l  #D_4AE46,$2A(a0)
-L_4AB56:
+.4AB56:
                 move.b  #$A,$35(a0)
                 bsr.w   L_4AC48
                 move.w  #$B,$1E(a0)
                 tst.w   d2
-                bpl.b   L_4AB6E
+                bpl.b   .4AB6E
                 clr.w   $1E(a0)
-L_4AB6E:
+.4AB6E:
                 rts
-L_4AB70:
+.4AB70:
                 move.w  $32(a0),d2
                 movem.w $A(a0),d0-d1
                 add.w   #$C,d1
                 subq.w  #$3,d0
                 tst.w   d2
-                bmi.b   L_4AB88
+                bmi.b   .4AB88
                 add.w   #$23,d0
-L_4AB88:
+.4AB88:
                 jsr     (jt_GetMapCell).w
-                bne.b   L_4AB46
+                bne.b   .4AB46
                 adda.l  (MapRowBytes).w,a4
                 btst.b  #$7,(a4)
                 beq.b   L_4AB9E
@@ -338,9 +420,9 @@ L_4AB9E:
                 move.w  #$23,$38(a0)
                 move.l  #D_4AE55,$2A(a0)
                 tst.w   d2
-                bpl.b   L_4ABC2
+                bpl.b   .4ABC2
                 move.l  #D_4AE4B,$2A(a0)
-L_4ABC2:
+.4ABC2:
                 move.w  #$3,$1E(a0)
                 clr.b   $20(a0)
                 st.b    $22(a0)
@@ -351,15 +433,15 @@ L_4ABD2:
                 moveq   #3,d2
                 move.b  (a2,d0.w),d3
                 cmp.b   #$7F,d3
-                bne.b   L_4ABF0
+                bne.b   .4ABF0
                 move.b  #$2,$34(a0)
                 bra.b   L_4AC08
-L_4ABF0:
+.4ABF0:
                 ext.w   d3
                 tst.w   $32(a0)
-                bpl.b   L_4ABFA
+                bpl.b   .4ABFA
                 neg.w   d2
-L_4ABFA:
+.4ABFA:
                 add.w   d2,$A(a0)
                 add.w   d3,$C(a0)
                 addq.w  #$1,$36(a0)
@@ -370,37 +452,37 @@ L_4AC08:
                 addq.w  #$8,d0
                 add.w   #$1A,d1
                 jsr     (jt_GetMapCell).w
-                bne.b   L_4AC24
+                bne.b   .4AC24
                 addq.w  #$4,$C(a0)
                 rts
-L_4AC24:
+.4AC24:
                 clr.w   $34(a0)
                 move.l  #D_4AE50,$2A(a0)
                 clr.b   $20(a0)
                 clr.w   $1E(a0)
                 tst.w   $32(a0)
-                bpl.b   L_4AC46
+                bpl.b   .4AC46
                 move.l  #D_4AE46,$2A(a0)
-L_4AC46:
+.4AC46:
                 rts
 L_4AC48:
                 moveq   #1,d2
                 move.w  (ShipPos).w,d0
                 sub.w   $A(a0),d0
-                bpl.b   L_4AC5C
+                bpl.b   .4AC5C
                 neg.w   d0
                 neg.w   d2
                 add.w   #$F,d0
-L_4AC5C:
+.4AC5C:
                 rts
-L_4AC5E:
+.4AC5E:
                 moveq   #1,d2
                 move.w  ($F0).w,d0
                 sub.w   $C(a0),d0
-                bpl.b   L_4AC6E
+                bpl.b   .4AC6E
                 neg.w   d0
                 neg.w   d2
-L_4AC6E:
+.4AC6E:
                 rts
 Spawn_4AC70:
                 movem.w $2(a1),d0-d1
@@ -415,7 +497,7 @@ Upd_4AC8E:
                 jsr     (jt_AdjustForScroll).w
                 move.w  $32(a0),d2
                 subq.w  #$1,$36(a0)
-                bpl.b   L_4ACC6
+                bpl.b   .4ACC6
                 move.w  $34(a0),$36(a0)
                 lea.l   (D_4AEDE).l,a2
                 lsl.w   #$3,d2
@@ -424,42 +506,42 @@ Upd_4AC8E:
                 clr.w   $1E(a0)
                 move.w  $6(a2,d2.w),d2
                 move.w  d2,$32(a0)
-L_4ACC6:
+.4ACC6:
                 lsl.w   #$2,d2
                 lea.l   (D_4AECE).l,a2
                 add.w   $2(a2,d2.w),d1
                 add.w   (a2,d2.w),d0
-                bmi.b   L_4ACEA
+                bmi.b   .4ACEA
                 cmp.w   #$170,d0
-                bhi.b   L_4ACEA
+                bhi.b   .4ACEA
                 cmp.w   #$4,d1
-                bcs.b   L_4ACEA
+                bcs.b   .4ACEA
                 cmp.w   #$E0,d1
-                bcs.b   L_4ACEE
-L_4ACEA:
+                bcs.b   .4ACEE
+.4ACEA:
                 jmp     (jt_ObjKillSelf).w
-L_4ACEE:
+.4ACEE:
                 movem.w d0-d1,$A(a0)
                 subq.w  #$1,$38(a0)
-                bpl.b   L_4AD28
+                bpl.b   .4AD28
                 move.w  d0,d2
                 move.w  d1,d3
                 subq.w  #$5,d0
                 sub.w   (ShipPos).w,d2
-                bpl.b   L_4AD0A
+                bpl.b   .4AD0A
                 add.w   #$17,d0
-L_4AD0A:
+.4AD0A:
                 subq.w  #$5,d1
                 sub.w   ($F0).w,d3
-                bpl.b   L_4AD16
+                bpl.b   .4AD16
                 add.w   #$15,d1
-L_4AD16:
+.4AD16:
                 jsr     (jt_FireEnemyBullet).w
                 moveq   #60,d0
                 jsr     (jt_Random).w
                 add.w   #$3C,d0
                 move.w  d0,$38(a0)
-L_4AD28:
+.4AD28:
                 rts
 D_4AD2A:
                 dc.w    $0000,$0000

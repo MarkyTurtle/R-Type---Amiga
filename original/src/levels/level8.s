@@ -41,15 +41,27 @@ LevelInterface:
                 dc.l    $5F244               ; LvEndMusic: ending tune player, 32-row ($82) patterns; samples $60376, data $6040C
 ScrollScript:
                 dc.w    $000B,$0000,$0064,$0000,$0000,$FFFF
+; Checkpoint list (LV_Waves): scroll x reached, where to resume in the
+; wave list.  Highest first; the 0 entry is the level start.
 WaveList:
-                dc.w    $0000,$0004,$A342,$00AA,$0170,$0041,$0002,$FFFC
-                dc.w    $0000,$0000,$FFFF,$FFFF,$00CC,$0170,$0069,$0003
-                dc.w    $FFFC,$0000,$0000,$FFFF,$FFFF,$01C3,$0168,$0032
-                dc.w    $0003,$FFFC,$0000,$0000,$FFFF,$FFFF,$01F4,$00FA
-                dc.w    $00E0,$0000,$0000,$0000,$0000,$0004,$B020,$0436
-                dc.w    $0168,$008C,$0000,$FFFC,$0000,$0000,$FFFF,$FFFF
-                dc.w    $046A,$0168,$0041,$0001,$FFFC,$0000,$0000,$FFFF
-                dc.w    $FFFF,$7530
+                dc.w    $0000
+                dc.l    Waves
+; Wave list: trigger (scroll x; level 3: frame count), x, y, 8 bytes
+; for the spawn routine, definition (-1 = POW Armor, the default).
+Waves:
+                dc.w    $00AA,$0170,$0041
+                dc.l    $0002FFFC,$00000000,$FFFFFFFF ; POW Armor
+                dc.w    $00CC,$0170,$0069
+                dc.l    $0003FFFC,$00000000,$FFFFFFFF ; POW Armor
+                dc.w    $01C3,$0168,$0032
+                dc.l    $0003FFFC,$00000000,$FFFFFFFF ; POW Armor
+                dc.w    $01F4,$00FA,$00E0
+                dc.l    $00000000,$00000000,Def_4B020
+                dc.w    $0436,$0168,$008C
+                dc.l    $0000FFFC,$00000000,$FFFFFFFF ; POW Armor
+                dc.w    $046A,$0168,$0041
+                dc.l    $0001FFFC,$00000000,$FFFFFFFF ; POW Armor
+                dc.w    $7530   ; end: never reached
 LevelPalette:
                 dc.w    $0555,$0BBB,$0777,$0500,$005F,$00A0,$0050,$0955
                 dc.w    $0B00,$09BF,$000B,$0F77,$0C70,$0FF0,$0FFF
@@ -77,7 +89,7 @@ L_4A42A:
                 cmp.w   #$5D2,d7
                 bcs.b   L_4A428
                 cmp.w   #$64D,d7
-                bne.b   L_4A462
+                bne.b   .4A462
                 move.w  #$12C,d0
                 moveq   #100,d1
                 move.w  #$7D0,d2
@@ -87,75 +99,75 @@ L_4A42A:
                 clr.w   $32(a0)
                 jsr     (jt_ObjInsert).w
                 st.b    (MusicFadeReq).w
-L_4A462:
+.4A462:
                 cmp.w   #$64F,d7
-                bne.b   L_4A46C
+                bne.b   .4A46C
                 clr.b   (ScrollActive).w
-L_4A46C:
+.4A46C:
                 subq.b  #$1,(D_4AC7C).l
-                bpl.b   L_4A4CA
+                bpl.b   .4A4CA
                 move.b  #$4,(D_4AC7C).l
                 movea.l (D_4AC70).l,a4
-L_4A482:
+.4A482:
                 move.l  (a4),d0
-                bpl.b   L_4A4BC
+                bpl.b   .4A4BC
                 btst    #$1E,d0
-                bne.b   L_4A4B6
+                bne.b   .4A4B6
                 move.b  d0,d1
                 subq.b  #$1,d1
-                bne.b   L_4A4B2
+                bne.b   .4A4B2
                 lsr.w   #$8,d0
                 move.b  d0,$3(a4)
                 addq.l  #$8,a4
                 st.b    (D_4AC6D).l
                 clr.b   (D_4AC6E).l
                 move.l  #D_4ACDE,(D_4AC74).l
-                bra.b   L_4A482
-L_4A4B2:
+                bra.b   .4A482
+.4A4B2:
                 move.b  d1,$3(a4)
-L_4A4B6:
+.4A4B6:
                 movea.l $4(a4),a4
-                bra.b   L_4A482
-L_4A4BC:
+                bra.b   .4A482
+.4A4BC:
                 movea.l d0,a0
                 bsr.w   L_4A57E
                 addq.l  #$4,a4
                 move.l  a4,(D_4AC70).l
-L_4A4CA:
+.4A4CA:
                 tst.b   (D_4AC6D).l
-                beq.b   L_4A51E
+                beq.b   .4A51E
                 subq.b  #$1,(D_4AC6E).l
-                bpl.b   L_4A51E
+                bpl.b   .4A51E
                 move.b  #$4,(D_4AC6E).l
                 movea.l (D_4AC74).l,a4
                 move.l  (a4)+,d7
                 btst    #$1E,d7
-                beq.b   L_4A50C
+                beq.b   .4A50C
                 eori.b  #$FF,(D_4AC6F).l
-                bne.b   L_4A50C
+                bne.b   .4A50C
                 bsr.w   L_4A8E4
                 tst.w   (D_4B064).l
-                beq.b   L_4A50C
+                beq.b   .4A50C
                 subq.w  #$1,(D_4B064).l
-L_4A50C:
+.4A50C:
                 btst    #$1F,d7
-                bne.b   L_4A520
+                bne.b   .4A520
                 movea.l d7,a0
                 bsr.w   L_4A57E
                 move.l  a4,(D_4AC74).l
-L_4A51E:
+.4A51E:
                 rts
-L_4A520:
+.4A520:
                 clr.b   (D_4AC6D).l
                 rts
 L_4A528:
                 move.w  $26(a0),d0
                 cmp.w   $32(a0),d0
-                beq.b   L_4A57C
+                beq.b   .4A57C
                 move.w  d0,$32(a0)
                 move.b  #$3,$28(a0)
                 cmpi.w  #$3C,$32(a0)
-                bcs.b   L_4A57C
+                bcs.b   .4A57C
                 move.l  #L_4A68C,(D_4AC78).l
                 move.b  #$28,(D_4AC7C).l
                 move.w  #$F,$96(a6)
@@ -166,7 +178,7 @@ L_4A528:
                 move.l  #$15000,d0
                 jsr     (jt_AddScore).w
                 jmp     (jt_ObjKillSelf).w
-L_4A57C:
+.4A57C:
                 rts
 L_4A57E:
                 moveq   #0,d0
@@ -174,28 +186,28 @@ L_4A57E:
                 movea.l (a0)+,a1
                 move.b  (a0)+,d0
                 move.b  (a0)+,d1
-L_4A588:
+.4A588:
                 move.w  d0,d2
                 movea.l a1,a2
-L_4A58C:
+.4A58C:
                 move.w  (a0)+,(a2)+
-                dbra    d2,L_4A58C
+                dbra    d2,.4A58C
                 adda.l  (MapRowBytes).w,a1
-                dbra    d1,L_4A588
+                dbra    d1,.4A588
                 rts
 L_4A59C:
                 subq.b  #$1,(D_4AC6C).l
-                bne.b   L_4A618
+                bne.b   .4A618
                 move.b  #$1A,(D_4AC6C).l
                 moveq   #10,d0
                 jsr     (jt_Random).w
                 cmp.w   #$5,d0
-                bcc.b   L_4A5BC
+                bcc.b   .4A5BC
                 moveq   #0,d1
-                bra.b   L_4A5C0
-L_4A5BC:
+                bra.b   .4A5C0
+.4A5BC:
                 move.w  #$E0,d1
-L_4A5C0:
+.4A5C0:
                 move.w  #$12C,d0
                 jsr     (jt_Random).w
                 add.w   #$2D,d0
@@ -203,9 +215,9 @@ L_4A5C0:
                 movem.w (ShipPos).w,d2-d3
                 jsr     (jt_DirectionTo).w
                 cmp.w   #$4,d0
-                beq.b   L_4A616
+                beq.b   .4A616
                 cmp.w   #$C,d0
-                beq.b   L_4A616
+                beq.b   .4A616
                 lea.l   (D_4AB84).l,a3
                 lsl.w   #$2,d0
                 move.l  (a3,d0.w),d6
@@ -218,31 +230,31 @@ L_4A5C0:
                 move.l  a1,$2A(a0)
                 clr.b   $36(a0)
                 jmp     (jt_ObjInsert).w
-L_4A616:
+.4A616:
                 addq.l  #$4,a7
-L_4A618:
+.4A618:
                 rts
 Upd_4A61A:
                 tst.b   $36(a0)
-                bne.b   L_4A682
+                bne.b   .4A682
                 cmpi.w  #$1,$26(a0)
-                bcc.b   L_4A656
+                bcc.b   .4A656
                 movem.w $A(a0),d0-d1
                 add.w   $32(a0),d0
                 add.w   $34(a0),d1
-                bmi.b   L_4A64A
+                bmi.b   .4A64A
                 cmp.w   #$E0,d1
-                bhi.b   L_4A64A
+                bhi.b   .4A64A
                 cmp.w   #$10,d0
-                bcs.b   L_4A64A
+                bcs.b   .4A64A
                 cmp.w   #$168,d0
-                bcs.b   L_4A64E
-L_4A64A:
+                bcs.b   .4A64E
+.4A64A:
                 jmp     (jt_ObjKillSelf).w
-L_4A64E:
+.4A64E:
                 movem.w d0-d1,$A(a0)
                 rts
-L_4A656:
+.4A656:
                 st.b    $36(a0)
                 move.l  #Def_4AC04,$12(a0)
                 clr.w   $1E(a0)
@@ -252,18 +264,18 @@ L_4A656:
                 jsr     (jt_PlaySound).w
                 move.l  #$200,d0
                 jsr     (jt_AddScore).w
-L_4A682:
+.4A682:
                 cmpi.w  #$D,$1E(a0)
-                bcc.b   L_4A64A
+                bcc.b   .4A64A
                 rts
 L_4A68C:
                 subq.b  #$1,(D_4AC7C).l
-                bmi.b   L_4A6E2
+                bmi.b   .4A6E2
                 cmpi.b  #$14,(D_4AC7C).l
-                bne.b   L_4A6A8
+                bne.b   .4A6A8
                 lea.l   (D_4AEFC).l,a0
                 bsr.w   L_4A57E
-L_4A6A8:
+.4A6A8:
                 move.w  #$AA,d0
                 jsr     (jt_Random).w
                 add.w   #$1E,d0
@@ -278,50 +290,50 @@ L_4A6A8:
                 clr.l   $6(a0)
                 move.b  #$1,$5(a0)
                 jmp     (jt_ObjInsert).w
-L_4A6E2:
+.4A6E2:
                 st.b    (ScrollActive).w
                 move.b  #$F,(D_4AC7C).l
-                move.l  #L_4A6FE,(D_4AC78).l
+                move.l  #.4A6FE,(D_4AC78).l
                 clr.b   (D_4AC6E).l
-L_4A6FE:
+.4A6FE:
                 cmpi.w  #$69F,(ScrollX).w
-                bcs.b   L_4A740
+                bcs.b   .4A740
                 subq.b  #$1,(D_4AC6E).l
-                bpl.b   L_4A740
+                bpl.b   .4A740
                 move.b  #$2,(D_4AC6E).l
-                bsr.w   L_4A87A
+                bsr.w   .4A87A
                 subq.b  #$1,(D_4AC7C).l
-                bne.b   L_4A740
-                move.l  #L_4A742,(D_4AC78).l
+                bne.b   .4A740
+                move.l  #.4A742,(D_4AC78).l
                 move.b  #$F,(D_4AC7C).l
                 bset.b  #$1,(EndSequenceFlags).w
                 move.w  #$7C1,(ScrollX).w
-L_4A740:
+.4A740:
                 rts
-L_4A742:
+.4A742:
                 cmpi.w  #$7C6,(ScrollX).w
-                bcs.b   L_4A740
+                bcs.b   .4A740
                 subq.b  #$1,(D_4AC6E).l
-                bpl.b   L_4A740
+                bpl.b   .4A740
                 move.b  #$3,(D_4AC6E).l
                 lea.l   (D_4AFC2).l,a0
-                bsr.w   L_4A846
+                bsr.w   .4A846
                 subq.b  #$1,(D_4AC7C).l
-                bne.b   L_4A740
-                move.l  #L_4A790,(D_4AC78).l
+                bne.b   .4A740
+                move.l  #.4A790,(D_4AC78).l
                 clr.b   (D_4AC6D).l
                 move.b  #$1,(D_4AC7C).l
                 move.l  #D_4A9B2,(D_4AC74).l
                 rts
-L_4A790:
+.4A790:
                 tst.b   (D_4AC6D).l
-                bne.b   L_4A7F2
+                bne.b   .4A7F2
                 subq.b  #$1,(D_4AC7C).l
-                bne.b   L_4A7DA
+                bne.b   .4A7DA
                 movea.l (D_4AC74).l,a4
-L_4A7A6:
+.4A7A6:
                 move.w  (a4)+,d1
-                bmi.b   L_4A7DC
+                bmi.b   .4A7DC
                 move.w  #$10,d0
                 moveq   #-1,d2
                 lea.l   (Def_4AA4C).l,a2
@@ -331,88 +343,88 @@ L_4A7A6:
                 clr.b   $22(a0)
                 jsr     (jt_ObjInsert).w
                 move.w  (a4)+,d0
-                beq.b   L_4A7A6
+                beq.b   .4A7A6
                 move.l  a4,(D_4AC74).l
                 move.b  d0,(D_4AC7C).l
-L_4A7DA:
+.4A7DA:
                 rts
-L_4A7DC:
+.4A7DC:
                 st.b    (D_4AC6D).l
                 bset.b  #$2,(EndSequenceFlags).w
                 move.b  #$90,(D_4AC7C).l
                 rts
-L_4A7F2:
+.4A7F2:
                 subq.b  #$1,(D_4AC7C).l
-                bne.b   L_4A7DA
+                bne.b   .4A7DA
                 move.b  #$F,(D_4AC7C).l
                 clr.b   (D_4AC6E).l
-                move.l  #L_4A814,(D_4AC78).l
+                move.l  #.4A814,(D_4AC78).l
                 rts
-L_4A814:
+.4A814:
                 subq.b  #$1,(D_4AC6E).l
-                bpl.b   L_4A7DA
+                bpl.b   .4A7DA
                 move.b  #$2,(D_4AC6E).l
-                bsr.w   L_4A87A
+                bsr.w   .4A87A
                 subq.b  #$1,(D_4AC7C).l
-                bne.b   L_4A7DA
+                bne.b   .4A7DA
                 clr.b   (ScrollActive).w
-                move.l  #L_4A7DA,(D_4AC78).l
+                move.l  #.4A7DA,(D_4AC78).l
                 bset.b  #$3,(EndSequenceFlags).w
                 rts
-L_4A846:
+.4A846:
                 moveq   #14,d0
                 movea.l (ScoreToAddEnd).w,a1
                 addq.l  #$2,a1
-L_4A84E:
+.4A84E:
                 move.w  (a1),d2
                 move.w  (a0)+,d3
                 moveq   #1,d4
                 moveq   #2,d5
-L_4A856:
+.4A856:
                 move.w  d2,d6
                 move.w  d3,d7
                 and.w   #$F,d6
                 and.w   #$F,d7
                 cmp.b   d7,d6
-                bcc.b   L_4A868
+                bcc.b   .4A868
                 add.w   d4,(a1)
-L_4A868:
+.4A868:
                 lsl.w   #$4,d4
                 lsr.w   #$4,d2
                 lsr.w   #$4,d3
-                dbra    d5,L_4A856
+                dbra    d5,.4A856
                 addq.l  #$4,a1
-                dbra    d0,L_4A84E
+                dbra    d0,.4A84E
                 rts
-L_4A87A:
+.4A87A:
                 movea.l (ScoreToAddEnd).w,a0
                 addq.l  #$2,a0
                 moveq   #14,d5
-L_4A882:
+.4A882:
                 move.w  (a0),d4
                 clr.w   d2
                 moveq   #1,d7
                 moveq   #2,d3
-L_4A88A:
+.4A88A:
                 move.w  d4,d0
                 and.w   #$F,d0
-                beq.w   L_4A896
+                beq.w   .4A896
                 or.w    d7,d2
-L_4A896:
+.4A896:
                 lsr.w   #$4,d4
                 lsl.w   #$4,d7
-                dbra    d3,L_4A88A
+                dbra    d3,.4A88A
                 sub.w   d2,(a0)
                 addq.l  #$4,a0
-                dbra    d5,L_4A882
+                dbra    d5,.4A882
                 rts
 Upd_4A8A8:
                 move.w  $32(a0),d0
                 add.w   d0,$A(a0)
                 cmpi.w  #$168,$A(a0)
-                bcs.b   L_4A8BC
+                bcs.b   .4A8BC
                 jmp     (jt_ObjKillSelf).w
-L_4A8BC:
+.4A8BC:
                 rts
 Spawn_4A8BE:
                 movem.w $2(a1),d0-d1
@@ -435,11 +447,11 @@ L_4A8E4:
                 bra.b   L_4A8D4
 Upd_4A906:
                 btst.b  #$0,(EndSequenceFlags).w
-                beq.b   L_4A912
+                beq.b   .4A912
                 jmp     (jt_ObjKillSelf).w
-L_4A912:
+.4A912:
                 subq.w  #$1,$34(a0)
-                bpl.b   L_4A940
+                bpl.b   .4A940
                 move.w  (D_4B064).l,$34(a0)
                 subq.w  #$1,$36(a0)
                 movem.w $A(a0),d0-d1
@@ -448,21 +460,21 @@ L_4A912:
                 move.w  $38(a0),d1
                 jsr     (jt_TurnTowards).w
                 move.w  d1,$38(a0)
-L_4A940:
+.4A940:
                 move.w  $38(a0),d0
                 lsl.w   #$2,d0
                 lea.l   (D_4A972).l,a1
                 movem.w $A(a0),d1-d2
                 add.w   (a1,d0.w),d1
                 add.w   $2(a1,d0.w),d2
-                bpl.b   L_4A960
+                bpl.b   .4A960
                 moveq   #0,d2
-                bra.b   L_4A96A
-L_4A960:
+                bra.b   .4A96A
+.4A960:
                 cmp.w   #$E0,d2
-                bcs.b   L_4A96A
+                bcs.b   .4A96A
                 move.w  #$DF,d2
-L_4A96A:
+.4A96A:
                 movem.w d1-d2,$A(a0)
                 rts
 D_4A972:

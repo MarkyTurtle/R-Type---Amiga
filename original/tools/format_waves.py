@@ -61,6 +61,12 @@ def main():
         if min(t for _, t in cps) != waves:
             print(f'{path}: wave list does not follow the checkpoints - skipped'); continue
         labels = {waves: 'Waves'}
+        # labels the source already has inside the lists must survive
+        inner = {a: [n for n in ns if n not in ('WaveList', 'LevelPalette') and not n.startswith('.')]
+                 for a, ns in syms.items() if start < a < end}
+        inner = {a: ns for a, ns in inner.items() if ns}
+        if any(a < waves or (a - waves) % 0x12 for a in inner):
+            print(f'{path}: labels inside entries ({[hex(a) for a in inner]}) - skipped'); continue
         for sx, t in cps:
             if t != waves:
                 labels.setdefault(t, f'WavesFrom_{sx:04X}')
@@ -74,6 +80,9 @@ def main():
                 '; for the spawn routine, definition (-1 = POW Armor, the default).']
         a = waves
         while a + 0x12 <= end:
+            for n in inner.get(a, []):
+                if n != labels.get(a):
+                    out.append(n + ':')
             if a in labels:
                 out.append(labels[a] + ':')
             trig, x, y = w(a), w(a + 2), w(a + 4)
