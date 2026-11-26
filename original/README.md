@@ -43,6 +43,7 @@ tools/
   verify.py            assemble src/*.s and compare with files/
   render_gfx.py        render maps, tiles, BOBs and sprites to gfx/
   render_hud.py        render the HUD and fonts
+  levelb_layout.py     map the contents of each level B file
   render_music.py      play the in-game music with the game's own player code (68000 emulator)
   extract_sounds.py    write the sound effects to sfx/
   add_labels.py        insert labels at addresses in a source (keeps it identical)

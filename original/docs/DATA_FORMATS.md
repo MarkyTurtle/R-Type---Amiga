@@ -139,3 +139,15 @@ They were found by signature (mask offset = half the frame size, modulo = 52 −
 ## High scores
 
 `HighScores` (`$575C`, `$64` longs). The table is saved to track 68 (format in `DISK_FORMAT.md`). The entries are formatted for display by `FormatScores` and changed by `InsertScore` / `EnterName`. The hidden "sumita." trainer name is checked in `St_HighScore`.
+
+## Level B layout
+
+`tools/levelb_layout.py` maps every level B file (the full listing is in [levelb_layout.txt](levelb_layout.txt)). In address order each holds:
+
+1. **Tiles** from `$4D300` (`LV_Tiles`). Most levels have a few more tiles than their stored map uses (level 2: 4, level 5: 2, level 6: 55, level 7: 6, level 8: 8); level 3 has 239 more, which `PatchMap` writes into the map.
+2. **The map** (`LV_Map`; level 4's is copied to `$6EA6A` by `LevelInit`).
+3. **The music player** (`LV_Music`): code, its variables, songs and patterns, then the sample and period tables and the samples. Level 8 has a second player for the ending.
+4. **BOB graphics** for the level's object definitions, one block per definition, with more frames than the first animation sequence shows (e.g. the Gouger's 8 frames are four wall corners × 2).
+5. **Movement tables** at the end, read by the level code with absolute addresses: wave paths, jump arcs, the Compiler's section paths, the Worm's and the Zoids' paths.
+
+Apart from these only a few small gaps are left (at most 240 bytes, between the last BOB frames and the tables, or padding after the samples).

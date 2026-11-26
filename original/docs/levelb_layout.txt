@@ -1,0 +1,138 @@
+level 1: $4D300-$7965A
+  $4D300-$5AEFF   56320  tiles 0-439 (used by the map)
+  $5AF00-$5CA37    6968  map 268x13
+  $5CA38-$604F7   15040  level1 player code, songs, patterns
+  $604F8-$60593     156  sample table, period table
+  $60594-$62D95   10242  level1 samples (9)
+  $62D96-$62DA7      18  ?
+  $62DA8-$640A7    4864  BOB 8 frames of 608 (Def $4B99A)
+  $640A8-$655A7    5376  BOB 8 frames of 672 (Def $4BA36)
+  $655A8-$67017    6768  BOB 3 frames of 2256 (Def $4BD02)
+  $67018-$67617    1536  BOB 2 frames of 768 (Def $4BD46)
+  $67618-$6A6D7   12480  BOB 15 frames of 832 (Def $4BAA8)
+  $6A6D8-$6B3D7    3328  BOB 16 frames of 208 (Def $4BB64)
+  $6B3D8-$6DAD7    9984  BOB 12 frames of 832 (Def $4BD82)
+  $6DAD8-$6EE57    4992  BOB 6 frames of 832 (Def $4BEA0)
+  $6EE58-$727B7   14688  BOB 17 frames of 864 (Def $4BF04)
+  $727B8-$76027   14448  BOB 7 frames of 2064 (Def $4BFCA)
+  $76028-$760B7     144  BOB 1 frames of 144 (Def $4C036)
+  $760B8-$76FB7    3840  BOB 16 frames of 240 (Def $4C068)
+  $76FB8-$784B7    5376  BOB 8 frames of 672 (Def $4C26C)
+  $784B8-$78AB7    1536  BOB 6 frames of 256 (Def $4C1CA)
+  $78AB8-$7965A    2979  table read by the level code
+level 2: $4D300-$72579
+  $4D300-$5D4FF   66048  tiles 0-515 (used by the map)
+  $5D500-$5D6FF     512  ?
+  $5D700-$5E947    4680  map 180x13
+  $5E948-$608D5    8078  level2 player code, songs, patterns
+  $608D6-$60969     148  sample table, period table
+  $6096A-$61C95    4908  level2 samples (8)
+  $61C96-$67515   22656  BOB 8 frames of 2832 (Def $4AF24)
+  $67516-$67C65    1872  BOB 9 frames of 208 (Def $4AFA4)
+  $67C66-$699A5    7488  BOB 9 frames of 832 (Def $4B610)
+  $699A6-$6D3A5   14848  BOB 16 frames of 928 (Def $4B1CC)
+  $6D3A6-$709A5   13824  BOB 16 frames of 864 (Def $4B296)
+  $709A6-$723A5    6656  BOB 8 frames of 832 (Def $4B33E)
+  $723A6-$72495     240  ?
+  $72496-$72579     228  table read by the level code
+level 3: $4D300-$6FCDB
+  $4D300-$5AF7F   56448  tiles 0-440 (used by the map)
+  $5AF80-$626FF   30592  ?
+  $62700-$634CF    3536  map 68x26
+  $634D0-$65A8D    9662  level3 player code, songs, patterns
+  $65A8E-$65B23     150  sample table, period table
+  $65B24-$66E4F    4908  level3 samples (8)
+  $66E50-$66FCF     384  BOB 4 frames of 96 (Def $4BCEA)
+  $66FD0-$686CF    5888  BOB 8 frames of 736 (Def $4B85A)
+  $686D0-$69F4F    6272  BOB 7 frames of 896 (Def $4B902)
+  $69F50-$6AB4F    3072  BOB 1 frames of 3072 (Def $4BB74)
+  $6AB50-$6C04F    5376  BOB 24 frames of 224 (Def $4BCAE)
+  $6C050-$6C10F     192  ?
+  $6C110-$6F84F   14144  BOB 17 frames of 832 (Def $4B9CE)
+  $6F850-$6FACF     640  BOB 4 frames of 160 (Def $4B80C)
+  $6FAD0-$6FCDB     524  table read by the level code
+level 4: $4D300-$6EA69
+  $4D300-$50EFF   15360  tiles 0-119 (used by the map)
+  $50F00-$52077    4472  map 172x13
+  $52078-$53FB5    7998  level4 player code, songs, patterns
+  $53FB6-$5404B     150  sample table, period table
+  $5404C-$55377    4908  level4 samples (8)
+  $55378-$56677    4864  BOB 8 frames of 608 (Def $4B6F2)
+  $56678-$57B77    5376  BOB 8 frames of 672 (Def $4B772)
+  $57B78-$5AC37   12480  BOB 15 frames of 832 (Def $4B7E4)
+  $5AC38-$5B937    3328  BOB 16 frames of 208 (Def $4B8A0)
+  $5B938-$5E037    9984  BOB 12 frames of 832 (Def $4B95C)
+  $5E038-$5F3B7    4992  BOB 6 frames of 832 (Def $4BA4A)
+  $5F3B8-$625B7   12800  BOB 16 frames of 800 (Def $4BD08)
+  $625B8-$665B7   16384  BOB 16 frames of 1024 (Def $4BDC2)
+  $665B8-$68417    7776  BOB 1 frames of 7776 (Def $4BACE)
+  $68418-$69D77    6496  BOB 1 frames of 6496 (Def $4BAF6)
+  $69D78-$6B6F7    6528  BOB 1 frames of 6528 (Def $4BB1E)
+  $6B6F8-$6C697    4000  BOB 5 frames of 800 (Def $4BBAC)
+  $6C698-$6C817     384  BOB 4 frames of 96 (Def $4BC5E)
+  $6C818-$6EA69    8786  table read by the level code
+level 5: $4D300-$688B7
+  $4D300-$503FF   12544  tiles 0-97 (used by the map)
+  $50400-$504FF     256  ?
+  $50500-$51A53    5460  map 210x13
+  $51A54-$53A45    8178  level5 player code, songs, patterns
+  $53A46-$53ADB     150  sample table, period table
+  $53ADC-$54E07    4908  level5 samples (8)
+  $54E08-$56187    4992  BOB 6 frames of 832 (Def $4B02C)
+  $56188-$56307     384  BOB 4 frames of 96 (Def $4B3D4)
+  $56308-$57707    5120  BOB 8 frames of 640 (Def $4B452)
+  $57708-$5AF07   14336  BOB 16 frames of 896 (Def $4B2DA)
+  $5AF08-$5CDC7    7872  BOB 4 frames of 1968 (Def $4B422)
+  $5CDC8-$607C7   14848  BOB 16 frames of 928 (Def $4B0D0)
+  $607C8-$641C7   14848  BOB 16 frames of 928 (Def $4B18A)
+  $641C8-$66FC7   11776  BOB 16 frames of 736 (Def $4B232)
+  $66FC8-$678C7    2304  BOB 1 frames of 2304 (Def $4B5F8)
+  $678C8-$67FC7    1792  BOB 2 frames of 896 (Def $4B628)
+  $67FC8-$688B7    2288  table read by the level code
+level 6: $4D300-$6702F
+  $4D300-$59D7F   51840  tiles 0-404 (used by the map)
+  $59D80-$5B8FF    7040  ?
+  $5B900-$5C9A7    4264  map 164x13
+  $5C9A8-$5F0ED   10054  level6 player code, songs, patterns
+  $5F0EE-$5F183     150  sample table, period table
+  $5F184-$604AF    4908  level6 samples (8)
+  $604B0-$628AF    9216  BOB 6 frames of 1536 (Def $4ADBC)
+  $628B0-$6492F    8320  BOB 10 frames of 832 (Def $4AEFE)
+  $64930-$6702F    9984  BOB 12 frames of 832 (Def $4AE1E)
+level 7: $4D300-$7108E
+  $4D300-$56FFF   40192  tiles 0-313 (used by the map)
+  $57000-$572FF     768  ?
+  $57300-$582A3    4004  map 154x13
+  $582A4-$5A913    9840  level7 player code, songs, patterns
+  $5A914-$5A9A9     150  sample table, period table
+  $5A9AA-$5BCD5    4908  level7 samples (8)
+  $5BCD6-$5CFD5    4864  BOB 8 frames of 608 (Def $4B884)
+  $5CFD6-$5E4D5    5376  BOB 8 frames of 672 (Def $4B8F6)
+  $5E4D6-$5FF45    6768  BOB 3 frames of 2256 (Def $4BAE0)
+  $5FF46-$60545    1536  BOB 2 frames of 768 (Def $4BB24)
+  $60546-$63605   12480  BOB 15 frames of 832 (Def $4B968)
+  $63606-$64305    3328  BOB 16 frames of 208 (Def $4BA24)
+  $64306-$66A05    9984  BOB 12 frames of 832 (Def $4BB60)
+  $66A06-$67D85    4992  BOB 6 frames of 832 (Def $4BC10)
+  $67D86-$68025     672  BOB 1 frames of 672 (Def $4BFA8)
+  $68026-$68FA5    3968  BOB 4 frames of 992 (Def $4BCF6)
+  $68FA6-$69BA5    3072  BOB 1 frames of 3072 (Def $4BFDA)
+  $69BA6-$6BFA5    9216  BOB 4 frames of 2304 (Def $4BC70)
+  $6BFA6-$6F485   13536  BOB 9 frames of 1504 (Def $4C0EA)
+  $6F486-$6F605     384  BOB 4 frames of 96 (Def $4C00A)
+  $6F606-$70A05    5120  BOB 8 frames of 640 (Def $4C058)
+  $70A06-$7108E    1673  table read by the level code
+level 8: $4D300-$682B7
+  $4D300-$5AAFF   55296  tiles 0-431 (used by the map)
+  $5AB00-$5AEFF    1024  ?
+  $5AF00-$5C1FD    4862  map 187x13
+  $5C1FE-$5DE81    7300  level8 player code, songs, patterns
+  $5DE82-$5DF17     150  sample table, period table
+  $5DF18-$5F243    4908  level8 samples (8)
+  $5F244-$60375    4402  level8end player code, songs, patterns
+  $60376-$6040B     150  sample table, period table
+  $6040C-$61737    4908  level8end samples (8)
+  $61738-$65C37   17664  BOB 24 frames of 736 (Def $4AA78)
+  $65C38-$672B7    5760  BOB 6 frames of 960 (Def $4AC04)
+  $672B8-$679B7    1792  BOB 4 frames of 448 (Def $4AA4C)
+  $679B8-$682B7    2304  BOB 3 frames of 768 (Def $4B020)

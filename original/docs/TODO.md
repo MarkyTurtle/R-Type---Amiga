@@ -33,7 +33,7 @@ State on 26 Nov 2026. All 12 sources reassemble byte-identical (`tools/verify.py
 
 - [x] **Level 3's 30 KB**: 239 more tiles (441–679: flames, explosions, battleship parts) not placed in the stored map.
 - [x] **How level 3 uses tiles 441–679**: they are written into the map by `PatchMap` - 64 blocks in level 3's data use 237 of the 239 (gun mounts, the engine flame, the core chamber, wrecks).
-- [ ] **Level B layout**: between each music player and its first BOB graphics lie the songs, patterns, sample and period tables and samples (located per player in `MUSIC.md`); check nothing else is there.
+- [x] **Level B layout**: tiles, map, music player and samples, BOB graphics, movement tables - `tools/levelb_layout.py`, `docs/levelb_layout.txt`, DATA_FORMATS.md.
 - [x] **HUD**: the score/lives/beam-meter layout in the 3-plane HUD and the font used (`DigitFont`, `DrawChar`, `$2CEB8`).
 - [x] **Extract the HUD and the title-screen graphics** to PNG: `gfx/hud.png`, `gfx/font_game.png`, `gfx/font_digits.png` (`tools/render_hud.py`); the title picture is `docs/title.png`.
 - [x] **Map flag overlays**: `gfx/levelN_flags.png` (solid / destructible / animated), made by `tools/render_gfx.py`.
