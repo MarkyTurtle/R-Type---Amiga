@@ -34,9 +34,9 @@ State on 26 Nov 2026. All 12 sources reassemble byte-identical (`tools/verify.py
 - [x] **Level 3's 30 KB**: 239 more tiles (441–679: flames, explosions, battleship parts) not placed in the stored map.
 - [ ] **How level 3 uses tiles 441–679** (written into the map or drawn by its code).
 - [ ] **Level B layout**: between each music player and its first BOB graphics lie the songs, patterns, sample and period tables and samples (located per player in `MUSIC.md`); check nothing else is there.
-- [ ] **HUD**: the score/lives/beam-meter layout in the 3-plane HUD and the font used (`DigitFont`, `DrawChar`, `$2CEB8`).
-- [ ] **Extract the HUD and the title-screen graphics** to PNG.
-- [ ] **Map editor-style export**: per-level maps with solid, destructible and animated cells marked (overlay on `levelN_map.png`).
+- [x] **HUD**: the score/lives/beam-meter layout in the 3-plane HUD and the font used (`DigitFont`, `DrawChar`, `$2CEB8`).
+- [x] **Extract the HUD and the title-screen graphics** to PNG: `gfx/hud.png`, `gfx/font_game.png`, `gfx/font_digits.png` (`tools/render_hud.py`); the title picture is `docs/title.png`.
+- [x] **Map flag overlays**: `gfx/levelN_flags.png` (solid / destructible / animated), made by `tools/render_gfx.py`.
 - [x] Tiles, maps, BOBs, sprites, shots and weapons rendered to `gfx/`; the `$6000` block mapped end to end.
 - [x] Sound effects decoded and extracted to `sfx/`.
 

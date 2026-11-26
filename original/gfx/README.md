@@ -17,3 +17,6 @@ Generated from `../files/` by `python3 -I tools/render_gfx.py files gfx` (run in
 ![explosions, POW Armor, power-ups](engine_bobs.png)
 
 ![weapons](engine_weapons.png)
+
+- `hud.png`: the HUD as in memory and filled in (score, lives, beam meter); `font_game.png`, `font_digits.png`: the text and score fonts (`tools/render_hud.py`)
+- `levelN_flags.png`: each map with its cell flags marked (red solid, yellow destructible, cyan animated)

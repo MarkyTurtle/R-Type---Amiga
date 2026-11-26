@@ -81,10 +81,46 @@ def render_level(files, out, n):
         for c, v in enumerate(row):
             paste(im, cache[v & 0xFFF], c * 16, r * 16, L.palette)
     im.save(os.path.join(out, f'level{n}_map.png'))
+    render_flags(L, im, cells, out)
     solid = sum(1 for row in cells for v in row if v & 0x8000)
     anim = sum(1 for row in cells for v in row if v & 0x4000)
     return dict(level=n, cols=L.cols, rows=L.rows, map=f'${L.map_ptr:05X}', tiles=ntiles,
                 tiles_end=f'${L.tiles_ptr + ntiles * TILE_BYTES:05X}', solid=solid, animated=anim)
+
+def map_patches(L):
+    """LV_MapPatches: (column, row, cell) entries until column < 0, written
+    into the map at level start (level 1: the Blasters)."""
+    t = struct.unpack('>12I', L.a[0x1C:0x1C + 48])
+    if not t[7]:
+        return []
+    out, a = [], t[7]
+    while True:
+        c, r, v = struct.unpack('>hhH', L.read(a, 6))
+        if c < 0:
+            return out
+        out.append((c, r, v)); a += 6
+
+def render_flags(L, im, cells, out):
+    """levelN_flags.png: the map dimmed, with the cell flags marked - red solid
+    (bit 15), yellow destructible (bit 12), cyan animated (bit 14, including
+    the map patches written at level start)."""
+    from PIL import ImageDraw
+    fl = Image.eval(im, lambda v: v // 3)
+    d = ImageDraw.Draw(fl, 'RGBA')
+    cells = [row[:] for row in cells]
+    for c, r, v in map_patches(L):
+        if r < L.rows and c < L.cols:
+            cells[r][c] = v
+    for r, row in enumerate(cells):
+        for c, v in enumerate(row):
+            box = (c * 16, r * 16, c * 16 + 15, r * 16 + 15)
+            if v & 0x4000:
+                d.rectangle(box, fill=(0, 220, 255, 170))
+            elif v & 0x1000:
+                d.rectangle(box, fill=(255, 220, 0, 170))
+            elif v & 0x8000:
+                d.rectangle(box, fill=(255, 40, 40, 90))
+    fl.save(os.path.join(out, f'level{L.n}_flags.png'))
 
 # --- BOBs ------------------------------------------------------------------
 def find_definitions(L, mem_read, lo, hi):

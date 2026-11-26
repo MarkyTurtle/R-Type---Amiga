@@ -20,7 +20,28 @@ The extra 96 pixels per line and 32 lines on top are margin: the 20 × 13 tile b
 
 ## HUD
 
-From line `$ED` the copper switches to **3 bitplanes** (BPLCON0 `$3200`), non-interleaved 40-byte lines: planes at `$2C7B0`, `$2CA08`, `$2CC60` (`$258` bytes = 15 lines each), at the end of the `$6000` graphics block. It has its own colours, plus a COLOR01 gradient on lines `$EE`–`$F3`. The score digits (`DrawDigits`), lives (`DrawLives`, `$2C7DA`) and the beam meter (`DrawBeamMeter`, `$2C7E8`) are written straight into these planes.
+From line `$ED` the copper switches to **3 bitplanes** (BPLCON0 `$3200`), non-interleaved 40-byte lines: planes at `$2C7B0`, `$2CA08`, `$2CC60` (`$258` bytes = 15 lines each), at the end of the `$6000` graphics block. Its colours are set by the copper list: COLOR02–07 `$999 $ACD $FFF $89F $00C $E00`, and COLOR01 changes on lines `$EE`–`$F3` (`$006 $00A $00E $00A $006 $FFF`), a blue gradient for everything drawn in plane 0.
+
+![HUD as in memory, and filled in](../gfx/hud.png)
+
+The labels ("1P-", "BEAM", "HI-") and the meter's frame are part of the planes. The game writes into them directly:
+
+| What | Routine | Address | Size | Planes |
+|---|---|---|---|---|
+| Lives | `DrawLives` | `$2C7DA` (line 1, x 16) | up to 5 icons of 8×6 (`LifeIcon`), Lives + 1 shown | 3 |
+| Beam meter | `DrawBeamMeter` | `$2C7E8` (line 1, x 128) | 96×5: three longs of pixels (`ChargeBeam`) | 0 |
+| Score | `DrawDigits` | `$2C8F9` (line 8, x 72) | 6 digits, 8×7 (`DigitFont`), leading zeros blank | 0 |
+| Best score | `DrawDigits` | `$2C905` (line 8, x 168) | 6 digits (`TopScore`) | 0 |
+
+`DigitFont` (in `game.s`) is 7 rows of 10 bytes, one byte per digit per row:
+
+![digits](../gfx/font_digits.png)
+
+## Text font
+
+`DrawChar` prints 8×8 characters from `$2CEB8`: 48 characters (in `CharSet` order: a–z, 0–9, `. , - _ ! ?` and a few symbols), 8 bytes each, plane 0 then plane 1 `$180` bytes later. They go into planes 0 and 1 of both screens (planes 2–3 cleared), so with `TextPalette` the text uses colours 1–3.
+
+![font](../gfx/font_game.png)
 
 ## Tiles
 
@@ -37,6 +58,8 @@ From line `$ED` the copper switches to **3 bitplanes** (BPLCON0 `$3200`), non-in
 | 13 | hit: set by shots, the wave beam, the lasers, the Force and the Bits when they touch the cell. The tile routine reads it: level 1's animated blocks clear themselves and their neighbour when hit. |
 | 14 | animated tile: bits 0–3 select a routine in `LV_TileAnims` (called while drawing). A solid animated cell stops the reflect laser without a bounce, and the wave beam passes through it. |
 | 15 | solid: `GetMapCell` tests it (bit 7 of the high byte). The ship, the Force, the POW Armor, shots, lasers and the Bits collide with solid cells. |
+
+`gfx/levelN_flags.png` shows each map with its flags: red = solid, yellow = destructible, cyan = animated (with level 1's Blasters, which the map patches add at level start). Destructible cells only occur in level 4 (the cell walls that Cytron builds and Geld eats); level 5's map has no solid cells at all.
 
 Map sizes (tiles): level 1 268 × 13, 2 180 × 13, 3 68 × 26 (the giant battleship: the map is the ship itself), 4 172 × 13, 5 210 × 13, 6 164 × 13, 7 154 × 13, 8 187 × 13. Rendered in full in `gfx/levelN_map.png`.
 

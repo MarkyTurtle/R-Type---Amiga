@@ -42,6 +42,7 @@ tools/
   decrunch.py          exact Python port of the game's decruncher at $3EFC
   verify.py            assemble src/*.s and compare with files/
   render_gfx.py        render maps, tiles, BOBs and sprites to gfx/
+  render_hud.py        render the HUD and fonts
   extract_sounds.py    write the sound effects to sfx/
   add_labels.py        insert labels at addresses in a source (keeps it identical)
   music_tables.py      locate each music player's tables, write its samples to music/
