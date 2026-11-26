@@ -107,3 +107,34 @@ Replace the custom-track loader with one that reads a standard AmigaDOS (11-sect
   - Keep the high-score table as a one-block file in a fixed place, so the save never touches the file system's bitmap or directory.
   - Keep the checksum check so a bad or missing table falls back to the default.
 - [ ] **Build**: extend `build_disk.py` (or add an `enhanced` mode) to write a plain ADF and verify it, and test it in WinUAE on a 512K A500 and with more memory.
+
+### Display and drawing speed-ups (as in GnG and NZS)
+
+The enhanced version doesn't need to keep the original memory layout, so the display code can be rebuilt freely: move buffers, code and data wherever suits.
+
+**What the original already does.** The cheap wins are already taken:
+- The playfield is **interleaved** (4 planes, 52 bytes each, `$D0` per line).
+- BOBs are **pre-masked**: the mask is stored once per plane line, so each BOB is a single cookie-cut blit (`ObjAnimDraw`, minterm `$CA`).
+
+**The big cost is elsewhere.** `DrawMap` redraws the whole 20 × 13 tile background, about 260 small A→D blits plus CPU set-up, into the back buffer every frame. That redraw is also how the BOBs get erased, and it's probably why the game is locked to 25 Hz.
+
+- [ ] **Double-buffered corkscrew scroll with a pristine buffer** (as in GnG and NZS):
+  - Keep a pristine background buffer and two display buffers that scroll by moving the bitplane pointers. Each frame draws only the newly exposed column of tiles (or part of it), into all three buffers.
+  - Erase BOBs by copying their rectangles back from the pristine buffer. This replaces the full-screen tile redraw.
+  - Handle the wrap at the end of the buffer (the corkscrew), and `BPLCON1` fine scroll.
+- [ ] **Vertical scrolling**: `UpdateScroll` also moves `ScrollY`/`FineScrollY` (maps up to 26 rows, 13 visible).
+  - Either make the buffers tall enough for the whole map height and scroll vertically by pointer (check chip memory for three such buffers on 512K), or wrap vertically as well, with a copper split.
+- [ ] **Map changes go to the pristine buffer too**: tile animations (`LV_TileAnims`), destructible blocks (map bit 12) and map patches must redraw their tile into the pristine buffer and both display buffers.
+  - Treat level 3 (the battleship) and level 4 (map copy) separately.
+- [ ] **50 Hz**: with the background no longer redrawn, try unlocking the 25 Hz frame rate.
+  - As in GnG: run at 50 fps, dropping to 25 in busy scenes.
+  - Or as in NZS: keep the logic at 25 Hz and draw interpolated in-between frames.
+  - The ship and the Bits already move at 50 Hz from the VBL.
+- [ ] **BOB blits**:
+  - Skip the extra shift word when x is word-aligned.
+  - Clip at the screen edges instead of relying on the 96-pixel margin, which costs memory in every buffer.
+  - Sort or batch blits to cut `WaitBlit` stalls, and set up the next blit while the blitter runs.
+  - Check whether any BOBs (shots, bullets) would be cheaper as hardware sprites or multiplexed sprites.
+- [ ] **Memory detection** (as in GnG and NZS): find the RAM configuration at boot.
+  - Move code and data out of chip RAM where possible, so the extra buffers fit on a 512K machine.
+  - Cache files in spare RAM on bigger machines.
