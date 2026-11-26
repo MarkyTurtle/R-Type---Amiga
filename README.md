@@ -40,6 +40,7 @@ Stage 1's full map and the R-9's tilt frames, rendered straight from the disk da
 - [x] Sound effects decoded and extracted to WAV ([`original/sfx/`](original/sfx/)); `$6000` block mapped
 - [x] Object definitions labelled in all sources (`Def_`/`Upd_`/`Spawn_`)
 - [x] In-game music tables located for all 9 players, samples extracted ([`original/music/`](original/music/)); object gallery ([OBJECTS.md](original/docs/OBJECTS.md))
+- [x] Disk rebuild: an extended ADF from the sources (not yet boot-tested)
 - [ ] Still open: see [TODO.md](original/docs/TODO.md) (object names, line-by-line comments, song tables, disk rebuild…)
 
 ## Game data
@@ -49,4 +50,7 @@ All files extracted from the disk are in [`original/files/`](original/files/) (s
 ```sh
 python3 -I original/tools/extract.py path/to/R-Type.ipf original/files/
 python3 -I original/tools/verify.py      # needs vasmm68k_mot
+
+# rebuild a bootable disk image (WinUAE extended ADF) from the sources
+VASM=vasmm68k_mot python3 -I original/tools/build_disk.py --from-source R-Type.adf
 ```

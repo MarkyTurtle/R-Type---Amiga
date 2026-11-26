@@ -52,11 +52,12 @@ State on 26 Nov 2026. All 12 sources reassemble byte-identical (`tools/verify.py
 ## 5. Boot and disk
 
 - [x] Bootblock and stage 2: fully annotated.
-- [ ] **High-score saving**: test writing track 68 in WinUAE with a writable disk image.
-- [ ] **Rebuild a disk**: write a tool that builds an IPF-independent disk image (ADF or custom-format MFM) from `files/` and the sources, as a first step towards an enhanced build (as with GnG/NZS).
+- [ ] **High-score saving**: the rebuilt ADF has a valid track 68; test that scores save and reload.
+- [x] **Rebuild a disk**: `tools/build_disk.py` writes an extended ADF from `files/` or from the sources (`--from-source`), self-verified by decoding every track.
+- [ ] **Boot the rebuilt ADF in WinUAE** (A500 512K and 1 MB) and play through; test high-score saving on it.
 
 ## 6. Tooling
 
-- [ ] **Makefile / build script** that assembles every source and rebuilds `files/` from them.
+- [x] **Build**: `tools/build_disk.py --from-source` assembles every source into a disk image (`tools/verify.py` checks them against `files/`).
 - [x] **Cross-reference**: `tools/xref.py` (which routines read/write each label).
 - [ ] Retire `work`-style one-off generators once all sources are hand-maintained (`bootstrap_source.py`, `gen_source.py`, `trace68k.py` are kept only for reference).

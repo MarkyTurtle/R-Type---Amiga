@@ -104,3 +104,20 @@ A ByteKiller-style backwards LZ decruncher (`tools/decrunch.py` is an exact port
 | `$52300–$71A3B` | music + replay (play `$52324`, start `$5232C`, init `$52334`) |
 | `$79360–$7A79F` | stage 2 |
 | `$7C400` | game MFM buffer |
+
+## Rebuilding the disk
+
+`tools/build_disk.py` writes a WinUAE **extended ADF** (`UAE-1ADF`), putting every file back on its original tracks in its original format:
+- **Tracks 0–9:** AmigaDOS sectors (bootblock and boot read).
+- **Tracks 10–62:** short `$9521` tracks of 100,064 bits.
+- **Tracks 63–158:** long `$9521` tracks of 105,344 bits, about 5% longer than a standard track, as on the original.
+- **Track 68:** written with a **valid** checksum and the game's default high-score table, so saving high scores works (the factory placeholder never loads).
+
+```sh
+python3 -I tools/build_disk.py R-Type.adf                  # from files/
+VASM=vasmm68k_mot python3 -I tools/build_disk.py --from-source R-Type.adf
+```
+
+`--from-source` assembles `src/` first, replacing the bootblock (its checksum is recomputed), stage 2, the game program, the shared file and the level A files. The other files (title picture, music, `$6000` block, level B) come from `files/`. Every raw track it writes is decoded again with the extractor's decoders and compared with its input. Each file must still fit its tracks (the tool reports an overflow); moving files means changing the loaders' track numbers too (stage 2 and `LevelTable`).
+
+Both commands currently give the same image. It hasn't been booted in WinUAE yet.
