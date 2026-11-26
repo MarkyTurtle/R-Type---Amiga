@@ -354,6 +354,9 @@ CheckEndOfGame:
                 move.w  #$F,$96(a6)
                 moveq   #0,d7
                 bra.w   NewGame
+; St_StageClear: "stage N cleared" and "stage score", then CountBonus
+; rolls the bonus up digit by digit; when the jingle ends the next level
+; loads.
 St_StageClear:
                 btst.b  #$7,(StageFlags).l
                 beq.b   FrameDone
@@ -485,6 +488,9 @@ ApplyMapPatches:
                 bra.b   .00640
 .00656:
                 rts
+; LevelFadeInStep: fades the level palette in, one step every 3 frames.
+; When done the ship is live and the game goes to St_Playing, or to
+; St_PlayStart (the fly-in, StageFlags bit 0) at the start of a level.
 LevelFadeInStep:
                 subq.b  #$1,(ShipIntroTimer).l
                 bpl.b   .006ac
@@ -533,6 +539,11 @@ ShipDied:
                 move.w  #$14,(ShipX).l
                 move.w  (ScrollX).l,(Checkpoint).l
                 rts
+; DeathWait (St_Dead): after the ship explodes, DeathTimer (30 frames)
+; runs down.  With no lives left the game-over jingle plays and GameOver
+; follows; otherwise the palette fades out over FadeSteps (15) steps, one
+; every 3 frames, and after 2 more seconds of black the level restarts
+; from the last checkpoint (StartLevel).
 DeathWait:
                 tst.b   (DeathTimer).l
                 beq.b   .00770
@@ -562,6 +573,10 @@ DeathWait:
                 cmp.l   (VblCount).l,d0
                 bhi.b   .0079e
                 bra.w   StartLevel
+; StageEndSequence: the boss is dead.  The beam meter is cleared and the
+; ship taken out of play, then over 36 steps (one every 3 frames) the
+; palette fades out (the last 15 steps).  Then: autopilot (ShipMode -1),
+; the stage-clear jingle, music off, and St_StageClear shows the bonus.
 StageEndSequence:
                 tst.b   (StageEndStarted).l
                 bne.b   .007d0
@@ -759,6 +774,10 @@ PaletteFadeOut:
 ;==============================================================================
 ; Score
 ;==============================================================================
+; CountBonus: shows Bonus in BonusText, rolling the digits: the number of
+; digits comes from BonusDigitsTable; every 18 frames one more digit
+; (from the right) stops on its real value while the others show random
+; digits.
 CountBonus:
                 lea.l   (BonusText).l,a2
                 move.l  #$20202020,(a2)
@@ -816,16 +835,18 @@ CountBonus:
 AddScore:
                 tst.b   (CheatMode).l
                 bne.b   AddScoreDone
+; AddScoreAlways: d0 = BCD points.  Score += d0, then Bonus += d0 (the
+; stage score), 4-byte ABCD chains; each lea points just past its target.
 AddScoreAlways:
                 move.l  d0,(ScoreToAdd).l
-                lea.l   (Bonus).l,a1
+                lea.l   (Bonus).l,a1                ; = end of Score
                 lea.l   (ScoreToAddEnd).l,a2
                 andi.w  #$FFEF,sr
                 abcd.b  -(a2),-(a1)
                 abcd.b  -(a2),-(a1)
                 abcd.b  -(a2),-(a1)
                 abcd.b  -(a2),-(a1)
-                lea.l   (ExtraLifePtr).l,a1
+                lea.l   (ExtraLifePtr).l,a1         ; = end of Bonus
                 lea.l   (ScoreToAddEnd).l,a2
                 andi.w  #$FFEF,sr
                 abcd.b  -(a2),-(a1)
@@ -899,6 +920,9 @@ DrawDigits:
                 dbra    d1,.00b4c
                 movem.l (a7)+,d0-d4
                 rts
+; DrawLives: clears the 5 icon positions in the HUD ($2C7DA, 3 planes
+; $258 apart, 40-byte lines) and draws Lives+1 ship icons (LifeIcon: 6
+; lines x 3 planes, one byte wide).
 DrawLives:
                 moveq   #4,d0
                 lea.l   ($2C7DA).l,a0
@@ -1642,6 +1666,13 @@ FireEnemyBullet:
                 adda.l  #$E,a1
                 dbra    d7,.01312
                 rts
+; UpdateEnemyBullets: 16 bullets of $0E bytes (EnemyBullets):
+;   +0 x  +2 y  +4 dx  +6 dy  +8.b hit state  +$A.l frame graphics
+; A bullet flies straight on (velocity from BulletVelocities, by the
+; direction to the ship when fired) and is drawn as a 16x14 BOB.  It dies
+; when it leaves the screen.  Hitting the ship kills it; hitting a solid
+; map cell or the Force starts a 4-frame burst (+8 counts it, the frame
+; pointer steps by $E0) - the Force absorbs bullets.
 UpdateEnemyBullets:
                 move.w  #$30,$60(a6)
                 move.w  #$30,$66(a6)
@@ -1884,6 +1915,8 @@ HitByShots:
                 subq.l  #$2,a1
                 dbra    d7,.01544
                 rts
+; HitByBits: each owned Bit (an 8x8 box at its centre) does 1 damage to
+; the object and also hits the map cell under it (bits 13/12, see DrawMap).
 HitByBits:
                 move.b  (BitsFlags).l,d7
                 btst    #$0,d7
@@ -2044,6 +2077,8 @@ HitByForceOrShip:
 .0179c:
                 st.b    (ShipHit).l
                 rts
+; CollectSpeedUp: the S power-up.  Shows the speed-up flash beside the
+; ship and raises ShipSpeed by one, to at most 5.
 CollectSpeedUp:
                 move.l  a0,-(a7)
                 moveq   #5,d0
@@ -2061,6 +2096,9 @@ CollectSpeedUp:
                 addq.w  #$1,(ShipSpeed).l
 .017e6:
                 rts
+; HitByLasers: the 8 laser segments (LaserSegments) against the object's
+; box (8x8, or 12x12 for the ground laser).  A segment that hits is used
+; up (LaserCount) and does 1 damage.
 HitByLasers:
                 move.b  (GroundLaserActive).l,d2
                 lea.l   (LaserSegments).l,a1
@@ -2212,44 +2250,47 @@ FireWaveCannon:
                 adda.l  #$1C,a1
                 dbra    d7,.01952
                 rts
+; UpdateShots: player shot slots 0-9 (the ship's and the free Force's),
+; from ShotsX (slot 9) down.  A shot in a solid map cell hits it and dies;
+; otherwise it is drawn (ShotTypes), moved, and dies at the screen edge.
 UpdateShots:
-                move.w  #$30,$60(a6)
+                move.w  #$30,$60(a6)                ; C/D modulo: 52 - 4 bytes
                 move.w  #$30,$66(a6)
                 moveq   #9,d7
                 lea.l   (ShotsX).l,a0
                 lea.l   (ShotTypes).l,a3
 .019c6:
-                move.w  (a0),d5
+                move.w  (a0),d5                     ; x (0 = free slot)
                 beq.b   .01a20
-                move.w  $1C(a0),d6
+                move.w  $1C(a0),d6                  ; y
                 move.w  d5,d0
                 move.w  d6,d1
                 bsr.w   GetMapCell
                 beq.b   .019e6
-                bset.b  #$5,(a4)
+                bset.b  #$5,(a4)                    ; solid cell: mark it hit
                 btst.b  #$4,(a4)
                 beq.b   .01a18
-                clr.w   (a4)
+                clr.w   (a4)                        ; destructible: gone
                 bra.b   .01a18
 .019e6:
                 move.w  d5,d0
                 move.w  d6,d3
-                move.w  $38(a0),d2
+                move.w  $38(a0),d2                  ; shot type
                 lsl.w   #$4,d2
-                move.w  $6(a3,d2.w),d1
-                movea.l $8(a3,d2.w),a1
-                movea.l $C(a3,d2.w),a2
+                move.w  $6(a3,d2.w),d1              ; BLTSIZE
+                movea.l $8(a3,d2.w),a1              ; graphics
+                movea.l $C(a3,d2.w),a2              ; mask
                 bsr.b   BlitBob
-                add.w   (a3,d2.w),d5
+                add.w   (a3,d2.w),d5                ; move by dx, dy
                 add.w   $2(a3,d2.w),d6
-                cmp.w   #$170,d5
+                cmp.w   #$170,d5                    ; off screen?
                 bcc.b   .01a18
                 cmp.w   #$10,d6
                 bcs.b   .01a18
                 cmp.w   #$F0,d6
                 bcs.b   .01a1a
 .01a18:
-                clr.w   d5
+                clr.w   d5                          ; free the slot
 .01a1a:
                 move.w  d6,$1C(a0)
                 move.w  d5,(a0)
@@ -2825,6 +2866,10 @@ FireForce:
                 subq.l  #$2,a0
                 dbra    d7,.0202e
                 rts
+; ChargeBeam: one step of the beam meter while fire is held.  The meter
+; is 3 longs of pixels (DrawBeamMeter): BeamMeterBits fills the current
+; long 4 pixels at a time from the left; when it is full BeamMeterLevel
+; moves to the next long, and at level 2 it stays full.
 ChargeBeam:
                 move.l  (BeamMeterBits).l,d5
                 lsr.l   #$4,d5
@@ -3660,6 +3705,11 @@ Force_Enter:
                 move.l  #Force_Free,(ForceState).l
 .02aa0:
                 rts
+; Force_Free: the Force on its own.  It parks at the screen edge away
+; from the ship - x $C0 when the ship is right of $10E, else x $152
+; (ForceParkSide 1 / -1, 2 pixels a frame) - and then follows the ship's
+; y, re-deciding the direction every 16 frames, 1 pixel a frame (it stops
+; within 4 pixels).
 Force_Free:
                 bsr.b   ForceCommon
                 move.w  (ShipX).l,d0
@@ -3728,6 +3778,8 @@ Force_Free:
 .02b7a:
                 moveq   #0,d6
                 rts
+; Force_Return: fire 2 while free - the Force flies back to the ship, 1
+; pixel a frame on each axis, and docks on touching it (ForceHitsShip).
 Force_Return:
                 bsr.w   ForceFollowY
                 moveq   #1,d1
@@ -3820,6 +3872,8 @@ ForceToFree:
 ForceHaltedToFree:
                 moveq   #0,d7
                 bra.b   ForceToFree
+; ForceFollowY: move ForceY 1 pixel towards the ship's y (d7 = the step
+; for the map test).
 ForceFollowY:
                 moveq   #1,d1
                 moveq   #-2,d7
@@ -4244,6 +4298,8 @@ Missile_Home:
                 add.w   d1,$4(a0)
                 add.w   d2,$6(a0)
                 rts
+; HitByMissiles: the two homing missiles against the object's box; a
+; missile that hits is freed and does 1 damage.
 HitByMissiles:
                 tst.b   (MissilesEnabled).l
                 beq.b   .031d4
@@ -4384,6 +4440,9 @@ St_TitleWipe:
 TitleNextFrame:
                 st.b    (FrameReady).l
                 bra.w   TitleLoop
+; InitTitleLetters: starts the title music if the TFMX file is still at
+; MUSIC ($3F3 = hunk header), then creates the 7 R-TYPE letter objects
+; (TitleLetterList: definition, slide-in path) at x $17A.
 InitTitleLetters:
                 cmpi.l  #$3F3,(MUSIC).l
                 bne.b   .033de
@@ -4417,6 +4476,9 @@ InitTitleLetters:
                 bsr.w   ObjInsert
                 dbra    d7,.033fe
                 rts
+; DrawTitle: the title screen's frame: clears the band the letters
+; moved through (TitleWipeTop/Bottom), then runs and draws the letter
+; objects.
 DrawTitle:
                 move.w  (TitleWipeTop).l,d0
                 move.w  #$2A1A,d1
@@ -4443,6 +4505,8 @@ DrawTitle:
                 bne.b   .03490
 .034aa:
                 rts
+; ClearLines: d0 = first line, d1 = BLTSIZE; blitter-clears whole
+; interleaved lines of DrawBuffer.
 ClearLines:
                 clr.l   $44(a6)
                 movea.l (DrawBuffer).l,a0
@@ -4588,6 +4652,10 @@ ClearPlayfield:
                 cmpa.l  #$48BBA,a0
                 bcs.b   .03670
                 rts
+; InsertScore: d0 = score.  Finds its place in HighScores (a0 = entry,
+; or 0 if it doesn't qualify), moves the lower entries down (the last
+; name buffer is reused for the new entry), blanks the name and falls
+; into FormatScores.
 InsertScore:
                 lea.l   (HighScores).l,a0
                 moveq   #9,d1
@@ -4618,6 +4686,8 @@ InsertScore:
                 move.l  #$20202020,(a1)+
                 move.l  #$20202020,(a1)+
                 move.l  #$20202020,(a1)+
+; FormatScores: writes each entry's score as text after its name
+; (name + $11), leading zeros as spaces.
 FormatScores:
                 lea.l   (HighScores).l,a1
                 lea.l   (ScoreDigitChars).l,a2
@@ -4641,6 +4711,9 @@ FormatScores:
                 adda.l  #$C,a1
                 dbra    d0,.036fa
                 rts
+; DrawScoreTable: for each entry, a 12-line strip from the level B
+; graphics ($50832/$50862) behind the line on both screens, then the
+; score text and the name.
 DrawScoreTable:
                 lea.l   (HighScores).l,a4
                 lea.l   ($50862).l,a3
@@ -4782,6 +4855,8 @@ EnterName:
                 movem.l (a7)+,a0-a1
                 moveq   #-1,d0
                 bra.w   .03820
+; ReadNameInput: name entry input.  Fire (debounced) -> 3, joystick
+; port 1 vertical (JOY1DAT) -> 1 or 2, nothing -> 0.
 ReadNameInput:
                 btst.b  #$7,(CIAA_PRA).l
                 bne.b   .0390c
@@ -4851,6 +4926,10 @@ PrintString:
                 bra.b   PrintString
 .03970:
                 rts
+; DrawChar: d0 = character, a1 = screen byte.  Looks it up in CharSet
+; (unknown characters print as the last one) and copies the 8x8 font
+; ($2CEB8, 2 planes $180 apart) into planes 0 and 1 of both screens,
+; clearing planes 2 and 3.
 DrawChar:
                 movem.l d0/a0-a2,-(a7)
                 lea.l   (CharSet).l,a0
@@ -4916,6 +4995,11 @@ AbortTitle:
                 move.w  #$F,$96(a6)
                 clr.b   (TitleAbort).l
                 bra.w   ClearPlayfield
+; RestoreMusic: the title music.  If a copy was kept in fast/slow RAM
+; (MusicCopy, from stage 2) it is copied back to MUSIC ($52300, $1FBD0
+; bytes) and
+; the TFMX player restarted (mdat $6FD28, smpl $53768); otherwise MUSIC is
+; marked as overwritten so the title stays silent.
 RestoreMusic:
                 move.l  (MusicCopy).l,d0
                 beq.b   .03a66
@@ -4933,6 +5017,10 @@ RestoreMusic:
 .03a66:
                 clr.l   (MUSIC).l
                 rts
+; UpdateMusic: drives the level's music player (LV_Music, called with
+; d0 = 0).  JingleState > 0 starts jingle JingleState-1 (d4 = n<<8|$FF),
+; < 0 keeps it going until the player reports the end; otherwise
+; MusicRequest starts song n-1 (positive, d3 = -1) or fades (negative).
 UpdateMusic:
                 move.b  (JingleState).l,d4
                 beq.b   .03aa8
@@ -5022,6 +5110,10 @@ UpdateSound:
                 bsr.w   UpdateChannel
                 addq.l  #$8,a6
                 adda.w  #$10,a5
+; UpdateChannel: a6 = SoundChannels entry, a5 = Paula channel.  Starts a
+; queued effect (+2) from SoundTable: pointer, length, period, volume,
+; priority; then enables its audio interrupt and DMA.  Level4Int stops it
+; once it has played once.
 UpdateChannel:
                 move.b  $2(a6),d0
                 bmi.b   PlaySoundDone
@@ -5164,6 +5256,11 @@ LoadTracksNext:
                 subq.w  #$1,d1
                 bne.b   LoadTracksNext
                 bra.w   MotorOff
+; DecodeTrack: a long custom track in TRACK_BUFFER -> LoadDest.
+; $1998 bytes as $666 (odd, even) MFM long pairs, then the checksum pair:
+; EOR of all $CCC raw longs AND $55555555, XOR $AAAAAAAA (the rol of
+; $55555555).  On a bad checksum it steps the head away and back and
+; reads the track again (forever).
 DecodeTrack:
                 lea.l   (TRACK_BUFFER+2).l,a0
                 movea.l (LoadDest).l,a1
@@ -5207,6 +5304,8 @@ DecodeTrack:
                 bsr.w   SeekTrack
                 bsr.w   ReadTrack
                 bra.w   DecodeTrack
+; ReadTrack: DMA read of $19AC words with word sync (SyncWord, $9521 on
+; the game's tracks) into TRACK_BUFFER; waits for DSKBLK.
 ReadTrack:
                 move.l  (SyncWord).l,d7
                 swap    d7
@@ -5223,6 +5322,8 @@ ReadTrack:
                 move.w  #$2,$9C(a6)
                 move.w  #$4000,$24(a6)
                 rts
+; MotorOn / MotorOff: switch DriveUnit's motor (CIA-B PRB: /MTR is
+; latched when the drive's /SEL goes low).
 MotorOn:
                 move.l  d0,-(a7)
                 bclr.b  #$7,(CIAB_PRB).l
@@ -5252,6 +5353,8 @@ WaitDiskReady:
                 btst.b  #$5,(CIAA_PRA).l
                 bne.b   WaitDiskReady
                 rts
+; SeekTrack: d0 = track (cylinder * 2 + side).  Selects the side, then
+; steps the head to the cylinder; the first call seeks track 0 first.
 SeekTrack:
                 movem.l d0-d1,-(a7)
                 move.w  (CurrentTrack).l,d1
@@ -5420,6 +5523,12 @@ GetBits:
                 roxl.l  #$1,d2
                 dbra    d1,.03f8c
                 rts
+; LoadHighScores: read track 68 (sync $4489, up to 6 tries) into
+; HighScores.  Layout after the sync word: checksum (odd/even longs,
+; XOR $12345678), a spare pair, then 90 longs as odd/even pairs.  The
+; checksum is the EOR of the 200 raw data longs AND $55555555.  A bad
+; checksum keeps the built-in table (the factory disk's track 68 is a
+; placeholder that never passes, so scores only load once saved).
 LoadHighScores:
                 bsr.w   MotorOn
                 moveq   #68,d0
@@ -5463,6 +5572,10 @@ LoadHighScores:
 .0401a:
                 dbra    d7,.03fae
                 bra.w   MotorOff
+; SaveHighScores: builds track 68 in TRACK_BUFFER and writes it, unless
+; the disk is write-protected (CIA-A PRA bit 3).  $AAAA fill, 1000 bytes
+; of gap, sync $4489 + $2AAA, checksum and a zero long, then 100 longs of
+; HighScores as odd/even MFM pairs (EncodeLong).  Not called in cheat mode.
 SaveHighScores:
                 bsr.w   MotorOn
                 btst.b  #$3,(CIAA_PRA).l
@@ -5503,6 +5616,8 @@ SaveHighScores:
                 bsr.w   WriteScoreTrack
 .040b4:
                 bra.w   MotorOff
+; ReadScoreTrack: DMA read with word sync $4489 into TRACK_BUFFER ($300
+; words), waiting for the drive to be ready and the DSKBLK interrupt.
 ReadScoreTrack:
                 lea.l   (CUSTOM).l,a6
                 move.w  #$8210,$96(a6)
@@ -5523,6 +5638,9 @@ ReadScoreTrack:
                 move.w  #$2,$9C(a6)
                 move.w  #$4000,$24(a6)
                 rts
+; WriteScoreTrack: DMA write of TRACK_BUFFER ($194E words, MFM with
+; precompensation off) starting at the index pulse (CIA-B ICR FLG), with a
+; time-out.
 WriteScoreTrack:
                 lea.l   (CUSTOM).l,a6
                 move.w  #$7FFF,$9E(a6)
@@ -5549,6 +5667,9 @@ WriteScoreTrack:
                 move.w  #$4000,$24(a6)
                 move.w  #$2,$9C(a6)
                 rts
+; EncodeLong: d0 -> two MFM longs at (a1)+: odd bits, then even bits.
+; Clock bits are set between two zero data bits, and the first clock bit
+; is cleared if the previous MFM bit was a 1.
 EncodeLong:
                 move.l  d0,d3
                 lsr.l   #$1,d0
@@ -5881,6 +6002,13 @@ BeamMeterLevel:
                 dc.w    $0000
 BeamMeterBits:
                 dc.w    $0000,$0000
+; Player shots: 14 slots in parallel word arrays, $1C bytes apart:
+;   x +0 (0 = free), y +$1C, type +$38, hit box x/y +$54/+$70,
+;   size w/h +$8C/+$A8
+; Slots 0-3 the ship's shots (ShipFire, from ShotX3 down), 4-9 the free
+; Force's (ShotX5/ShotX7/ShotX8/ShotsX), 10-11 the Bits' shot streams
+; (BitShotX), 12 the anti-air laser (AntiAirLaserX), 13 the wave cannon
+; beam (WaveBeamX).  HitByShots tests all 14.
 ShotX:
                 dc.w    $0000,$0000,$0000
 ShotX3:
