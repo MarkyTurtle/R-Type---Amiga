@@ -58,7 +58,7 @@ TRACK_BUFFER    equ     $7C400          ; raw MFM buffer
 ;   $15650-$15A4F 32x4 shot streams       $15A50-$17ACF cannon walker
 ;   $17AD0-$189CF power-up items          $189D0-$19B8F wave cannon shots
 ;   $19B90-$19D8F lasers                  $19D90-$1A2CF enemy bullets
-;   $1A2D0-$1C2CF homing missiles (32 directions)
+;   $1A2D0-$1C2CF homing missiles (16 directions x 2 frames)
 ;   $1C2D0-$1C64F laser frames            $1C68A-$2C7AF sound effect samples
 ;   $2C7B0-$2CEB7 HUD bitplanes (3 x $258)
 ; Details: docs/GRAPHICS.md, rendered in gfx/engine_bobs.png and gfx/sprites_*
@@ -1879,12 +1879,12 @@ HitByBits:
                 move.b  (BitsFlags).l,d7
                 btst    #$0,d7
                 beq.b   .015f4
-                movem.w (D_0512E).l,d0-d1
+                movem.w (UpperBitHitPos).l,d0-d1
                 bsr.b   .01606
 .015f4:
                 btst    #$1,d7
                 beq.b   .01604
-                movem.w (D_05132).l,d0-d1
+                movem.w (LowerBitHitPos).l,d0-d1
                 bsr.b   .01606
 .01604:
                 rts
@@ -1994,7 +1994,7 @@ HitByForceOrShip:
                 beq.b   CollectSpeedUp
                 cmp.w   #$4,d0
                 bne.b   .01734
-                st.b    (D_055A4).l
+                st.b    (MissilesEnabled).l
                 rts
 .01734:
                 cmp.w   #$5,d0
@@ -2753,7 +2753,7 @@ FireForce:
                 btst.b  #$0,(BitsFlags).l
                 beq.b   .01ff4
                 lea.l   (D_04B8A).l,a0
-                movem.w (D_0512E).l,d0-d1
+                movem.w (UpperBitHitPos).l,d0-d1
                 addq.w  #$2,d1
                 move.w  d4,-(a7)
                 add.w   d4,d0
@@ -2763,7 +2763,7 @@ FireForce:
                 btst.b  #$1,(BitsFlags).l
                 beq.b   .0200e
                 addq.l  #$2,a0
-                movem.w (D_05132).l,d0-d1
+                movem.w (LowerBitHitPos).l,d0-d1
                 addq.w  #$2,d1
                 add.w   d4,d0
                 bsr.b   .01fbe
@@ -3096,8 +3096,8 @@ InitBits:
                 clr.w   (LowerBitPos).l
                 move.w  #$1E,(D_05128).l
                 move.w  #$10E,(D_0512C).l
-                clr.w   (D_05112).l
-                clr.w   (D_0511C).l
+                clr.w   (UpperBitTrail).l
+                clr.w   (LowerBitTrail).l
                 move.w  #$1,(D_05114).l
                 move.w  #$1,(D_0511E).l
                 lea.l   ($49342).l,a0
@@ -3109,30 +3109,36 @@ InitBits:
                 clr.w   (a0)+
                 dbra    d0,.02470
                 rts
+; The Bits trail the ship: every VBL the ship's position is written into a
+; small ring buffer ($49342 upper, $4934E lower; head/tail/timer in
+; UpperBitTrail/LowerBitTrail) and each Bit is placed at an older entry,
+; 25 pixels above / 29 below the ship (y clamped to $22-$10E).  BitsFlags
+; bit 0/1 = upper/lower Bit owned.  UpperBitHitPos/LowerBitHitPos are the
+; same positions in game coordinates, for collisions.
 UpdateBits:
                 move.b  (BitsFlags).l,d7
                 lsr.b   #$1,d7
 L_02490:
                 bcc.b   .024ba
                 lea.l   ($49342).l,a0
-                lea.l   (D_05112).l,a1
+                lea.l   (UpperBitTrail).l,a1
                 moveq   #-25,d2
                 bsr.b   .024e8
                 movem.w d2-d3,(UpperBitPos).l
                 sub.w   #$5F,d2
                 sub.w   #$C,d3
-                movem.w d2-d3,(D_0512E).l
+                movem.w d2-d3,(UpperBitHitPos).l
 .024ba:
                 lsr.w   #$1,d7
                 bcc.b   .024e6
                 lea.l   ($4934E).l,a0
-                lea.l   (D_0511C).l,a1
+                lea.l   (LowerBitTrail).l,a1
                 moveq   #29,d2
                 bsr.b   .024e8
                 movem.w d2-d3,(LowerBitPos).l
                 sub.w   #$5F,d2
                 sub.w   #$C,d3
-                movem.w d2-d3,(D_05132).l
+                movem.w d2-d3,(LowerBitHitPos).l
 .024e6:
                 rts
 .024e8:
@@ -4001,23 +4007,30 @@ Walker_Walk:
 ;==============================================================================
 ; Homing missiles
 ;==============================================================================
+; Homing missiles (the M power-up sets MissilesEnabled): two slots,
+; Missile1/Missile2, $1C bytes each: +0.l state routine (0 = free), +4 x,y,
+; +$C direction 0-15, +$E animation toggle (frame = direction + 16 on
+; alternate frames).  Both are launched together from the ship when fire is
+; pressed and MissileReload ($38 frames) has run out; MissilesInFlight
+; counts them.  A missile that reaches a solid map cell becomes an explosion
+; object; one that leaves the screen is freed.
 ResetMissiles:
-                clr.b   (D_055A4).l
-                clr.b   (D_055AA).l
-                clr.w   (D_055A8).l
-                clr.l   (D_0556C).l
-                clr.l   (D_05588).l
+                clr.b   (MissilesEnabled).l
+                clr.b   (MissilesInFlight).l
+                clr.w   (MissileReload).l
+                clr.l   (Missile1).l
+                clr.l   (Missile2).l
                 rts
 UpdateMissiles:
-                tst.b   (D_055AA).l
+                tst.b   (MissilesInFlight).l
                 bne.b   .02f96
-                tst.w   (D_055A8).l
+                tst.w   (MissileReload).l
                 beq.b   .02f96
-                subq.w  #$1,(D_055A8).l
+                subq.w  #$1,(MissileReload).l
 .02f96:
-                lea.l   (D_0556C).l,a0
+                lea.l   (Missile1).l,a0
                 bsr.b   .02fa4
-                lea.l   (D_05588).l,a0
+                lea.l   (Missile2).l,a0
 .02fa4:
                 move.l  (a0),d0
                 beq.w   .03048
@@ -4031,7 +4044,7 @@ UpdateMissiles:
                 bsr.w   GetMapCell
                 beq.b   .02ff2
                 clr.l   (a0)
-                subq.b  #$1,(D_055AA).l
+                subq.b  #$1,(MissilesInFlight).l
                 move.w  d6,d0
                 move.w  d7,d1
                 addq.w  #$8,d0
@@ -4063,7 +4076,7 @@ UpdateMissiles:
                 bcs.b   .03034
 .0302a:
                 clr.l   (a0)
-                subq.b  #$1,(D_055AA).l
+                subq.b  #$1,(MissilesInFlight).l
                 rts
 .03034:
                 move.w  #$30,$60(a6)
@@ -4071,11 +4084,11 @@ UpdateMissiles:
                 move.w  #$1002,d1
                 bra.w   BlitBob
 .03048:
-                tst.b   (D_055A4).l
+                tst.b   (MissilesEnabled).l
                 beq.b   L_030B6
                 tst.b   (ShipAlive).l
                 beq.b   L_030B6
-                tst.w   (D_055A8).l
+                tst.w   (MissileReload).l
                 bne.b   L_030B6
                 btst.b  #$7,(CIAA_PRA).l
                 bne.b   L_030B6
@@ -4090,8 +4103,8 @@ UpdateMissiles:
                 move.l  #Missile_Launch,(a0)
                 tst.b   $19(a0)
                 bmi.b   L_030B6
-                move.b  #$2,(D_055AA).l
-                move.w  #$38,(D_055A8).l
+                move.b  #$2,(MissilesInFlight).l
+                move.w  #$38,(MissileReload).l
 L_030B6:
                 rts
 Missile_Launch:
@@ -4176,11 +4189,11 @@ Missile_Home:
                 add.w   d2,$6(a0)
                 rts
 HitByMissiles:
-                tst.b   (D_055A4).l
+                tst.b   (MissilesEnabled).l
                 beq.b   .031d4
-                lea.l   (D_0556C).l,a1
+                lea.l   (Missile1).l,a1
                 bsr.b   .031d6
-                lea.l   (D_05588).l,a1
+                lea.l   (Missile2).l,a1
                 bsr.b   .031d6
 .031d4:
                 rts
@@ -4194,7 +4207,7 @@ HitByMissiles:
                 bsr.w   BoxTest
                 beq.b   .031d4
                 clr.l   (a1)
-                subq.b  #$1,(D_055AA).l
+                subq.b  #$1,(MissilesInFlight).l
                 moveq   #1,d0
                 bra.w   ObjDamage
 
@@ -5965,13 +5978,13 @@ VblCountLoByte:
                 dc.b    $00
 ShipTiltTable:
                 dc.w    $0505,$0404,$0406,$0606,$0606
-D_05112:
+UpperBitTrail:
                 dc.w    $0000
 D_05114:
                 dc.w    $0000,$0000
 UpperBitFrame:
                 dc.w    $0000,$0000
-D_0511C:
+LowerBitTrail:
                 dc.w    $0000
 D_0511E:
                 dc.w    $0000,$0000
@@ -5985,9 +5998,9 @@ LowerBitPos:
                 dc.w    $0000
 D_0512C:
                 dc.w    $0000
-D_0512E:
+UpperBitHitPos:
                 dc.w    $0000,$0000
-D_05132:
+LowerBitHitPos:
                 dc.w    $0000,$0000
 FlipCountdown:
                 dc.w    $0000
@@ -6142,7 +6155,7 @@ D_0542C:
                 dc.w    $0006,$0000,$0006,$0004,$0006,$0006,$0004,$0006
                 dc.w    $0000,$0006,$FFFC,$0006,$FFFA,$0006,$FFFA,$0004
                 dc.w    $FFFA,$0000,$FFFA,$FFFC,$FFFA,$FFFA,$FFFC,$FFFA
-; homing missile frames: 32 directions x $100 from $1A2D0 (UpdateMissiles)
+; homing missile frames: 16 directions x 2 animation frames (+16), $100 each, from $1A2D0 (UpdateMissiles)
 MissileFrames:
                 dc.w    $0001,$A2D0,$0001,$A3D0,$0001,$A4D0,$0001,$A5D0
                 dc.w    $0001,$A6D0,$0001,$A7D0,$0001,$A8D0,$0001,$A9D0
@@ -6161,19 +6174,19 @@ D_054EC:
                 dc.w    $0001,$0005,$000A,$0009,$0001,$0004,$000A,$0008
                 dc.w    $0000,$0005,$000B,$0006,$0001,$0002,$000A,$0008
                 dc.w    $0002,$0001,$0009,$000A,$0004,$0001,$0008,$000B
-D_0556C:
+Missile1:
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000,$00FE,$0100
-D_05588:
+Missile2:
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000,$0002,$0000
-D_055A4:
+MissilesEnabled:
                 dc.w    $0000
 D_055A6:
                 dc.w    $0000
-D_055A8:
+MissileReload:
                 dc.w    $0000
-D_055AA:
+MissilesInFlight:
                 dc.w    $0000
 D_055AC:
                 dc.w    $0000,$55E6,$0000,$0000,$0000,$5602,$0005,$0E62

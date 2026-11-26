@@ -133,6 +133,10 @@ A state machine in `ForceState`, run from the copper interrupt (details in the c
 
 `BoxTest` is a simple distance test with separate left/right and up/down extents. `ObjDamage` adds the damage, and when it reaches the definition's hit points the object explodes and its score is added. Otherwise it flashes white for 3 frames (hit sound). Objects carrying a power-up release it when hit. Flag bit 2 makes an object immune to weapons, and hit points < 0 make it indestructible.
 
+**Homing missiles** (the M power-up): two missiles are launched together from the ship on a fire press, with a 56-frame reload. They steer through 16 directions (each with 2 animation frames) and explode on solid map cells.
+
+**The Bits** trail the ship. Each VBL its position goes into a small ring buffer, and each Bit is placed at an older entry (25 pixels above or 29 below), which gives them their lagging movement.
+
 **Enemy bullets:** 16 at most, aimed at the ship when fired (`FireEnemyBullet`, 16 directions). They're stopped by the map and the Force, and kill the ship on contact.
 
 ## Hidden trainer

@@ -99,7 +99,7 @@ No code at all: shared graphics and the sound-effect samples. The pieces are con
 | `$189D0`–`$19B8F` | wave cannon by charge: 16×12, 32×12, 48×14, 64×16, 2 frames each | `WaveCannonShots`, `FireWaveCannon` |
 | `$19B90`–`$19D8F` | lasers, 16×16, 2 frames | `UpdateLasers` |
 | `$19D90`–`$1A2CF` | enemy bullet + hit burst, 16×14, 6 frames | `FireEnemyBullet`, `UpdateEnemyBullets` |
-| `$1A2D0`–`$1C2CF` | homing missiles, 16×16, 32 directions × `$100` | `MissileFrames`, `UpdateMissiles` |
+| `$1A2D0`–`$1C2CF` | homing missiles, 16×16, 16 directions × 2 animation frames, `$100` each | `MissileFrames`, `UpdateMissiles` |
 | `$1C2D0`–`$1C64F` | laser frames, 16×14, 4 × `$E0` | `LaserFrames`, `UpdateLasers` |
 | `$1C68A`–`$2C7AF` | 14 sound-effect samples | `SoundTable` (see `MUSIC.md`) |
 | `$2C7B0`–`$2CEB7` | HUD bitplanes, 3 × `$258` | see HUD above |
