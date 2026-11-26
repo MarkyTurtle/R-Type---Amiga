@@ -152,6 +152,28 @@ They explode on solid map cells.
 
 **Enemy bullets:** 16 at most, aimed at the ship when fired (`FireEnemyBullet`, 16 directions). They're stopped by the map and the Force, and kill the ship on contact.
 
+## Attract mode and credits
+
+`TitleSequence` is a state machine in `TitleState`, run at 50 Hz. Each state fades the current screen out, then shows the next for `TitleDelay` frames. Fire on port 2 starts a game at any point.
+
+1. **High score:** if the last game's score made the table, the player enters a name (`EnterName`: joystick up/down picks a character, fire takes it, up to 16 characters).
+2. **Credits** (`TxtCredits`), for 200 frames.
+3. **High-score table**, for 250 frames.
+4. **Title:** the R-TYPE letters fly in as objects. Then the text: "blast off and strike the evil bydo empire!", "press fire to start", "freeplay" (or "trainer"), "C 1987 by irem". A 112-pixel-wide graphic from the shared file is wiped in 4 lines a frame. After 200 frames it goes back to the credits.
+
+The credits in the program name the Amiga team:
+
+| Role | Names |
+|---|---|
+| Design | Factor 5 (licensed from Irem by Electric Dreams, produced by Rainbow Arts) |
+| Programming | Achim Möller, Holger Schmidt |
+| Graphics | Lutz Osterkorn, Stefan Tsouparidis, Willi Baecker |
+| Music | Darius Zendeh; title music Chris Huelsbeck |
+
+(The boot loader's own credits, in `stage2.s`, also list Thomas Fanslau, Holger Schmidt and Willi Baecker for "tool coding", and Mark Jones for the ST graphics.)
+
+The **ending text**, shown after level 8 (`TxtEnding`): "thanks to your brave fighting. the cosmos restored peace / the bydo empire was annihilated / to never scare people again. your name will remain in the universe forever."
+
 ## Hidden trainer
 
 Enter **`sumita.`** as your high-score name. `CheatMode` (`$56FF`) is then set: no score, no lives lost, high scores not saved, and the title's "freeplay" line reads "trainer". The game hides both the name (`$E6EADAD2 >> 1` = "sumi", `$74612E20` = "ta. ") and the string pointer (stored halved). See `St_HighScore`.

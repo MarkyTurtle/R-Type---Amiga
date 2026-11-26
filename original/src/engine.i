@@ -159,9 +159,9 @@ Missile_Home        equ     $03156
 HitByMissiles       equ     $031BC
 TitleSequence       equ     $03202
 TitleLoop           equ     $0323C
-St_TitleFadeOut     equ     $0326A
-St_ScoresFadeOut    equ     $032B6
-St_CreditsFadeOut   equ     $032FC
+St_ShowCredits     equ     $0326A
+St_ShowHighScores    equ     $032B6
+St_ShowTitle   equ     $032FC
 St_TitleStart       equ     $03316
 St_TitleLetters     equ     $0332E
 St_TitleText        equ     $0334A

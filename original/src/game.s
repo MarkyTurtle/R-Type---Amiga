@@ -4238,10 +4238,26 @@ HitByMissiles:
 ;==============================================================================
 ; Attract mode: title, high scores, demo
 ;==============================================================================
+; Attract mode, a state machine in TitleState run at 50 Hz (Flip50Hz).
+; Each state fades the current screen out over TitleFadeSteps, then shows
+; the next one for TitleDelay frames:
+;   St_HighScore      first: enter the last game's score into the table
+;   St_ShowCredits    TxtCredits (Amiga team: Factor 5, Rainbow Arts,
+;                     programmers, artists, musicians) - 200 frames
+;   St_ShowHighScores DrawScoreTable - 250 frames
+;   St_ShowTitle      InitTitleLetters: the R-TYPE letters fly in as
+;                     objects (St_TitleLetters until TitleLettersDone),
+;                     then St_TitleText prints TitleTextList ("blast off
+;                     and strike the evil bydo empire!", "press fire to
+;                     start", "freeplay"/"trainer", "C 1987 by irem") and
+;                     St_TitleWipe copies a 112-pixel wide graphic from the
+;                     shared file ($50282) into both screens, 4 lines a
+;                     frame - then 200 frames and back to the credits
+; Fire on port 2 at any point -> AbortTitle -> the game.
 TitleSequence:
                 move.l  a7,(TitleStack).l
                 clr.b   (CheatMode).l
-                clr.b   (D_056FE).l
+                clr.b   (TitleAbort).l
                 tst.w   d7
                 bne.b   .03220
                 bsr.w   LoadShared
@@ -4249,61 +4265,61 @@ TitleSequence:
 .03220:
                 clr.w   (FineScrollX).l
                 clr.w   (FineScrollY).l
-                clr.w   (D_056F6).l
+                clr.w   (TitleDelay).l
                 move.l  #St_HighScore,(TitleState).l
 TitleLoop:
                 tst.b   (FrameReady).l
                 bne.b   TitleLoop
                 btst.b  #$7,(CIAA_PRA).l
                 beq.w   AbortTitle
-                tst.w   (D_056F6).l
+                tst.w   (TitleDelay).l
                 beq.b   .03262
-                subq.w  #$1,(D_056F6).l
+                subq.w  #$1,(TitleDelay).l
                 bra.w   TitleNextFrame
 .03262:
                 movea.l (TitleState).l,a1
                 jmp     (a1)
-St_TitleFadeOut:
+St_ShowCredits:
                 bsr.w   PaletteFadeOut
-                move.w  #$4,(D_056F6).l
-                subq.b  #$1,(D_056F3).l
+                move.w  #$4,(TitleDelay).l
+                subq.b  #$1,(TitleFadeSteps).l
                 bpl.w   TitleNextFrame
                 bsr.w   ClearPlayfield
-                lea.l   (D_056AA).l,a1
+                lea.l   (TitlePalette).l,a1
                 bsr.w   SetPalette
-                lea.l   (D_05962).l,a4
-                bsr.w   PrintList
-                move.w  #$C8,(D_056F6).l
-                move.l  #St_ScoresFadeOut,(TitleState).l
-                move.b  #$F,(D_056F3).l
+                lea.l   (TxtCredits).l,a4
+                bsr.w   PrintList                   ; credits screen
+                move.w  #$C8,(TitleDelay).l
+                move.l  #St_ShowHighScores,(TitleState).l
+                move.b  #$F,(TitleFadeSteps).l
                 bra.w   TitleNextFrame
-St_ScoresFadeOut:
+St_ShowHighScores:
                 bsr.w   PaletteFadeOut
-                move.w  #$4,(D_056F6).l
-                subq.b  #$1,(D_056F3).l
+                move.w  #$4,(TitleDelay).l
+                subq.b  #$1,(TitleFadeSteps).l
                 bpl.w   TitleNextFrame
                 bsr.w   ClearPlayfield
                 lea.l   (TextPalette).l,a1
                 bsr.w   SetPalette
                 bsr.w   DrawScoreTable
-                move.w  #$FA,(D_056F6).l
-                move.b  #$F,(D_056F3).l
-                move.l  #St_CreditsFadeOut,(TitleState).l
+                move.w  #$FA,(TitleDelay).l
+                move.b  #$F,(TitleFadeSteps).l
+                move.l  #St_ShowTitle,(TitleState).l
                 bra.w   TitleNextFrame
-St_CreditsFadeOut:
+St_ShowTitle:
                 bsr.w   PaletteFadeOut
-                move.w  #$4,(D_056F6).l
-                subq.b  #$1,(D_056F3).l
+                move.w  #$4,(TitleDelay).l
+                subq.b  #$1,(TitleFadeSteps).l
                 bpl.w   TitleNextFrame
                 bsr.w   ClearPlayfield
 St_TitleStart:
                 bsr.w   InitTitleLetters
-                lea.l   (D_056AA).l,a1
+                lea.l   (TitlePalette).l,a1
                 bsr.w   SetPalette
                 move.l  #St_TitleLetters,(TitleState).l
 St_TitleLetters:
                 bsr.w   DrawTitle
-                tst.b   (D_056F2).l
+                tst.b   (TitleLettersDone).l
                 beq.w   TitleNextFrame
                 move.l  #St_TitleText,(TitleState).l
                 bra.w   TitleNextFrame
@@ -4312,7 +4328,7 @@ St_TitleText:
                 lea.l   (TitleTextList).l,a4
                 bsr.w   PrintList
                 move.l  #St_TitleWipe,(TitleState).l
-                move.b  #$D,(D_056F3).l
+                move.b  #$D,(TitleFadeSteps).l
                 lea.l   ($37C63).l,a2
                 lea.l   ($45963).l,a3
                 lea.l   ($50282).l,a0
@@ -4327,12 +4343,12 @@ St_TitleWipe:
                 adda.l  #$26,a2
                 adda.l  #$26,a3
                 dbra    d0,.0337e
-                move.w  #$2,(D_056F6).l
-                subq.b  #$1,(D_056F3).l
+                move.w  #$2,(TitleDelay).l
+                subq.b  #$1,(TitleFadeSteps).l
                 bne.b   TitleNextFrame
-                move.w  #$C8,(D_056F6).l
-                move.l  #St_TitleFadeOut,(TitleState).l
-                move.b  #$F,(D_056F3).l
+                move.w  #$C8,(TitleDelay).l
+                move.l  #St_ShowCredits,(TitleState).l
+                move.b  #$F,(TitleFadeSteps).l
 TitleNextFrame:
                 st.b    (FrameReady).l
                 bra.w   TitleLoop
@@ -4343,7 +4359,7 @@ InitTitleLetters:
 .033de:
                 bsr.w   InitObjects
                 st.b    (Flip50Hz).l
-                clr.b   (D_056F2).l
+                clr.b   (TitleLettersDone).l
                 move.b  #$1,(D_056F4).l
                 moveq   #6,d7
                 lea.l   (D_055AC).l,a4
@@ -4449,16 +4465,19 @@ St_HighScore:
 .03552:
                 bsr.w   SaveHighScores
 .03556:
-                move.b  #$F,(D_056F3).l
-                move.l  #St_CreditsFadeOut,(TitleState).l
+                move.b  #$F,(TitleFadeSteps).l
+                move.l  #St_ShowTitle,(TitleState).l
                 move.b  #$1,(D_056FD).l
-                st.b    (D_056FE).l
+                st.b    (TitleAbort).l
                 bra.w   TitleNextFrame
 .0357a:
-                st.b    (D_056FE).l
+                st.b    (TitleAbort).l
                 addq.l  #$4,a7
                 move.l  #St_TitleStart,(TitleState).l
                 bra.w   TitleNextFrame
+; One R-TYPE title letter (an object): slides in from the right at 5
+; pixels a frame to x $46, waits, then drops into place; the last one sets
+; TitleLettersDone.
 ObjUpd_TitleLetter:
                 tst.b   $32(a0)
                 beq.w   .03622
@@ -4504,7 +4523,7 @@ ObjUpd_TitleLetter:
                 subq.b  #$1,$38(a0)
                 bne.b   .03620
                 clr.l   $6(a0)
-                st.b    (D_056F2).l
+                st.b    (TitleLettersDone).l
 .03620:
                 rts
 .03622:
@@ -4632,6 +4651,10 @@ DrawScoreTable:
                 adda.l  #$C,a4
                 dbra    d7,.03740
                 rts
+; High-score name entry: joystick up/down (ReadNameInput 1/2) steps
+; through CharSet (47 entries), fire (3) takes the character.  Entries
+; $2C/$2D/$2E are rub out / space / end.  Up to 16 characters.  (The name
+; "sumita. " switches the trainer on - see St_HighScore.)
 EnterName:
                 move.l  a0,-(a7)
                 lea.l   (D_0573C).l,a0
@@ -4774,7 +4797,7 @@ PrintList:
 PrintString:
                 btst.b  #$7,(CIAA_PRA).l
                 bne.b   .03952
-                tst.b   (D_056FE).l
+                tst.b   (TitleAbort).l
                 beq.b   .03952
                 movea.l (TitleStack).l,a7
                 bra.w   AbortTitle
@@ -4859,7 +4882,7 @@ LoadShared:
 AbortTitle:
                 clr.b   (TitleMusicOn).l
                 move.w  #$F,$96(a6)
-                clr.b   (D_056FE).l
+                clr.b   (TitleAbort).l
                 bra.w   ClearPlayfield
 RestoreMusic:
                 move.l  (MusicCopy).l,d0
@@ -6231,7 +6254,7 @@ D_055E4:
                 dc.w    $03F0,$0000,$0000,$0000,$56AA,$0502,$0030,$0050
                 dc.w    $0000,$0000,$0000,$0005,$0232,$0000,$0028,$0000
                 dc.w    $0000,$0000,$56AA
-D_056AA:
+TitlePalette:
                 dc.w    $028C,$0FFF,$00FF,$0FEF,$0B9F,$095F,$0B7F,$0000
                 dc.w    $0DBF,$00D9,$00B9,$0097,$0077,$0FFF,$0000
 TextPalette:
@@ -6243,15 +6266,15 @@ MusicCopy:
                 dc.w    $0000,$0000
 TitleStack:
                 dc.w    $0000,$0000
-D_056F2:
+TitleLettersDone:
                 dc.b    $00
-D_056F3:
+TitleFadeSteps:
                 dc.b    $00
 D_056F4:
                 dc.b    $00
 TitleMusicOn:
                 dc.b    $00
-D_056F6:
+TitleDelay:
                 dc.w    $0000
 D_056F8:
                 dc.w    $0000
@@ -6261,7 +6284,7 @@ JinglePlaying:
                 dc.b    $00
 D_056FD:
                 dc.b    $00
-D_056FE:
+TitleAbort:
                 dc.b    $00
 CheatMode:
                 dc.b    $00
@@ -6317,7 +6340,7 @@ TxtTrainer:
                 dc.w    $7472,$6169,$6E65,$7200,$6372,$6564,$6974,$2030
                 dc.w    $3500,$4320,$3139,$3837,$2062,$7920,$6972,$656D
                 dc.w    $0000
-D_05962:
+TxtCredits:
                 dc.w    $0002,$EBC4,$0000,$59B6,$0002,$F4B2,$0000,$59D8
                 dc.w    $0002,$FDA8,$0000,$59FE,$0003,$16D3,$0000,$5A17
                 dc.w    $0003,$1EF3,$0000,$5A35,$0003,$35B3,$0000,$5A55
