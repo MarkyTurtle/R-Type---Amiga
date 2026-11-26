@@ -111,7 +111,6 @@ Engine calls in the level sources use the names in `src/engine.i` (for example `
 ## Still to do
 
 - Comment `src/game.s` routine by routine; name the remaining `L_`/`D_` labels.
-- Name and comment the level routines (enemy behaviours, bosses) and their object definitions.
-- Map the rest of the `$6000` graphics block (HUD font, bullets, beam, explosions) and level 3's unidentified 30 KB.
-- Sound effect table and samples; the level 8 ending music.
-- Disassemble the in-game music players in level B and the TFMX replay.
+- Give the level objects their R-Type names (the `Def_`/`Upd_`/`Spawn_` labels are structural) and comment the enemy and boss behaviours.
+- The small frames at `$08480`–`$0873F`, the beam/laser/bullet/missile frame sizes, level 3's unidentified 30 KB.
+- The in-game music data per level, the level 8 ending music, and disassembling the TFMX replay.

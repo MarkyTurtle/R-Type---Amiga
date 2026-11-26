@@ -78,20 +78,31 @@ The Force table is at `$516C` (16 bytes per level: first frame, last frame, fram
 
 ## The `$6000` graphics block (tracks 36–62)
 
-No code at all. References confirmed in the code so far:
+No code at all: shared graphics and the sound-effect samples. The pieces are contiguous, which confirms the frame sizes.
 
-| Address | Contents | Used by |
+| Range | Contents | Format / user |
 |---|---|---|
-| `$06000`–`$064FF` | ship sprite frames (5 × `$100`) | `ShipTilt` |
-| `$06500`–`$069CF` | Bit sprite frames (11 × `$70`) | `InitBits`, `UpdateBits` |
-| `$06A40`–`$0847F` | Force sprite frames, 4 power levels | `UpdateForce` |
-| `$15650`, `$15850` | wave cannon beam | `UpdateWaveBeam` |
-| `$19B90` | lasers | `UpdateLasers` |
-| `$19D90` | enemy bullets | `FireEnemyBullet` |
-| `$1C650` | walker | `Walker_Walk` |
-| `$2C7B0`–`$2CEB7` | HUD bitplanes (see above) | HUD routines |
+| `$06000`–`$064FF` | ship, 5 tilt frames | sprites, `ShipTilt` |
+| `$06500`–`$069CF` | Bits, 11 frames | sprites, `InitBits` |
+| `$06A40`–`$0847F` | the Force, 4 power levels | sprites, `UpdateForce` |
+| `$08480`–`$0873F` | small frames (pointer table at `$4C52`) | not identified yet |
+| `$08740`–`$0B43F` | two explosions, 6 frames each | BOB, `DefExplosion1/2` |
+| `$0B440`–`$10A4F` | large explosion, 48×51, 9 frames | BOB, `DefExplosionLarge` |
+| `$10A50`–`$1248F` | ring burst, 7 frames | BOB, `DefRingBurst` |
+| `$12490`–`$1294F` | speed-up flash, 2 frames | BOB, `DefSpeedFlash` |
+| `$12950`–`$1564F` | reflect laser, 6 × `$780` | `ReflectLaserFrames`, `UpdateReflectBeam` |
+| `$15650`–`$15A4F` | wave cannon beam | `UpdateWaveBeam` |
+| `$15A50`–`$17ACF` | cannon walker, 10 frames | BOB, `DefWalker` (default wave object) |
+| `$17AD0`–`$189CF` | power-up items: blue/red/yellow crystal, S, M, bit | BOB, `DefPowerUp` |
+| `$189D0`–`$19B8F` | wave cannon shots by charge level | `WaveCannonShots`, `FireWaveCannon` |
+| `$19B90`–`$19D8F` | lasers | `UpdateLasers` |
+| `$19D90`–`$1A2CF` | enemy bullets | `FireEnemyBullet` |
+| `$1A2D0`–`$1C2CF` | homing missiles, 32 directions × `$100` | `MissileFrames`, `UpdateMissiles` |
+| `$1C2D0`–`$1C64F` | laser frames, 4 × `$E0` | `LaserFrames`, `UpdateLasers` |
+| `$1C68A`–`$2C7AF` | 14 sound-effect samples | `SoundTable` (see `MUSIC.md`) |
+| `$2C7B0`–`$2CEB7` | HUD bitplanes, 3 × `$258` | see HUD above |
 
-The rest is still to be mapped. Most enemy graphics live in each level's B file instead and are reached through the object definitions.
+The BOB entries are rendered in `gfx/engine_bobs.png` (with level 1's palette; each level supplies its own colours). The beam, laser, bullet and missile frames are drawn by dedicated code rather than through object definitions, so their exact sizes aren't documented yet.
 
 ## Level B files
 
@@ -120,8 +131,9 @@ Level 1's tiles end exactly where its map starts, and level 4's where its stored
 | `levelN_tiles.png` | the tile set, 16 per row, in tile-number order |
 | `levelN_bobs.png` | one row per object definition found in the level, all its frames (mask applied) |
 | `sprites_ship.png`, `sprites_bits.png`, `sprites_force0-3.png` | the hardware sprites, 3× size |
+| `engine_bobs.png` | the engine's own BOBs: explosions, ring burst, speed-up flash, walker, power-ups (2× size) |
 
-The BOB sheets come from searching level A's DATA for object definitions by their signature (mask offset = half the frame size, modulo = 52 − 2 × width, valid pointers). Frame counts are capped at the next known graphics block. Level 7's definition `$4BE14` (graphics at `$0B440` in the `$6000` block) renders as noise. It's either a false match or uses another palette.
+The BOB sheets come from searching level A's DATA for object definitions by their signature (mask offset = half the frame size, modulo = 52 − 2 × width, valid pointers). Frame counts are capped at the next known graphics block. Level definitions can also point at engine graphics in the `$6000` block, for example level 7's `$4BE14` uses the large explosion.
 
 ## Title picture (boot)
 

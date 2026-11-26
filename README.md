@@ -37,7 +37,9 @@ Stage 1's full map and the R-9's tilt frames, rendered straight from the disk da
 - [ ] Level code: name enemy routines and object definitions
 - [x] Documented: disk, code structure, data, graphics and music formats (first pass)
 - [x] Graphics extracted to PNG: all level maps, tile sets, enemy frames and the player sprites ([`original/gfx/`](original/gfx/))
-- [ ] Still open: rest of the $6000 graphics block, sound effects, level 8 ending music
+- [x] Sound effects decoded and extracted to WAV ([`original/sfx/`](original/sfx/)); `$6000` block mapped
+- [x] Object definitions labelled in all sources (`Def_`/`Upd_`/`Spawn_`)
+- [ ] Still open: R-Type names for the level objects, line-by-line comments, in-game music data, level 8 ending music
 
 ## Game data
 

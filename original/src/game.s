@@ -48,6 +48,21 @@ MUSIC_START     equ     MUSIC+$2C
 MUSIC_INIT      equ     MUSIC+$34
 TRACK_BUFFER    equ     $7C400          ; raw MFM buffer
 
+; --- The $6000 block (tracks 36-62): graphics and sound only ----------------
+;   $06000-$064FF ship sprite frames      $06500-$069CF Bit sprite frames
+;   $06A40-$0847F Force sprite frames (4 power levels, see UpdateForce)
+;   $08480-$0873F small frames (table at $4C52, not identified yet)
+;   $08740-$0B43F explosions (DefExplosion1/2)
+;   $0B440-$10A4F large explosion         $10A50-$1248F ring burst
+;   $12490-$1294F speed-up flash          $12950-$1564F reflect laser
+;   $15650-$15A4F wave cannon beam        $15A50-$17ACF cannon walker
+;   $17AD0-$189CF power-up items          $189D0-$19B8F wave cannon shots
+;   $19B90-$19D8F lasers                  $19D90-$1A2CF enemy bullets
+;   $1A2D0-$1C2CF homing missiles (32 directions)
+;   $1C2D0-$1C64F laser frames            $1C68A-$2C7AF sound effect samples
+;   $2C7B0-$2CEB7 HUD bitplanes (3 x $258)
+; Details: docs/GRAPHICS.md, rendered in gfx/engine_bobs.png and gfx/sprites_*
+
 ; --- Level interface: table at $4A300 (start of level A's TEXT) ----------------
 LV_Entry        equ     $4A300          ; shared file: jingle player code
                                         ; level files: magic $03011969
@@ -385,7 +400,7 @@ L_004C8:
                 moveq   #104,d1
                 moveq   #-1,d2
                 bsr.w   ObjAlloc
-                move.l  #D_04252,$12(a0)
+                move.l  #DefSpeedFlash,$12(a0)
                 move.l  #ObjUpd_FlyInShip,$6(a0)
                 move.l  #D_0427A,$2A(a0)
                 move.w  #$2D,$32(a0)
@@ -499,7 +514,7 @@ ShipDied:
                 clr.b   (JingleState).l
                 clr.b   (MusicFadeReq).l
                 move.w  #$F,$96(a6)
-                moveq   #7,d0
+                moveq   #7,d0                       ; sound: ship explodes
                 bsr.w   PlaySound
                 bsr.w   ClearBeamMeter
                 bsr.w   ResetShipWeapons
@@ -1331,7 +1346,7 @@ SpawnWaves:
                 bcs.b   .0107e
                 move.l  $E(a1),d1
                 bpl.b   .0106c
-                move.l  #D_051FC,d1
+                move.l  #DefWalker,d1
 .0106c:
                 movea.l d1,a2
                 movea.l $20(a2),a3
@@ -1762,7 +1777,7 @@ ObjCollisions:
                 btst.b  #$0,$28(a0)
                 beq.b   .01500
                 bset.b  #$0,$23(a0)
-                moveq   #6,d0
+                moveq   #6,d0                       ; sound: enemy hit
                 bra.w   PlaySound
 .01500:
                 rts
@@ -1930,7 +1945,7 @@ ObjDamage:
 .01698:
                 bset.b  #$0,$23(a0)
                 move.b  #$3,$28(a0)
-                moveq   #6,d0
+                moveq   #6,d0                       ; sound: enemy hit
                 bra.w   PlaySound
 .016aa:
                 rts
@@ -1957,7 +1972,7 @@ HitByForceOrShip:
                 beq.w   .0179c
                 move.l  #$400,d0
                 bsr.w   AddScore
-                moveq   #8,d0
+                moveq   #8,d0                       ; sound: power-up
                 bsr.w   PlaySound
                 move.w  #$10,$A(a0)
                 move.w  $1E(a0),d0
@@ -2006,7 +2021,7 @@ CollectSpeedUp:
                 moveq   #5,d1
                 moveq   #-1,d2
                 bsr.w   ObjAlloc
-                move.l  #D_04252,$12(a0)
+                move.l  #DefSpeedFlash,$12(a0)
                 move.l  #ObjUpd_SpeedFlash,$6(a0)
                 move.l  #D_0427A,$2A(a0)
                 move.w  #$6,$32(a0)
@@ -2099,7 +2114,7 @@ ShipFire:
                 tst.b   (ForceLevel).l
                 bne.b   .018d8
 .018cc:
-                moveq   #0,d0
+                moveq   #0,d0                       ; sound: ship shot
                 bra.w   PlaySound
 .018d2:
                 subq.l  #$2,a0
@@ -2130,18 +2145,18 @@ L_01914:
                 addq.b  #$1,(BeamCharge).l
                 cmpi.b  #$6,(BeamCharge).l
                 bne.b   .01932
-                moveq   #9,d0
+                moveq   #9,d0                       ; sound: beam charged
                 bsr.w   PlaySound
 .01932:
                 move.w  d1,d0
                 bra.w   ChargeBeam
 .01938:
-                moveq   #13,d0
+                moveq   #13,d0                      ; sound: explosion 3 / beam fully charged
                 bsr.w   PlaySound
                 bra.b   .01932
 FireWaveCannon:
                 lea.l   (D_04B90).l,a0
-                lea.l   (D_04CA2).l,a1
+                lea.l   (WaveCannonShots).l,a1
                 and.w   #$FF,d0
                 moveq   #3,d7
 .01952:
@@ -2162,7 +2177,7 @@ FireWaveCannon:
                 move.w  (a1)+,$38(a0)
                 move.l  (a1)+,(D_04B68).l
                 move.l  (a1)+,(D_04B6C).l
-                moveq   #1,d0
+                moveq   #1,d0                       ; sound: wave cannon
                 bra.w   PlaySound
 .019a0:
                 adda.l  #$1C,a1
@@ -2368,7 +2383,7 @@ UpdateReflectBeam:
                 moveq   #20,d4
 .01bf0:
                 move.w  d4,(D_04BC6).l
-                lea.l   (D_04C8A).l,a0
+                lea.l   (ReflectLaserFrames).l,a0
                 movea.l (a0,d4.w),a1
                 movea.l a1,a2
                 adda.l  #$3C0,a2
@@ -2450,7 +2465,7 @@ UpdateLasers:
                 bset.b  #$5,(a1)
                 bra.b   .01d0e
 .01cf0:
-                moveq   #2,d0
+                moveq   #2,d0                       ; sound: laser
                 bsr.w   PlaySound
                 bra.b   .01cd0
 .01cf8:
@@ -2484,7 +2499,7 @@ UpdateLasers:
                 movem.w d0-d1,-(a7)
                 move.w  $50(a0),d6
                 move.w  d6,d5
-                lea.l   (D_04E5E).l,a1
+                lea.l   (LaserFrames).l,a1
                 lsl.w   #$2,d5
                 movea.l (a1,d5.w),a1
                 movea.l a1,a2
@@ -2669,7 +2684,7 @@ FireForce:
                 addq.w  #$1,d3
                 dbra    d6,.01f4e
                 st.b    (D_04B61).l
-                moveq   #4,d0
+                moveq   #4,d0                       ; sound: Force weapon B
                 bra.w   PlaySound
 .01f88:
                 tst.b   d7
@@ -2686,7 +2701,7 @@ FireForce:
                 moveq   #2,d4
 .01f9e:
                 move.w  d0,-(a7)
-                moveq   #3,d0
+                moveq   #3,d0                       ; sound: Force weapon A
                 bsr.w   PlaySound
                 move.w  (a7)+,d0
                 cmp.b   #$2,d6
@@ -3676,7 +3691,7 @@ ForceHitsShip:
 .02c04:
                 move.b  d1,(ForceSide).l
                 move.l  #Force_Attached,(ForceState).l
-                moveq   #5,d0
+                moveq   #5,d0                       ; sound: Force docks
                 bra.w   PlaySound
 .02c1a:
                 rts
@@ -3695,7 +3710,7 @@ Force_Attached:
                 neg.w   d0
 .02c52:
                 move.w  d0,(D_0515E).l
-                moveq   #5,d0
+                moveq   #5,d0                       ; sound: Force docks
                 bsr.w   PlaySound
                 move.l  #Force_Launched,(ForceState).l
                 clr.b   (ForceSide).l
@@ -3779,7 +3794,7 @@ ReleasePowerUp:
                 move.b  $32(a0),d3
                 movem.w $A(a0),d0-d1
                 moveq   #-1,d2
-                lea.l   (D_05288).l,a2
+                lea.l   (DefPowerUp).l,a2
                 bsr.w   ObjCreate
                 bset.b  #$3,$23(a0)
                 move.b  d3,$1F(a0)
@@ -3787,7 +3802,7 @@ ReleasePowerUp:
                 bset.b  #$2,$23(a0)
                 jsr     (ObjInsert).l
                 movea.l (a7)+,a0
-                moveq   #8,d0
+                moveq   #8,d0                       ; sound: power-up
                 bra.w   PlaySound
 ObjUpd_ScrollOff:
                 tst.b   (ScrollActive).l
@@ -3986,7 +4001,7 @@ UpdateMissiles:
                 add.w   #$10,d0
 .03002:
                 lsl.w   #$2,d0
-                lea.l   (D_0546C).l,a1
+                lea.l   (MissileFrames).l,a1
                 movea.l (a1,d0.w),a1
                 movea.l a1,a2
                 adda.l  #$80,a2
@@ -4825,6 +4840,9 @@ L_03AE4:
                 rts
 
 ; PlaySound: d0 = effect number (priority-based on two channels)
+; Queue effect d0 on whichever channel holds the lower-priority sound (or
+; not at all if both are busy with higher priorities).  Ignored while a
+; jingle plays.  UpdateSound starts queued effects from the VBL.
 PlaySound:
                 tst.b   (JingleState).l
                 bne.b   L_03AE4
@@ -4899,6 +4917,9 @@ UpdateChannel:
                 rts
 
 ; Level4Int: audio interrupts for channels 2 and 3
+; Audio interrupts: the first one after a start means Paula has latched
+; the sample; the second means it has played once - then DMA and the
+; interrupt for that channel are switched off (one-shot effects).
 Level4Int:
                 movem.l d0-d1/a6,-(a7)
                 move.w  (CUSTOM+INTREQR).l,d0
@@ -4912,7 +4933,7 @@ Level4Int:
 .03bfa:
                 btst    #$A,d0
                 beq.b   .03c08
-                lea.l   (D_05B00).l,a6
+                lea.l   (SoundChannel3).l,a6
                 bsr.b   AudioIntChannel
 .03c08:
                 move.w  d0,(CUSTOM+INTREQ).l
@@ -5472,7 +5493,8 @@ Checkpoint:
 SpriteColours:
                 dc.w    $0000,$0FFF,$0444,$0777,$0999,$0BBB,$0DDD,$0333
                 dc.w    $0F33,$0F90,$0C00,$0FD0,$004D,$006F,$04AF,$0000
-D_04252:
+; object definition: speed-up flash, 2 frames ($12490)
+DefSpeedFlash:
                 dc.w    $1303,$002E,$0260,$0003,$FFFF,$0000,$0001,$2490
                 dc.w    $0000,$0130,$0000,$427A,$0000,$427E,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000
@@ -5637,18 +5659,28 @@ D_04918:
 D_0491A:
                 dc.w    $0000,$493A,$0000,$000E,$0000,$4972,$0000,$000C
                 dc.w    $0000,$49A8,$0000,$001A,$0000,$49EC,$0000,$0006
+; object definition: explosion, 6 frames ($08740)
+DefExplosion1:
                 dc.w    $1E03,$002E,$03C0,$0000,$FFFF,$0000,$0000,$8740
                 dc.w    $0000,$01E0,$0000,$4962,$0000,$427E,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000,$0001,$0001,$0202,$0303
-                dc.w    $0404,$0405,$0505,$05FF,$1E03,$002E,$03C0,$0000
+                dc.w    $0404,$0405,$0505,$05FF
+; object definition: explosion, 6 frames ($09DC0)
+DefExplosion2:
+                dc.w    $1E03,$002E,$03C0,$0000
                 dc.w    $FFFF,$0000,$0000,$9DC0,$0000,$01E0,$0000,$499A
                 dc.w    $0000,$427E,$0000,$0000,$0000,$0000,$0000,$0000
-                dc.w    $0001,$0001,$0102,$0203,$0304,$0405,$05FF,$3304
+                dc.w    $0001,$0001,$0102,$0203,$0304,$0405,$05FF
+; object definition: large explosion, 48x51, 9 frames ($0B440)
+DefExplosionLarge:
+                dc.w    $3304
                 dc.w    $002C,$0990,$0000,$FFFF,$0000,$0000,$B440
                 dc.l    L_004C8
                 dc.w    $0000,$49D0,$0000,$427E,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0001,$0201,$0102,$0203,$0304,$0405
                 dc.w    $0506,$0607,$0708,$0805,$0506,$0607,$0708,$08FF
+; object definition: ring burst, 7 frames ($10A50)
+DefRingBurst:
                 dc.w    $1E03,$002E,$03C0,$0001,$FFFF,$0000,$0001,$0A50
                 dc.w    $0000,$01E0,$0000,$4A14,$0000,$427E,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000,$0001,$0203,$0405,$06FF
@@ -5750,10 +5782,12 @@ D_04C3A:
                 dc.w    $0000,$85E0,$0000,$8638,$0000,$000C
                 dc.l    L_00B02
                 dc.w    $0000,$8690,$0000,$86E8
-D_04C8A:
+; reflect laser frames: 6 x $780 from $12950 (UpdateReflectBeam)
+ReflectLaserFrames:
                 dc.w    $0001,$2950,$0001,$30D0,$0001,$3850,$0001,$3FD0
                 dc.w    $0001,$4750,$0001,$4ED0
-D_04CA2:
+; wave cannon shot sizes by charge ($189D0-$19B8F) (FireWaveCannon)
+WaveCannonShots:
                 dc.w    $0018,$000B,$0001,$0007,$0002,$0036,$000C,$0008
                 dc.w    $002A,$1005,$000B,$0001,$9390,$0000,$0200,$0012
                 dc.w    $0010,$0001,$0003,$0003,$002B,$0009,$0008,$002C
@@ -5788,7 +5822,8 @@ D_04DBA:
                 dc.w    $0006,$019E,$019E,$019E,$019E,$019E,$ACCF,$ACCF
                 dc.w    $ACCF,$ACCF,$ACCF,$ACCF,$ACCF,$ACCF,$019E,$019E
                 dc.w    $019E,$019E
-D_04E5E:
+; laser frames: 4 x $E0 from $1C2D0 (UpdateLasers)
+LaserFrames:
                 dc.w    $0001,$C2D0,$0001,$C3B0,$0001,$C490,$0001,$C570
 D_04E6E:
                 dc.w    $0000,$FFF2,$0000,$FFFF,$FDE8,$000E,$0000,$0001
@@ -5965,7 +6000,8 @@ D_051CC:
 D_051DC:
                 dc.w    $0000,$0000,$0015,$000E,$0000,$0000,$0015,$0011
                 dc.w    $000C,$0000,$0014,$0011,$0005,$0001,$0017,$0014
-D_051FC:
+; object definition: cannon walker, 10 frames ($15A50) - default wave object
+DefWalker:
                 dc.w    $1A03,$002E,$0340,$0003,$0001,$0000,$0001,$5A50
                 dc.w    $0000,$01A0,$0000,$5224,$0000,$5238
                 dc.l    ObjUpd_Walker
@@ -5984,7 +6020,8 @@ D_05233:
                 dc.b    $05,$00,$13,$00,$14,$00,$06,$00,$01,$00,$11,$00,$18,$00,$02,$00
                 dc.b    $01,$00,$16,$00,$12,$00,$04,$00,$01,$00,$10,$00,$18,$00,$02,$00
                 dc.b    $01,$00,$16,$00,$12
-D_05288:
+; object definition: power-up items - blue/red/yellow laser crystal, speed, missiles, bit ($17AD0)
+DefPowerUp:
                 dc.w    $1403,$002E,$0280,$0000,$FFFF,$0000,$0001,$7AD0
                 dc.l    L_00140
                 dc.w    $0000,$52B0,$0000,$52B8
@@ -6045,7 +6082,8 @@ D_0542C:
                 dc.w    $0006,$0000,$0006,$0004,$0006,$0006,$0004,$0006
                 dc.w    $0000,$0006,$FFFC,$0006,$FFFA,$0006,$FFFA,$0004
                 dc.w    $FFFA,$0000,$FFFA,$FFFC,$FFFA,$FFFA,$FFFC,$FFFA
-D_0546C:
+; homing missile frames: 32 directions x $100 from $1A2D0 (UpdateMissiles)
+MissileFrames:
                 dc.w    $0001,$A2D0,$0001,$A3D0,$0001,$A4D0,$0001,$A5D0
                 dc.w    $0001,$A6D0,$0001,$A7D0,$0001,$A8D0,$0001,$A9D0
                 dc.w    $0001,$AAD0,$0001,$ABD0,$0001,$ACD0,$0001,$ADD0
@@ -6209,10 +6247,22 @@ D_05962:
                 dc.w    $6E64,$6568,$0074,$6974,$6C65,$206D,$7573,$6963
                 dc.w    $2062,$7920,$2020,$6368,$7269,$7320,$6875,$656C
                 dc.w    $7362,$6563,$6B00
+; Two effect channels (audio channels 2 and 3), 8 bytes each:
+;   +0.b state (0 idle, 1 started, $FF playing)  +1.b priority of the sound
+;   +2.b requested effect (-1 none)  +3.b audio-interrupt count
+;   +4.w DMACON bit  +6.w INTENA/INTREQ bit
 SoundChannels:
                 dc.w    $0000,$FF00,$0004,$0200
-D_05B00:
+; second sound effect channel (audio channel 3)
+SoundChannel3:
                 dc.w    $0000,$FF00,$0008,$0400
+; Sound effects: 14 entries of 12 bytes (samples in the $6000 block)
+;   +0.l sample  +4.w length (words)  +6.w period  +8.w volume  +$A.b 0
+;   +$B.b priority.  All are period 428 (8287 Hz), played once.
+;    0 ship shot   1 wave cannon   2 laser   3/4 Force weapons   5 Force docks
+;    6 enemy hit   7 ship explodes 8 power-up  9 beam charged
+;   10-13 explosion types 0-3 (13 also repeats while the beam is full)
+; WAVs: sfx/ (tools/extract_sounds.py)
 SoundTable:
                 dc.w    $0001,$C68A,$03B6,$01AC,$0028,$0014,$0001,$CDF6
                 dc.w    $0817,$01AC,$0037,$0019,$0001,$DE24,$0C8E,$01AC

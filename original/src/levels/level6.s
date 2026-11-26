@@ -169,13 +169,13 @@ L_4A98C:
                 move.w  #$B1,d0
                 moveq   #0,d1
                 moveq   #4,d2
-                lea.l   (D_4ADBC).l,a2
+                lea.l   (Def_4ADBC).l,a2
                 jsr     (jt_ObjCreate).w
                 bra.w   L_4A9C0
 L_4A9AA:
                 st.b    (LevelComplete).w
                 rts
-L_4A9B0:
+Spawn_4A9B0:
                 movem.w $2(a1),d0-d1
                 moveq   #4,d2
                 jsr     (jt_ObjCreate).w
@@ -193,7 +193,7 @@ L_4A9CE:
                 move.b  #$2,$21(a0)
                 move.w  #$7D0,$24(a0)
                 jmp     (jt_ObjInsert).w
-L_4A9EE:
+Upd_4A9EE:
                 move.w  $A(a0),d0
                 move.w  $26(a0),d1
                 clr.w   $26(a0)
@@ -266,8 +266,8 @@ L_4AA9C:
 L_4AABA:
                 move.b  d2,$32(a0)
                 addq.l  #$1,$36(a0)
-                bra.w   L_4A9EE
-L_4AAC6:
+                bra.w   Upd_4A9EE
+Spawn_4AAC6:
                 move.w  $2(a1),d0
                 move.w  $4(a1),d1
                 move.w  $8(a2),d2
@@ -283,7 +283,7 @@ L_4AAEE:
                 clr.w   $1E(a0)
                 bsr.w   L_4AC08
                 jmp     (jt_ObjInsert).w
-L_4AB08:
+Upd_4AB08:
                 cmpi.w  #$10,$A(a0)
                 bcs.b   L_4AB20
                 cmpi.w  #$170,$A(a0)
@@ -402,7 +402,7 @@ L_4AC5E:
                 neg.w   d2
 L_4AC6E:
                 rts
-L_4AC70:
+Spawn_4AC70:
                 movem.w $2(a1),d0-d1
                 moveq   #2,d2
                 jsr     (jt_ObjCreate).w
@@ -410,7 +410,7 @@ L_4AC70:
                 clr.w   $36(a0)
                 clr.w   $38(a0)
                 jmp     (jt_ObjInsert).w
-L_4AC8E:
+Upd_4AC8E:
                 movem.w $A(a0),d0-d1
                 jsr     (jt_AdjustForScroll).w
                 move.w  $32(a0),d2
@@ -477,21 +477,25 @@ D_4AD94:
                 dc.w    $0000,$FFFD,$0006,$0002,$0004,$0003,$0000,$002E
                 dc.w    $0005,$0148,$0000,$0003,$0006,$001E,$0004,$FFFD
                 dc.w    $0000,$0002,$0005,$0148
-D_4ADBC:
+; object definition: 48x32, 3 frames, gfx $604B0, score 1000, update Upd_4A9EE, spawn Spawn_4A9B0
+Def_4ADBC:
                 dc.w    $2004,$002C,$0600,$0003,$0000,$0000,$0006,$04B0
                 dc.w    $0000,$0300,$0004,$AE14,$0004,$ADE4
-                dc.l    L_4A9EE
-                dc.l    L_4A9B0
+                dc.l    Upd_4A9EE
+                dc.l    Spawn_4A9B0
                 dc.w    $0000,$1000,$0005,$0004,$0028,$0018,$0005,$0004
                 dc.w    $0028,$0018,$0005,$0004,$0028,$0018,$0002,$0003
                 dc.w    $0028,$0019,$0002,$0003,$0028,$0019,$0002,$0003
                 dc.b    $00,$28,$00,$19,$00,$01,$00,$02,$FF
 D_4AE19:
-                dc.b    $03,$04,$03,$05,$FF,$1A,$03,$00,$2E,$03,$40,$00,$03,$00,$01,$00
+                dc.b    $03,$04,$03,$05,$FF
+; object definition: 32x26, 4 frames, gfx $64930, 1 hit point, fires every ~9 frames, score 200, update Upd_4AB08, spawn Spawn_4AAC6
+Def_4AE1E:
+                dc.b    $1A,$03,$00,$2E,$03,$40,$00,$03,$00,$01,$00
                 dc.b    $09,$00,$06,$49,$30,$00,$00,$01,$A0,$00,$04,$AE,$46,$00,$04,$AE
                 dc.b    $5A
-                dc.l    L_4AB08
-                dc.l    L_4AAC6
+                dc.l    Upd_4AB08
+                dc.l    Spawn_4AAC6
                 dc.w    $0000,$0200
 D_4AE46:
                 dc.b    $00,$01,$02,$03,$FF
@@ -515,10 +519,12 @@ D_4AECE:
 D_4AEDE:
                 dc.w    $0004,$AF82,$0000,$0002,$0004,$AF88,$0000,$0003
                 dc.w    $0004,$AF76,$0000,$0000,$0004,$AF7C,$0000,$0001
+; object definition: 32x26, 5 frames, gfx $628B0, score 300, update Upd_4AC8E, spawn Spawn_4AC70
+Def_4AEFE:
                 dc.w    $1A03,$002E,$0340,$0002,$0000,$0000,$0006,$28B0
                 dc.w    $0000,$01A0,$0004,$AF76,$0004,$AF26
-                dc.l    L_4AC8E
-                dc.l    L_4AC70
+                dc.l    Upd_4AC8E
+                dc.l    Spawn_4AC70
                 dc.w    $0000,$0300,$FFFF,$0002,$0019,$0015,$FFFF,$0001
                 dc.w    $0019,$0018,$FFFF,$0001,$0019,$0018,$FFFF,$0001
                 dc.w    $0019,$0018,$FFFF,$0002,$0018,$0015,$0002,$FFFF

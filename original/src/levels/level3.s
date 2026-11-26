@@ -268,7 +268,7 @@ L_4A91A:
                 subq.b  #$1,(D_4B62D).l
                 bpl.b   L_4A942
                 move.b  #$A,(D_4B62D).l
-                bsr.w   L_4AA96
+                bsr.w   Spawn_4AA96
 L_4A942:
                 subq.w  #$1,(D_4B626).l
                 bpl.b   L_4A972
@@ -351,13 +351,13 @@ L_4AA58:
                 st.b    (LevelComplete).w
 L_4AA94:
                 rts
-L_4AA96:
+Spawn_4AA96:
                 movea.l a0,a4
                 movem.w (D_4B46E).l,d0-d1
                 sub.w   #$23,d0
                 sub.w   #$14,d1
                 moveq   #1,d2
-                lea.l   (D_4B80C).l,a2
+                lea.l   (Def_4B80C).l,a2
                 jsr     (jt_ObjCreate).w
                 moveq   #7,d0
                 jsr     (jt_Random).w
@@ -373,7 +373,7 @@ L_4AABE:
                 jsr     (jt_ObjInsert).w
                 movea.l a4,a0
                 rts
-L_4AADC:
+Upd_4AADC:
                 movem.w $A(a0),d0-d1
                 addq.w  #$8,d0
                 addq.w  #$8,d1
@@ -406,7 +406,7 @@ L_4AB12:
                 rts
 L_4AB3C:
                 jmp     (jt_ObjKillSelf).w
-L_4AB40:
+Spawn_4AB40:
                 movem.w $2(a1),d0-d1
                 moveq   #-1,d2
                 jsr     (jt_ObjCreate).w
@@ -421,7 +421,7 @@ L_4AB40:
                 move.l  #D_4B892,$2A(a0)
 L_4AB78:
                 jmp     (jt_ObjInsert).w
-L_4AB7C:
+Spawn_4AB7C:
                 movem.w $2(a1),d0-d1
                 move.w  #$1F40,d2
                 jsr     (jt_ObjCreate).w
@@ -434,7 +434,7 @@ L_4AB7C:
                 move.b  #$1,$37(a0)
                 clr.b   $22(a0)
                 jmp     (jt_ObjInsert).w
-L_4ABBC:
+Upd_4ABBC:
                 bsr.w   L_4A892
                 movem.w $A(a0),d0-d1
                 cmp.w   #$10,d0
@@ -468,7 +468,7 @@ L_4ABE2:
                 jsr     (jt_FireEnemyBullet).w
 L_4AC2A:
                 rts
-L_4AC2C:
+Upd_4AC2C:
                 move.l  $32(a0),$A(a0)
                 bsr.w   L_4A892
                 movem.w $A(a0),d0-d1
@@ -493,7 +493,7 @@ L_4AC6A:
                 movea.l a0,a3
                 movem.w $A(a0),d0-d1
                 moveq   #-1,d2
-                lea.l   (D_4B902).l,a2
+                lea.l   (Def_4B902).l,a2
                 jsr     (jt_ObjCreate).w
                 move.b  #$14,$4(a0)
                 move.b  #$1,$5(a0)
@@ -528,7 +528,7 @@ L_4ACB0:
                 bcs.b   L_4AD48
                 cmp.w   #$DF,d1
                 bhi.b   L_4AD48
-                lea.l   (D_4B9CE).l,a2
+                lea.l   (Def_4B9CE).l,a2
                 jsr     (jt_ObjCreate).w
                 move.b  #$1,$4(a0)
                 move.w  #$3,$1E(a0)
@@ -578,7 +578,7 @@ L_4ADB2:
                 movem.w $32(a0),d0-d1
                 movem.w d0-d1,$A(a0)
                 bra.w   L_4ACB0
-L_4ADC2:
+Upd_4ADC2:
                 tst.b   $3A(a0)
                 beq.b   L_4ADEC
                 subq.b  #$1,$3A(a0)
@@ -609,7 +609,7 @@ L_4AE20:
                 jmp     (jt_ObjKillSelf).w
 L_4AE24:
                 rts
-L_4AE26:
+Spawn_4AE26:
                 clr.w   (D_4BC9A).l
                 move.l  #L_4AFD0,(D_4BC92).l
                 move.w  #$64,(D_4BC90).l
@@ -624,7 +624,7 @@ L_4AE26:
                 clr.w   $34(a0)
                 move.w  #$3E8,$36(a0)
                 jmp     (jt_ObjInsert).w
-L_4AE78:
+Upd_4AE78:
                 cmpi.w  #$1E,$26(a0)
                 bcc.w   L_4AF2A
                 cmpi.w  #$14,$26(a0)
@@ -667,7 +667,7 @@ L_4AEFC:
                 add.w   #$10,d0
                 add.w   (a3)+,d1
                 moveq   #-1,d2
-                lea.l   (D_4BCAE).l,a2
+                lea.l   (Def_4BCAE).l,a2
                 jsr     (jt_ObjCreate).w
                 move.b  #$14,$4(a0)
                 move.l  (a3)+,$32(a0)
@@ -693,7 +693,7 @@ L_4AF2A:
                 add.w   $A(a0),d0
                 sub.w   #$F,d0
                 moveq   #-1,d2
-                lea.l   (D_4BB74).l,a2
+                lea.l   (Def_4BB74).l,a2
                 jsr     (jt_ObjCreate).w
                 clr.l   $6(a0)
                 move.b  #$1,$5(a0)
@@ -757,7 +757,7 @@ L_4B046:
                 lea.l   (D_4BC2C).l,a0
 L_4B05C:
                 bra.w   L_4A7E2
-L_4B060:
+Upd_4B060:
                 movem.w $32(a0),d0-d1
                 add.w   d0,$A(a0)
                 add.w   d1,$C(a0)
@@ -843,7 +843,7 @@ L_4B17A:
                 movem.w $A(a4),d0-d1
                 add.w   d7,d1
                 moveq   #-1,d2
-                lea.l   (D_4BCEA).l,a2
+                lea.l   (Def_4BCEA).l,a2
                 jsr     (jt_ObjCreate).w
                 bset.b  #$2,$23(a0)
                 move.b  #$A,$4(a0)
@@ -851,7 +851,7 @@ L_4B17A:
                 movea.l a4,a0
 L_4B1A2:
                 rts
-L_4B1A4:
+Upd_4B1A4:
                 subq.w  #$7,$A(a0)
                 cmpi.w  #$10,$A(a0)
                 bhi.b   L_4B1B4
@@ -1097,18 +1097,22 @@ D_4B7DC:
                 dc.w    $0000,$0000,$0004,$B5E0,$0004,$B804
                 dc.l    L_4AA58
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$001E,$0012
-D_4B80C:
+; object definition: 16x10, 4 frames, gfx $6F850, update Upd_4AADC, spawn Spawn_4AA96
+Def_4B80C:
                 dc.w    $0A02,$0030,$00A0,$0003,$0000,$0000,$0006,$F850
                 dc.w    $0000,$0050,$0004,$B834,$0004,$B83A
-                dc.l    L_4AADC
-                dc.l    L_4AA96
+                dc.l    Upd_4AADC
+                dc.l    Spawn_4AA96
                 dc.w    $0000,$0000,$0001,$0203,$FF00,$0001,$0001,$0008
                 dc.w    $0008,$0001,$0001,$0008,$0008,$0001,$0001,$0008
-                dc.w    $0008,$0001,$0001,$0008,$0008,$1703,$002E,$02E0
+                dc.w    $0008,$0001,$0001,$0008,$0008
+; object definition: 32x23, 8 frames, gfx $66FD0, score 200, update Upd_4ABBC, spawn Spawn_4AB40
+Def_4B85A:
+                dc.w    $1703,$002E,$02E0
                 dc.w    $0000,$0000,$0000,$0006,$6FD0,$0000,$0170,$0004
                 dc.w    $B882,$0004,$B8A2
-                dc.l    L_4ABBC
-                dc.l    L_4AB40
+                dc.l    Upd_4ABBC
+                dc.l    Spawn_4AB40
                 dc.w    $0000,$0200,$0303,$0303,$0202,$0101,$0000,$0000
                 dc.w    $0000,$0102
 D_4B892:
@@ -1120,11 +1124,12 @@ D_4B892:
 D_4B8E2:
                 dc.w    $FFFA,$0007,$0000,$0000,$000A,$FFF9,$0010,$FFFE
                 dc.w    $FFF7,$0003,$0003,$000B,$000A,$000F,$0010,$000B
-D_4B902:
+; object definition: 32x28, 6 frames, gfx $686D0, score 200, update Upd_4AC2C, spawn Spawn_4AB7C
+Def_4B902:
                 dc.w    $1C03,$002E,$0380,$0000,$0000,$0000,$0006,$86D0
                 dc.w    $0000,$01C0,$0004,$B962,$0004,$B92A
-                dc.l    L_4AC2C
-                dc.l    L_4AB7C
+                dc.l    Upd_4AC2C
+                dc.l    Spawn_4AB7C
                 dc.w    $0000,$0200,$0007,$0001,$0012,$0013,$0009,$0001
                 dc.w    $000E,$0019,$0007,$0001,$0014,$0014,$0002,$0007
                 dc.w    $0018,$000E,$0007,$0006,$0013,$0015,$0009,$0002
@@ -1137,10 +1142,11 @@ D_4B902:
 D_4B9B2:
                 dc.w    $0000,$0000,$0004,$FFFF,$0007,$0001,$000D,$FFF9
                 dc.w    $0008,$FFF2,$0004,$FFF2,$0000,$FFF3
-D_4B9CE:
+; object definition: 32x26, 5 frames, gfx $6C110, update Upd_4ADC2
+Def_4B9CE:
                 dc.w    $1A03,$002E,$0340,$0000,$0000,$0000,$0006,$C110
                 dc.w    $0000,$01A0,$0004,$BA7E,$0004,$B9F6
-                dc.l    L_4ADC2
+                dc.l    Upd_4ADC2
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0009,$0007,$0008
                 dc.w    $0000,$0006,$000F,$000E,$0000,$0004,$0012,$0012
                 dc.w    $0005,$000B,$000F,$000D,$0003,$0008,$0012,$0011
@@ -1169,11 +1175,12 @@ D_4BAB0:
 D_4BB58:
                 dc.w    $FFFE,$0002,$0000,$0002,$0002,$0002,$0002,$0000
                 dc.w    $0002,$FFFE,$0000,$FFFE,$FFFE,$FFFE
-D_4BB74:
+; object definition: 96x32, 1 frame, gfx $69F50, score 1000, update Upd_4AE78, spawn Spawn_4AE26
+Def_4BB74:
                 dc.w    $2007,$0026,$0C00,$0000,$0000,$0000,$0006,$9F50
                 dc.w    $0000,$0600,$0004,$BB9C,$0004,$BB9E
-                dc.l    L_4AE78
-                dc.l    L_4AE26
+                dc.l    Upd_4AE78
+                dc.l    Spawn_4AE26
                 dc.w    $0000,$1000,$00FF,$0000,$0000,$0059,$0020,$0006
                 dc.w    $2CFC,$0303,$01A6,$8193,$8194,$8195,$81BA,$81A7
                 dc.w    $81A8,$81A9,$81CE,$81BB,$81BC,$81BD,$01B9,$81CF
@@ -1210,16 +1217,18 @@ D_4BC9B:
 D_4BC9C:
                 dc.w    $0003,$FFF8,$FFF9,$0009,$FFF4,$0000,$000F,$FFF8
                 dc.w    $0007
-D_4BCAE:
+; object definition: 16x14, 2 frames, gfx $6AB50, update Upd_4B060
+Def_4BCAE:
                 dc.w    $0E02,$0030,$00E0,$0000,$0000,$0000,$0006,$AB50
                 dc.w    $0000,$0070,$0004,$BCD6,$0004,$BCDA
-                dc.l    L_4B060
+                dc.l    Upd_4B060
                 dc.w    $0000,$0000,$0000,$0000,$0001,$FF00,$0002,$0001
                 dc.w    $000D,$000C,$0002,$0001,$000D,$000C
-D_4BCEA:
+; object definition: 32x3, 4 frames, gfx $66E50, update Upd_4B1A4
+Def_4BCEA:
                 dc.w    $0303,$002E,$0060,$0002,$0000,$0000,$0006,$6E50
                 dc.w    $0000,$0030,$0004,$BD32,$0004,$BD12
-                dc.l    L_4B1A4
+                dc.l    Upd_4B1A4
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0020,$0003
                 dc.w    $0000,$0000,$0020,$0003,$0000,$0000,$0020,$0003
                 dc.w    $0000,$0000,$0020,$0003,$0001,$0203,$FF00

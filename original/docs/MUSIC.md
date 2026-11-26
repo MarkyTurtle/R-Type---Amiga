@@ -61,4 +61,32 @@ Compared with a module, there are no song name, sample names or effect commands,
 
 ## Sound effects
 
-`PlaySound` (engine, `$3AE6`; level code uses `jt_PlaySound` at `$10A`): d0 = effect number from `SoundTable` (`$5B08`). Effects are played on two channels with priorities (`SoundChannels`, `$5AF8`). The level 4 interrupt (`Level4Int`) handles the audio interrupts for channels 2 and 3. The effect table and sample format are still to be worked out.
+14 one-shot samples, played on audio channels 2 and 3. The music sequencer's two-channel mode sets DMACON `$8203` (channels 0 and 1), which leaves 2 and 3 free for effects. They are extracted as WAVs to `sfx/` by `tools/extract_sounds.py`.
+
+`SoundTable` (`$5B08`), 12 bytes per effect:
+
+| Offset | Contents |
+|---|---|
+| `+0.l` | sample address (`$6000` block) |
+| `+4.w` | length in words |
+| `+6.w` | period (all 428 = 8287 Hz on PAL) |
+| `+8.w` | volume 0–64 |
+| `+$A.b` | 0 |
+| `+$B.b` | priority |
+
+| # | Effect | Triggered by | Sample | Bytes | Vol | Pri |
+|---|---|---|---|---|---|---|
+| 0 | ship shot | `ShipFire` | `$1C68A` | 1900 | 40 | 20 |
+| 1 | wave cannon | `FireWaveCannon` | `$1CDF6` | 4142 | 55 | 25 |
+| 2 | laser | `UpdateLasers` | `$1DE24` | 6428 | 52 | 20 |
+| 3 | Force weapon A | `FireForce` | `$1F740` | 7664 | 51 | 20 |
+| 4 | Force weapon B | `FireForce` | `$21530` | 5474 | 56 | 20 |
+| 5 | Force docks | `Force_Attached`, `ForceHitsShip` | `$22A92` | 5598 | 52 | 25 |
+| 6 | enemy hit | `ObjDamage`, `ObjCollisions` | `$24070` | 542 | 60 | 21 |
+| 7 | ship explodes | `ShipDied` | `$2428E` | 7654 | 64 | 30 |
+| 8 | power-up | `HitByForceOrShip`, `ReleasePowerUp` | `$26074` | 5688 | 60 | 28 |
+| 9 | beam charged | charge reaches 6 | `$276AC` | 7342 | 50 | 23 |
+| 10–12 | explosions types 0–2 | `ObjExplode` (10 + type) | `$2935A` / `$2A574` / `$2B4F4` | 4634 / 3968 / 4796 | 42 / 41 / 55 | 21 / 21 / 22 |
+| 13 | explosion type 3, also repeated while the beam is fully charged | `ObjExplode`, beam charge | `$28DFA` | 1376 | 50 | 23 |
+
+**Playing an effect:** `PlaySound` (d0 = effect, ignored while a jingle plays) queues it on whichever of the two channels is playing the lower-priority sound, or drops it if both are busier. `UpdateSound` (VBL) starts queued effects. `Level4Int` counts the channel's audio interrupts: the first means Paula has latched the sample, the second that it has played once, and the channel's DMA and interrupt are then switched off. Each channel's state lives in `SoundChannels` / `SoundChannel3` (8 bytes: state, priority, requested effect, interrupt count, DMACON bit, INTENA bit).

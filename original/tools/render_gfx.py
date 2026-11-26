@@ -7,7 +7,9 @@ Writes, per level: levelN_tiles.png (tile sheet, 16 per row, numbered by
 position), levelN_map.png (the whole map, as the game draws it) and
 levelN_bobs.png (every frame of each object definition found in the level's
 DATA, one row per definition).  From the $6000 block: sprites_ship.png,
-sprites_bits.png, sprites_force.png (hardware sprites, 16 colours).
+sprites_bits.png, sprites_force0-3.png (hardware sprites, 16 colours) and
+engine_bobs.png (explosions, walker, power-ups... defined in the game
+program itself).
 Formats: docs/GRAPHICS.md.
 """
 import os, struct, sys
@@ -134,7 +136,7 @@ def render_bobs(files, out, n, low6000):
         imgs = []
         for f in range(min(nfr, 32)):
             a = d['gfx'] + f * d['frame']
-            data = low6000[a - 0x6000:a - 0x6000 + d['frame']] if a < 0x2D1BA else L.read(a, d['frame'])
+            data = low6000[a:a + d['frame']] if a < 0x2D1BA else L.read(a, d['frame'])
             if len(data) < d['frame']:
                 break                       # runs past the loaded data
             imgs.append(bob_frame(data, d['lines'], d['words'], d['mask']))
@@ -199,6 +201,44 @@ def render_sprites(files, out):
         force.append((lvl, f0, f1, sz, h))
     return force
 
+def render_engine_bobs(files, out, low6000):
+    """Object definitions in the game program's DATA (explosions, walker,
+    power-ups, speed-up flash), drawn with level 1's palette."""
+    low = open(os.path.join(files, 'game_low_000a4.bin'), 'rb').read()
+    R = lambda a, n: low[a - 0xA4:a - 0xA4 + n]
+    pal = Level(files, 1).palette
+    defs = []
+    for p in range(0x41B4, 0x5C66 - 0x28, 2):
+        bs, mod, fs = struct.unpack('>HHH', R(p, 6))
+        g, mo, an = struct.unpack('>III', R(p + 12, 12))
+        h, w = bs >> 6, bs & 63
+        if fs and mo * 2 == fs and 0 < w <= 8 and h and h % 4 == 0 and mod == 52 - w * 2 \
+                and 0x6000 <= g < 0x2D1BA:
+            defs.append((p, h // 4, w - 1, fs, g, mo, an))
+    starts = sorted({d[4] for d in defs} | {0x12950, 0x189D0})
+    rows, info = [], []
+    for p, lines, words, fs, g, mo, an in defs:
+        frames = [b for b in R(an, 32) if b < 0x80]
+        nxt = min(a for a in starts if a > g)
+        n = max(1, min(max(frames) + 1 if frames else 1, (nxt - g) // fs))
+        rows.append([bob_frame(low6000[g + i * fs:g + (i + 1) * fs], lines, words, mo) for i in range(n)])
+        info.append(f'${p:05X}: {words * 16}x{lines} x{n} gfx ${g:05X}-${g + n * fs - 1:05X}')
+    W = max(sum(len(f[0]) + 2 for f in r) for r in rows) + 2
+    H = sum(len(r[0]) + 3 for r in rows)
+    im = Image.new('RGB', (W, H), (60, 0, 60))
+    y = 1
+    for r in rows:
+        x = 1
+        for f in r:
+            for yy, row in enumerate(f):
+                for xx, v in enumerate(row):
+                    if v is not None:
+                        im.putpixel((x + xx, y + yy), pal[v])
+            x += len(f[0]) + 2
+        y += len(r[0]) + 3
+    im.resize((im.width * 2, im.height * 2), Image.NEAREST).save(os.path.join(out, 'engine_bobs.png'))
+    return info
+
 def main():
     files, out = sys.argv[1], sys.argv[2]
     os.makedirs(out, exist_ok=True)
@@ -209,6 +249,8 @@ def main():
         for line in render_bobs(files, out, n, low6000):
             print('   ', line)
     print(render_sprites(files, out))
+    for line in render_engine_bobs(files, out, low6000):
+        print('   ', line)
 
 if __name__ == '__main__':
     main()

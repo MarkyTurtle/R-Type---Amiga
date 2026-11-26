@@ -212,7 +212,7 @@ L_4A5C0:
                 movea.l $40(a3,d0.w),a1
                 movem.w (a7)+,d0-d1
                 moveq   #-1,d2
-                lea.l   (D_4AA78).l,a2
+                lea.l   (Def_4AA78).l,a2
                 jsr     (jt_ObjCreate).w
                 move.l  d6,$32(a0)
                 move.l  a1,$2A(a0)
@@ -222,7 +222,7 @@ L_4A616:
                 addq.l  #$4,a7
 L_4A618:
                 rts
-L_4A61A:
+Upd_4A61A:
                 tst.b   $36(a0)
                 bne.b   L_4A682
                 cmpi.w  #$1,$26(a0)
@@ -244,7 +244,7 @@ L_4A64E:
                 rts
 L_4A656:
                 st.b    $36(a0)
-                move.l  #D_4AC04,$12(a0)
+                move.l  #Def_4AC04,$12(a0)
                 clr.w   $1E(a0)
                 clr.b   $20(a0)
                 move.l  #D_4AC2C,$2A(a0)
@@ -324,7 +324,7 @@ L_4A7A6:
                 bmi.b   L_4A7DC
                 move.w  #$10,d0
                 moveq   #-1,d2
-                lea.l   (D_4AA4C).l,a2
+                lea.l   (Def_4AA4C).l,a2
                 jsr     (jt_ObjCreate).w
                 move.w  (a4)+,$1E(a0)
                 move.w  (a4)+,$32(a0)
@@ -406,7 +406,7 @@ L_4A896:
                 addq.l  #$4,a0
                 dbra    d5,L_4A882
                 rts
-L_4A8A8:
+Upd_4A8A8:
                 move.w  $32(a0),d0
                 add.w   d0,$A(a0)
                 cmpi.w  #$168,$A(a0)
@@ -414,7 +414,7 @@ L_4A8A8:
                 jmp     (jt_ObjKillSelf).w
 L_4A8BC:
                 rts
-L_4A8BE:
+Spawn_4A8BE:
                 movem.w $2(a1),d0-d1
                 moveq   #-1,d2
                 jsr     (jt_ObjCreate).w
@@ -428,12 +428,12 @@ L_4A8E4:
                 move.w  #$12C,d0
                 move.w  #$78,d1
                 moveq   #-1,d2
-                lea.l   (D_4B020).l,a2
+                lea.l   (Def_4B020).l,a2
                 jsr     (jt_ObjCreate).w
                 move.w  #$C,$38(a0)
                 move.w  #$14,$34(a0)
                 bra.b   L_4A8D4
-L_4A906:
+Upd_4A906:
                 btst.b  #$0,(EndSequenceFlags).w
                 beq.b   L_4A912
                 jmp     (jt_ObjKillSelf).w
@@ -481,15 +481,17 @@ D_4A9B2:
                 dc.w    $0091,$0003,$0002,$000A,$0028,$0001,$0003,$0006
                 dc.w    $0055,$0000,$0001,$0000,$0082,$0001,$0004,$0000
                 dc.w    $00A0,$0003,$0002,$0000,$FFFF
-D_4AA4C:
+; object definition: 32x14, 4 frames, gfx $672B8, update Upd_4A8A8
+Def_4AA4C:
                 dc.w    $0E03,$002E,$01C0,$0000,$0000,$0000,$0006,$72B8
                 dc.w    $0000,$00E0,$0004,$AA74,$0004,$AAA0
-                dc.l    L_4A8A8
+                dc.l    Upd_4A8A8
                 dc.w    $0000,$0000,$0000,$0000,$0001,$0203
-D_4AA78:
+; object definition: 32x23, 10 frames, gfx $61738, score 200, update Upd_4A61A
+Def_4AA78:
                 dc.w    $1703,$002E,$02E0,$0002,$0000,$0000,$0006,$1738
                 dc.w    $0000,$0170,$0004,$AB60,$0004,$AAA0
-                dc.l    L_4A61A
+                dc.l    Upd_4A61A
                 dc.w    $0000,$0000,$0000,$0200,$0004,$0000,$0010,$0015
                 dc.w    $0004,$0000,$0010,$0015,$0004,$0000,$0010,$0016
                 dc.w    $0004,$0000,$000F,$0016,$0002,$0001,$0016,$0010
@@ -514,7 +516,8 @@ D_4AB84:
                 dc.w    $0000,$0000,$0004,$AB6C,$0004,$AB6F,$0004,$AB72
                 dc.w    $0004,$AB75,$0004,$AB78,$0004,$AB7B,$0004,$AB7B
                 dc.w    $0000,$0000,$0004,$AB7E,$0004,$AB60,$0004,$AB81
-D_4AC04:
+; object definition: 32x30, 6 frames, gfx $65C38
+Def_4AC04:
                 dc.w    $1E03,$002E,$03C0,$0000,$0000,$0000,$0006,$5C38
                 dc.w    $0000,$01E0,$0004,$AC2C,$0004,$AC3C,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000
@@ -608,11 +611,12 @@ D_4AFE0:
                 dc.l    L_4A528
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0014,$002D
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-D_4B020:
+; object definition: 32x24, 3 frames, gfx $679B8, update Upd_4A906, spawn Spawn_4A8BE
+Def_4B020:
                 dc.w    $1803,$002E,$0300,$0000,$0000,$0000,$0006,$79B8
                 dc.w    $0000,$0180,$0004,$B048,$0004,$B04C
-                dc.l    L_4A906
-                dc.l    L_4A8BE
+                dc.l    Upd_4A906
+                dc.l    Spawn_4A8BE
                 dc.w    $0000,$0000,$0001,$02FF,$0004,$0001,$0012,$0016
                 dc.w    $0004,$0003,$0013,$0012,$0002,$0003,$0015,$0011
 D_4B064:
