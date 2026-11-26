@@ -12,7 +12,9 @@
 ; It uses all four channels: notes from NoteTable, sample info from
 ; SampleTable, Amiga periods from PeriodTable, 8-bit samples from Samples.
 ;
-; First pass: code and data separated, main tables labelled.
+; Jingle_Start4Ch: d0 = $FF - the song on all four channels (8-byte rows);
+; Jingle_Start2Ch: d3 = $FF - on channels 0-1 only (4-byte rows).  1 and 2
+; fade out (FadeLevel lowers every volume).  All labels named.
 ;==============================================================================
 CUSTOM          equ     $DFF000
 DMACON          equ     $096
@@ -24,157 +26,157 @@ JinglePlayer:
                 lea.l   JingleState(pc),a0
                 movem.l (a0)+,a1-a2
                 tst.b   d0
-                beq.w   L_4A346
+                beq.w   .4A346
                 cmpi.b  #$FF,d0
-                bne.b   L_4A336
+                bne.b   .4A336
                 lea.l   JingleSequence(pc),a0
                 move.l  a0,d0
-                lea.l   D_4A4EA(pc),a0
+                lea.l   SongPos(pc),a0
                 move.l  d0,(a0)
-                lea.l   D_4A4EE(pc),a0
+                lea.l   SongStart(pc),a0
                 move.l  d0,(a0)
-                lea.l   D_4A4F6(pc),a0
+                lea.l   LoopSong(pc),a0
                 move.w  #$0,(a0)
-                bra.w   L_4A480
-L_4A336:
+                bra.w   Jingle_Start4Ch
+.4A336:
                 cmpi.b  #$1,d0
-                beq.w   L_4A3F2
+                beq.w   .4A3F2
                 cmpi.b  #$2,d0
-                beq.w   L_4A3FA
-L_4A346:
+                beq.w   .4A3FA
+.4A346:
                 tst.w   d4
-                beq.b   L_4A398
+                beq.b   .4A398
                 moveq   #0,d0
                 move.b  d4,d0
                 lsr.w   #$8,d4
                 cmpi.b  #$FF,d0
-                bne.b   L_4A380
+                bne.b   .4A380
                 cmpi.b  #$1,d4
-                bne.b   L_4A362
+                bne.b   .4A362
                 lea.l   JingleSequence(pc),a0
-                bra.b   L_4A366
-L_4A362:
+                bra.b   .4A366
+.4A362:
                 lea.l   JingleSequence(pc),a0
-L_4A366:
+.4A366:
                 move.l  a0,d0
-                lea.l   D_4A4EA(pc),a0
-                lea.l   D_4A4EE(pc),a1
+                lea.l   SongPos(pc),a0
+                lea.l   SongStart(pc),a1
                 move.l  d0,(a0)
                 move.l  d0,(a1)
-                lea.l   D_4A4F6(pc),a0
+                lea.l   LoopSong(pc),a0
                 move.w  #$1,(a0)
-                bra.w   L_4A480
-L_4A380:
+                bra.w   Jingle_Start4Ch
+.4A380:
                 bsr.w   JingleStop
                 moveq   #0,d4
-                lea.l   D_4A4F8(pc),a0
+                lea.l   SongEnded(pc),a0
                 cmpi.w  #$1,(a0)
-                bne.w   L_4A426
+                bne.w   Jingle_Exit
                 moveq   #-1,d4
-                bra.w   L_4A41C
-L_4A398:
+                bra.w   Jingle_Silence
+.4A398:
                 moveq   #0,d0
                 tst.b   d3
-                beq.w   L_4A426
+                beq.w   Jingle_Exit
                 move.w  d3,d0
                 cmpi.b  #$FF,d0
-                bne.b   L_4A3E2
+                bne.b   .4A3E2
                 tst.w   d1
-                bne.b   L_4A3BE
+                bne.b   .4A3BE
                 lea.l   JingleSequence(pc),a0
                 move.l  a0,d0
-                lea.l   D_4A4EE(pc),a0
+                lea.l   SongStart(pc),a0
                 move.l  d0,(a0)
                 lea.l   JingleSequence(pc),a0
-                bra.b   L_4A3CE
-L_4A3BE:
+                bra.b   .4A3CE
+.4A3BE:
                 lea.l   JingleSequence(pc),a0
                 move.l  a0,d0
-                lea.l   D_4A4EE(pc),a0
+                lea.l   SongStart(pc),a0
                 move.l  d0,(a0)
                 lea.l   JingleSequence(pc),a0
-L_4A3CE:
+.4A3CE:
                 move.l  a0,d0
-                lea.l   D_4A4EA(pc),a0
+                lea.l   SongPos(pc),a0
                 move.l  d0,(a0)
-                lea.l   D_4A4F6(pc),a0
+                lea.l   LoopSong(pc),a0
                 move.w  #$0,(a0)
-                bra.w   L_4A43A
-L_4A3E2:
+                bra.w   Jingle_Start2Ch
+.4A3E2:
                 cmpi.b  #$1,d0
-                beq.b   L_4A3F2
+                beq.b   .4A3F2
                 cmpi.b  #$2,d0
-                beq.b   L_4A3FA
-                bra.w   L_4A426
-L_4A3F2:
-                lea.l   D_4A434(pc),a0
+                beq.b   .4A3FA
+                bra.w   Jingle_Exit
+.4A3F2:
+                lea.l   FadeCount(pc),a0
                 move.w  #$3F,(a0)
-L_4A3FA:
+.4A3FA:
                 bsr.w   JingleStop
-                move.w  D_4A434(pc),d0
+                move.w  FadeCount(pc),d0
                 cmpi.w  #$3F,d0
-                bne.b   L_4A414
-                lea.l   D_4A436(pc),a0
+                bne.b   Jingle_Done
+                lea.l   FadeLevel(pc),a0
                 cmpi.w  #$3E,(a0)
-                beq.b   L_4A41C
+                beq.b   Jingle_Silence
                 addq.w  #$2,(a0)
-L_4A414:
+Jingle_Done:
                 moveq   #4,d0
                 moveq   #0,d4
-                bra.w   L_4A426
-L_4A41C:
+                bra.w   Jingle_Exit
+Jingle_Silence:
                 moveq   #0,d0
                 move.w  #$F,(CUSTOM+DMACON).l
-L_4A426:
-                lea.l   D_4A61E(pc),a0
+Jingle_Exit:
+                lea.l   RowTicks(pc),a0
                 movem.l a1-a2,-(a0)
                 movem.l (a7)+,a0-a3
                 rts
-D_4A434:
+FadeCount:
                 dc.w    $0000
-D_4A436:
+FadeLevel:
                 dc.w    $0000,$0000
-L_4A43A:
-                lea.l   D_4A434(pc),a0
+Jingle_Start2Ch:
+                lea.l   FadeCount(pc),a0
                 clr.w   $0(a0)
                 clr.w   $2(a0)
                 clr.w   $4(a0)
-                lea.l   D_4A4E8(pc),a0
+                lea.l   RowBytes(pc),a0
                 move.w  #$4,(a0)
                 tst.w   d1
-                bne.b   L_4A45C
+                bne.b   .4A45C
                 lea.l   JingleSequence(pc),a0
-                bra.b   L_4A460
-L_4A45C:
+                bra.b   .4A460
+.4A45C:
                 lea.l   JingleSequence(pc),a0
-L_4A460:
+.4A460:
                 move.l  a0,d0
-                lea.l   D_4A4EA(pc),a0
+                lea.l   SongPos(pc),a0
                 move.l  d0,(a0)
-                lea.l   D_4A4F2(pc),a0
+                lea.l   ChannelsMinus1(pc),a0
                 move.w  #$1,(a0)
-                lea.l   D_4A4F4(pc),a0
+                lea.l   DmaChannels(pc),a0
                 move.w  #$8203,(a0)
                 bsr.b   ClearRegs
                 bsr.w   StartChannelsA
-                bra.b   L_4A414
-L_4A480:
-                lea.l   D_4A4F8(pc),a0
+                bra.b   Jingle_Done
+Jingle_Start4Ch:
+                lea.l   SongEnded(pc),a0
                 move.w  #$0,(a0)
                 move.w  #$F,(CUSTOM+DMACON).l
-                lea.l   D_4A434(pc),a0
+                lea.l   FadeCount(pc),a0
                 clr.w   $0(a0)
                 clr.w   $2(a0)
                 clr.w   $4(a0)
-                lea.l   D_4A4E8(pc),a0
+                lea.l   RowBytes(pc),a0
                 move.w  #$8,(a0)
-                lea.l   D_4A4F2(pc),a0
+                lea.l   ChannelsMinus1(pc),a0
                 move.w  #$3,(a0)
-                lea.l   D_4A4F4(pc),a0
+                lea.l   DmaChannels(pc),a0
                 move.w  #$820F,(a0)
                 bsr.b   ClearRegs
                 bsr.b   StartChannelsB
-                bra.w   L_4A414
+                bra.w   Jingle_Done
 ClearRegs:
                 moveq   #0,d0
                 moveq   #0,d1
@@ -184,58 +186,58 @@ ClearRegs:
                 rts
 JingleStop:
                 bsr.b   ClearRegs
-                lea.l   D_4A622(pc),a0
+                lea.l   TickHalf(pc),a0
                 cmpi.w  #$0,(a0)
-                bne.b   L_4A4FA
+                bne.b   Jingle_NextRow
                 move.w  #$1,(a0)
-                move.w  D_4A620(pc),d0
+                move.w  TickCount(pc),d0
                 move.w  d0,(CUSTOM+DMACON).l
                 rts
-D_4A4E8:
+RowBytes:
                 dc.w    $0000
-D_4A4EA:
+SongPos:
                 dc.w    $0000,$0000
-D_4A4EE:
+SongStart:
                 dc.w    $0000,$0000
-D_4A4F2:
+ChannelsMinus1:
                 dc.w    $0000
-D_4A4F4:
+DmaChannels:
                 dc.w    $0000
-D_4A4F6:
+LoopSong:
                 dc.w    $0000
-D_4A4F8:
+SongEnded:
                 dc.w    $0000
-L_4A4FA:
+Jingle_NextRow:
                 clr.w   (a0)
                 addq.w  #$4,a2
-                suba.w  D_4A4E8(pc),a1
+                suba.w  RowBytes(pc),a1
                 cmpi.b  #$FF,(a2)
-                bne.b   L_4A53A
+                bne.b   Jingle_PlayRowA
                 lea.l   NoteTable(pc),a2
-                adda.w  D_4A4E8(pc),a1
+                adda.w  RowBytes(pc),a1
                 cmpi.b  #$FF,(a1)
-                bne.b   L_4A53A
-                lea.l   D_4A4F8(pc),a0
+                bne.b   Jingle_PlayRowA
+                lea.l   SongEnded(pc),a0
                 move.w  #$1,(a0)
-                lea.l   D_4A4F6(pc),a0
+                lea.l   LoopSong(pc),a0
                 cmpi.w  #$1,(a0)
                 bne.b   StartChannelsB
                 rts
 StartChannelsA:
-                lea.l   D_4A4EA(pc),a1
-                bra.b   L_4A534
+                lea.l   SongPos(pc),a1
+                bra.b   Jingle_PlayRow
 StartChannelsB:
-                lea.l   D_4A4EE(pc),a1
-L_4A534:
+                lea.l   SongStart(pc),a1
+Jingle_PlayRow:
                 movea.l (a1),a1
                 lea.l   NoteTable(pc),a2
-L_4A53A:
-                move.w  D_4A4F2(pc),d4
-                lea.l   D_4A620(pc),a0
+Jingle_PlayRowA:
+                move.w  ChannelsMinus1(pc),d4
+                lea.l   TickCount(pc),a0
                 clr.w   (a0)
                 move.w  #$1,-$2(a0)
                 lea.l   (CUSTOM+AUD0LC).l,a3
-L_4A550:
+.4A550:
                 move.b  (a1),d0
                 move.b  $1(a1),d3
                 mulu.w  #$62,d0
@@ -257,22 +259,22 @@ L_4A550:
                 moveq   #0,d3
                 exg.l   d2,d3
                 bclr    #$7,d3
-                beq.b   L_4A5B2
-                lea.l   D_4A624(pc),a0
+                beq.b   .4A5B2
+                lea.l   LastPeriods(pc),a0
                 move.w  d4,d2
                 asl.w   #$1,d2
                 move.w  (a0,d2.l),d2
                 btst.b  #$7,$3(a2,d0.l)
-                beq.b   L_4A5AC
+                beq.b   .4A5AC
                 add.w   d2,d3
-                bra.b   L_4A5B0
-L_4A5AC:
+                bra.b   .4A5B0
+.4A5AC:
                 sub.w   d3,d2
                 exg.l   d3,d2
-L_4A5B0:
+.4A5B0:
                 move.w  d3,d1
-L_4A5B2:
-                lea.l   D_4A624(pc),a0
+.4A5B2:
+                lea.l   LastPeriods(pc),a0
                 move.w  d4,d2
                 asl.w   #$1,d2
                 move.w  d1,(a0,d2.l)
@@ -282,39 +284,39 @@ L_4A5B2:
                 moveq   #0,d1
                 move.b  $2(a2,d0.l),d2
                 move.b  $3(a2,d0.l),d1
-                move.w  D_4A436(pc),d0
+                move.w  FadeLevel(pc),d0
                 cmp.w   d0,d2
-                bgt.b   L_4A5DE
+                bgt.b   .4A5DE
                 move.w  #$1,d2
-                bra.b   L_4A5E0
-L_4A5DE:
+                bra.b   .4A5E0
+.4A5DE:
                 sub.w   d0,d2
-L_4A5E0:
+.4A5E0:
                 move.w  d2,$8(a3)
                 adda.w  #$10,a3
                 addq.w  #$2,a1
-                move.w  D_4A61E(pc),d0
-                lea.l   D_4A620(pc),a0
+                move.w  RowTicks(pc),d0
+                lea.l   TickCount(pc),a0
                 btst    #$0,d1
-                bne.b   L_4A5FA
+                bne.b   .4A5FA
                 add.w   d0,(a0)
-L_4A5FA:
+.4A5FA:
                 asl.w   #$1,d0
                 move.w  d0,-$2(a0)
-                dbra    d4,L_4A550
-                movea.w D_4A4F4(pc),a0
+                dbra    d4,.4A550
+                movea.w DmaChannels(pc),a0
                 move.w  a0,(CUSTOM+DMACON).l
                 lea.l   (CUSTOM+AUD0LC).l,a3
                 rts
 JingleState:
                 dc.w    $0000,$0000,$0000,$0000
-D_4A61E:
+RowTicks:
                 dc.w    $0000
-D_4A620:
+TickCount:
                 dc.w    $0000
-D_4A622:
+TickHalf:
                 dc.w    $0000
-D_4A624:
+LastPeriods:
                 dc.w    $0000,$0000,$0000,$0000
 ; Song: rows of (pattern.b, transpose.b) for each channel (4 channels = 8
 ; bytes a row, 2 channels = 4), ending with $FF.  Every pattern is 24 rows,

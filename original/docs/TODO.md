@@ -26,7 +26,7 @@ State on 26 Nov 2026. All 12 sources reassemble byte-identical (`tools/verify.py
 - [ ] **Wave lists**: one entry per line with the definition names (`tools/format_waves.py`); level 1's parameters decoded (Pata-Pata groups, Bug chains); the other levels' parameters are described in the spawn routines' comments but not laid out.
 - [x] **Tile animation routines** (`LV_TileAnims`, level 1) and **map patches**: level 1's are the Blasters, gun batteries built into the map.
 - [x] **Level 3** (the battleship): the scroll script moves the 26-row map in x and y; parts are map cells patched in and out (`PatchMap`) plus invisible targets that follow the scroll. Still to check: the exact stage list of the rear tower.
-- [x] **Unnamed labels**: none left in the level files or `game.s` (`tools/localise_labels.py` turns branch labels local, `tools/format_waves.py` lays out the wave lists). `shared.s` and `stage2.s` still have 41 `L_`/`D_` labels.
+- [x] **Unnamed labels**: none left in the level files or `game.s` (`tools/localise_labels.py` turns branch labels local, `tools/format_waves.py` lays out the wave lists). `shared.s` and `stage2.s` are fully named too.
 - [x] **Code hidden as data**: level 4's Geld routines, reached only through a pointer table, are code again.
 
 ## 3. Data and assets
