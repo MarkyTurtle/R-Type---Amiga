@@ -1,0 +1,10 @@
+# Game data is not distributed: regenerate it from your own disk image with
+#   python3 -I original/tools/extract.py path/to/R-Type.ipf original/files/
+*.ipf
+*.adf
+original/files/*
+!original/files/manifest.json
+original/files/_mfm/
+__pycache__/
+*.o
+*.bin
