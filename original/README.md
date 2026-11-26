@@ -20,8 +20,8 @@ Reverse-engineering of the Amiga R-Type (Electric Dreams 1989; Amiga version by 
 src/bootblock.s        annotated bootblock
 src/stage2.s           annotated stage-2 loader ($79360)
 src/game.s             the game program ($000A4): engine, all game code
-files/                 extracted disk files (not in git - run extract.py);
-                       manifest.json lists names, load addresses, SHA-1s
+files/                 every file extracted from the disk; manifest.json lists
+                       names, tracks, load addresses and SHA-1s
 docs/DISK_FORMAT.md    track formats, boot sequence, level table, memory map
 docs/GAME.md           how the game is organised: interfaces, frame, objects
 tools/

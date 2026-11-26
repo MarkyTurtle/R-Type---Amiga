@@ -1,10 +1,9 @@
-# Game data is not distributed: regenerate it from your own disk image with
+# The disk image itself is not stored; the files extracted from it are
+# (original/files/). Regenerate them with:
 #   python3 -I original/tools/extract.py path/to/R-Type.ipf original/files/
 *.ipf
 *.adf
-original/files/*
-!original/files/manifest.json
 original/files/_mfm/
 __pycache__/
 *.o
-*.bin
+build/

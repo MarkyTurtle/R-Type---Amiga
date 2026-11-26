@@ -22,7 +22,7 @@ Start with [`original/docs/DISK_FORMAT.md`](original/docs/DISK_FORMAT.md) for th
 
 ## Game data
 
-The game's binaries are not included. Extract them from your own disk image:
+All files extracted from the disk are in [`original/files/`](original/files/) (see `manifest.json` for load addresses, tracks and SHA-1s). To regenerate them from a disk image and check the sources:
 
 ```sh
 python3 -I original/tools/extract.py path/to/R-Type.ipf original/files/
