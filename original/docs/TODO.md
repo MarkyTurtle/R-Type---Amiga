@@ -32,7 +32,7 @@ State on 26 Nov 2026. All 12 sources reassemble byte-identical (`tools/verify.py
 ## 3. Data and assets
 
 - [x] **Level 3's 30 KB**: 239 more tiles (441–679: flames, explosions, battleship parts) not placed in the stored map.
-- [ ] **How level 3 uses tiles 441–679** (written into the map or drawn by its code).
+- [x] **How level 3 uses tiles 441–679**: they are written into the map by `PatchMap` - 64 blocks in level 3's data use 237 of the 239 (gun mounts, the engine flame, the core chamber, wrecks).
 - [ ] **Level B layout**: between each music player and its first BOB graphics lie the songs, patterns, sample and period tables and samples (located per player in `MUSIC.md`); check nothing else is there.
 - [x] **HUD**: the score/lives/beam-meter layout in the 3-plane HUD and the font used (`DigitFont`, `DrawChar`, `$2CEB8`).
 - [x] **Extract the HUD and the title-screen graphics** to PNG: `gfx/hud.png`, `gfx/font_game.png`, `gfx/font_digits.png` (`tools/render_hud.py`); the title picture is `docs/title.png`.
@@ -43,10 +43,10 @@ State on 26 Nov 2026. All 12 sources reassemble byte-identical (`tools/verify.py
 ## 4. Music
 
 - [x] **In-game music data**: sample, period and data tables located for all 9 players; 73 samples extracted to `music/`.
-- [ ] **Song and pattern tables per player**: list each player's songs (d4 command) and pattern table addresses.
-- [ ] **Convert the in-game songs** to something playable (e.g. MIDI or a ProTracker module) as a check on the format.
+- [x] **Songs per player**: two tunes (level, boss) and three jingles; level 1's song addresses listed in MUSIC.md. (A full table for every player is still to write.)
+- [x] **Convert the in-game songs**: `tools/render_music.py` runs the players in a 68000 emulator and mixes the Paula output; `music/songs/*.mp3`. (A ProTracker conversion is still an option for editing them.)
 - [x] **Level 8's ending music**: a third player variant with 32-row (`$82`) patterns.
-- [ ] **The music players' command interface** (d0/d4 commands, fades) as used by `UpdateMusic` / `UpdateJingle`.
+- [x] **The music players' command interface**: MUSIC.md, *Commands*.
 - [ ] **Disassemble the TFMX replay** (`files/tfmx_player_52300.exe`) or confirm it matches a known TFMX version.
 - [ ] **Test** `mdat.rtypetitle` + `smpl.rtypetitle` in a TFMX player (UADE / DeliTracker).
 

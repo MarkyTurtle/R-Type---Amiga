@@ -59,6 +59,24 @@ Rows of `pattern.b, transpose.b` for each channel (8 bytes per row for 4 channel
 
 Compared with a module, there are no song name, sample names or effect commands, and no pattern grid of 64 × 4 notes. Patterns here are short per-channel phrases with their own volume per row, and the song transposes them.
 
+### Commands (how the engine calls the players)
+
+All registers are set by the caller on every call; the players keep their state in their own variables.
+
+| Caller | First call | Every following frame | Finished when |
+|---|---|---|---|
+| `UpdateMusic`, a tune (`MusicRequest` = n) | d3 = `$FFFF`, d1 = n − 1 (0 = the level's tune, 1 = the boss tune) | d1 = d3 = 2 | the player returns d0 = 0 (the tunes loop, so they run until replaced) |
+| `UpdateMusic`, a jingle (`JingleState` = n) | d4 = (n − 1) << 8 \| `$FF` | d4 = 1 | the player returns d4 negative |
+| `UpdateJingle` (shared player, level 8's ending player) | d0 = `$FF` (`JingleCmd`) | d0 = 2 | d0 = 0 |
+
+d0 = 1 or 2 with d4 = 0 fades the music out (`MusicFadeReq`): every call lowers all volumes by one (`FadeLevel`). Tunes use channels 0–1 only, with 4-byte song rows, so the sound effects can have channels 2–3; jingles take all four channels and the effects are muted (`PlaySound` ignores requests while a jingle plays).
+
+In level 1's player, for example, the command handler picks: tune 0 `$5CD34`, tune 1 `$5CDC6` (it loops from `$5CDDE`), jingle 0 (game over) `$5CEFC`, 1 (stage clear) `$5CEBA`, 2 (game start) `$5CE20`.
+
+### Listening to them
+
+`tools/render_music.py` runs each player in a 68000 emulator (`machine68k`), calls it as above and mixes the Paula register writes; the results are in `music/songs/` ([index](../music/songs/README.md)). Every level's player has its own tune; the boss tune, the game-over and stage-clear jingles are the same in all of them, and only level 1's player has the game-start fanfare.
+
 ### Where each player's data is
 
 Found by `tools/music_tables.py`, which also writes every instrument sample to `music/` as WAV (73 samples):
