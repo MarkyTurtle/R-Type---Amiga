@@ -69,7 +69,7 @@ All registers are set by the caller on every call; the players keep their state 
 | `UpdateMusic`, a jingle (`JingleState` = n) | d4 = (n − 1) << 8 \| `$FF` | d4 = 1 | the player returns d4 negative |
 | `UpdateJingle` (shared player, level 8's ending player) | d0 = `$FF` (`JingleCmd`) | d0 = 2 | d0 = 0 |
 
-d0 = 1 or 2 with d4 = 0 fades the music out (`MusicFadeReq`): every call lowers all volumes by one (`FadeLevel`). Tunes use channels 0–1 only, with 4-byte song rows, so the sound effects can have channels 2–3; jingles take all four channels and the effects are muted (`PlaySound` ignores requests while a jingle plays).
+d0 = 1 or 2 with d4 = 0 fades the music out: each call raises `FadeLevel` by 2 (up to 62), which is subtracted from every volume. Tunes use channels 0–1 only, with 4-byte song rows, so the sound effects can have channels 2–3; jingles take all four channels and the effects are muted (`PlaySound` ignores requests while a jingle plays).
 
 In level 1's player, for example, the command handler picks: tune 0 `$5CD34`, tune 1 `$5CDC6` (it loops from `$5CDDE`), jingle 0 (game over) `$5CEFC`, 1 (stage clear) `$5CEBA`, 2 (game start) `$5CE20`.
 
