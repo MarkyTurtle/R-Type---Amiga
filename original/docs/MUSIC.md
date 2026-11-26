@@ -71,7 +71,21 @@ All registers are set by the caller on every call; the players keep their state 
 
 d0 = 1 or 2 with d4 = 0 fades the music out: each call raises `FadeLevel` by 2 (up to 62), which is subtracted from every volume. Tunes use channels 0–1 only, with 4-byte song rows, so the sound effects can have channels 2–3; jingles take all four channels and the effects are muted (`PlaySound` ignores requests while a jingle plays).
 
-In level 1's player, for example, the command handler picks: tune 0 `$5CD34`, tune 1 `$5CDC6` (it loops from `$5CDDE`), jingle 0 (game over) `$5CEFC`, 1 (stage clear) `$5CEBA`, 2 (game start) `$5CE20`.
+The songs each player's command handler selects (from the `lea`s in the handler; "loop" is where a tune restarts):
+
+| Player | Level tune | Boss tune (loop) | Stage clear | Game over | Game start | Patterns (size) |
+|---|---|---|---|---|---|---|
+| level1 | `$5CD34` | `$5CDC6` (`$5CDDE`) | `$5CEBA` | `$5CEFC` | `$5CE20` | fixed (`$62`) |
+| level2 | `$5EC38` | `$5ECEA` (`$5ED02`) | `$5ED44` | `$5ED86` | – | fixed (`$62`) |
+| level3 | `$637C0` | `$63882` (`$6389A`) | `$638DC` | `$6391E` | – | fixed (`$62`) |
+| level4 | `$52368` | `$523CA` (`$523E2`) | `$52424` | `$52466` | – | fixed (`$62`) |
+| level5 | `$51D88` | `$51DEA` (`$51E02`) | `$51E44` | `$51E86` | – | tune `$534DC` (`$42`), boss and jingles `$51EA8` (`$62`) |
+| level6 | `$5CCDC` | `$5CDDE` (`$5CDF6`) | `$5CE38` | `$5CE7A` | – | tune `$5E4D0` (`$42`), others `$5CE9C` (`$62`) |
+| level7 | `$585D8` | `$586CA` (`$586E2`) | `$58724` | `$58766` | – | tune `$59DBC` (`$42`), others `$58788` (`$62`) |
+| level8 | `$5C532` | `$5C544` (`$5C55C`) | `$5C59E` | `$5C5E0` | – | tune `$5DC36` (`$42`), others `$5C602` (`$62`) |
+| level8end | `$5F570` (the ending) | | | | | `$82` |
+
+Without a game-start song, the command for it falls through to the game-over song. The level tunes of levels 5–8 use 16-row patterns; everything else 24 rows.
 
 ### Listening to them
 

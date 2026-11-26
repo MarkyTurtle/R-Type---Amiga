@@ -43,8 +43,9 @@ State on 26 Nov 2026. All 12 sources reassemble byte-identical (`tools/verify.py
 ## 4. Music
 
 - [x] **In-game music data**: sample, period and data tables located for all 9 players; 73 samples extracted to `music/`.
-- [x] **Songs per player**: two tunes (level, boss) and three jingles; level 1's song addresses listed in MUSIC.md. (A full table for every player is still to write.)
-- [x] **Convert the in-game songs**: `tools/render_music.py` runs the players in a 68000 emulator and mixes the Paula output; `music/songs/*.mp3`. (A ProTracker conversion is still an option for editing them.)
+- [x] **Songs per player**: two tunes (level, boss) and three jingles; every player's song and pattern addresses in MUSIC.md.
+- [x] **Convert the in-game songs**: `tools/render_music.py` runs the players in a 68000 emulator and mixes the Paula output; `music/songs/*.mp3`. 
+- [ ] (Low priority) **ProTracker conversion** of the songs, to edit them in a tracker.
 - [x] **Level 8's ending music**: a third player variant with 32-row (`$82`) patterns.
 - [x] **The music players' command interface**: MUSIC.md, *Commands*.
 - [ ] **Disassemble the TFMX replay** (`files/tfmx_player_52300.exe`) or confirm it matches a known TFMX version.
