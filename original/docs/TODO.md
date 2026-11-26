@@ -90,7 +90,7 @@ Replace the custom-track loader with one that reads a standard AmigaDOS (11-sect
     | level B files (8; now ByteKiller) | 511,056 | 334,246 |
     | **total** | **986,872** | **576,213** |
 
-  - The total of about 563K leaves roughly 300K free on an FFS disk (about 869K of file space). ZX0 also beats the original ByteKiller packing of the level B files by about 35%.
+  - The total of about 576K leaves roughly 300K free on an FFS disk (about 869K of file space). ZX0 also beats the original ByteKiller packing of the level B files by about 35%.
   - **Where to unpack.** ZX0 unpacks forwards, the opposite of the original's backwards `Decrunch`, so the in-place trick changes:
     - Load the packed data at the *end* of the destination area plus salvador's safety margin and unpack forwards. Or use salvador's backwards mode (`-b`, which needs the backwards 68000 decompressor) to keep the original's layout.
     - Check memory per file. Level B now loads at `$4CB00` and unpacks to `$4D300`, ending at up to `$7975B`, close to `TRACK_BUFFER` at `$7C400`.
