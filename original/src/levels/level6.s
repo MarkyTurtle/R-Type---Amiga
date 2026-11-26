@@ -10,8 +10,9 @@
 ; $4AF90 on: unused track padding (only $4A2E4-$4CAFF survives the load
 ; of part B to $4CB00)
 ;
-; First pass: code and data separated, entry points from the level table
-; named.  L_xxxxx = code, D_xxxxx = data, still to be named.
+; Stage 6, the transport system (shortened on the Amiga: no boss).
+; Enemies: Dop containers on rails, Bink (level 1's), the Capsule, the
+; POW Armor.
 ;==============================================================================
                 include "engine.i"
 
@@ -51,179 +52,182 @@ WaveList:
 ; for the spawn routine, definition (-1 = POW Armor, the default).
 Waves:
                 dc.w    $0064,$0168,$0028
-                dc.l    $00000014,$00000000,Def_4AEFE
+                dc.l    $00000014,$00000000,Def_Capsule
                 dc.w    $0065,$0167,$00B8
-                dc.l    $00020014,$00000000,Def_4AEFE
+                dc.l    $00020014,$00000000,Def_Capsule
                 dc.w    $00B4,$0170,$003C
                 dc.l    $0000FFFC,$00000000,$FFFFFFFF ; POW Armor
                 dc.w    $00E1,$015D,$0070
-                dc.l    $00030201,$FF000000,Def_4ADBC
+                dc.l    $00030201,$FF000000,Def_Dop
                 dc.w    $00FA,$015D,$0030
-                dc.l    $00030201,$FF000000,Def_4ADBC
+                dc.l    $00030201,$FF000000,Def_Dop
                 dc.w    $0122,$015D,$0030
-                dc.l    $00030201,$FF000000,Def_4ADBC
+                dc.l    $00030201,$FF000000,Def_Dop
                 dc.w    $0127,$0167,$00CC
-                dc.l    $00010028,$00000000,Def_4AEFE
+                dc.l    $00010028,$00000000,Def_Capsule
                 dc.w    $0152,$015D,$0030
-                dc.l    $00030201,$FF000000,Def_4ADBC
+                dc.l    $00030201,$FF000000,Def_Dop
                 dc.w    $0153,$0167,$005C
-                dc.l    $0001001E,$00000000,Def_4AEFE
+                dc.l    $0001001E,$00000000,Def_Capsule
                 dc.w    $0176,$015D,$0030
-                dc.l    $00030201,$FF000000,Def_4ADBC
+                dc.l    $00030201,$FF000000,Def_Dop
                 dc.w    $0190,$0167,$009C
-                dc.l    $0001001E,$00000000,Def_4AEFE
+                dc.l    $0001001E,$00000000,Def_Capsule
                 dc.w    $01E0,$0130,$0000
-                dc.l    $000203FF,$00000000,Def_4ADBC
+                dc.l    $000203FF,$00000000,Def_Dop
                 dc.w    $01E1,$0167,$00CC
-                dc.l    $00010028,$00000000,Def_4AEFE
+                dc.l    $00010028,$00000000,Def_Capsule
                 dc.w    $01FE,$00A1,$00E0
-                dc.l    $000003FF,$00000000,Def_4ADBC
+                dc.l    $000003FF,$00000000,Def_Dop
                 dc.w    $0226,$00EA,$0000
-                dc.l    $000203FF,$00000000,Def_4ADBC
+                dc.l    $000203FF,$00000000,Def_Dop
                 dc.w    $0230,$015D,$0030
-                dc.l    $0003FF00,$00000000,Def_4ADBC
+                dc.l    $0003FF00,$00000000,Def_Dop
                 dc.w    $028A,$0000,$00B0
-                dc.l    $00010003,$FF000000,Def_4ADBC
+                dc.l    $00010003,$FF000000,Def_Dop
                 dc.w    $0294,$0163,$0045
-                dc.l    $FFFE0000,$00000000,Def_4AE1E
+                dc.l    $FFFE0000,$00000000,Def_Bink
                 dc.w    $029C,$0074,$0000
-                dc.l    $000200FF,$00000000,Def_4ADBC
+                dc.l    $000200FF,$00000000,Def_Dop
                 dc.w    $02A2,$0163,$0045
-                dc.l    $FFFE0000,$00000000,Def_4AE1E
+                dc.l    $FFFE0000,$00000000,Def_Bink
                 dc.w    $02BC,$0000,$00B0
-                dc.l    $00010003,$FF000000,Def_4ADBC
+                dc.l    $00010003,$FF000000,Def_Dop
                 dc.w    $02D0,$015D,$0030
-                dc.l    $0003FF00,$00000000,Def_4ADBC
+                dc.l    $0003FF00,$00000000,Def_Dop
                 dc.w    $02EE,$0000,$00B0
-                dc.l    $00010003,$FF000000,Def_4ADBC
+                dc.l    $00010003,$FF000000,Def_Dop
                 dc.w    $02EF,$0167,$005C
-                dc.l    $0001001E,$00000000,Def_4AEFE
+                dc.l    $0001001E,$00000000,Def_Capsule
                 dc.w    $0311,$015D,$00B0
-                dc.l    $00030001,$020102FF,Def_4ADBC
+                dc.l    $00030001,$020102FF,Def_Dop
                 dc.w    $0334,$015D,$00B0
-                dc.l    $00030001,$020300FF,Def_4ADBC
+                dc.l    $00030001,$020300FF,Def_Dop
                 dc.w    $0335,$015D,$0030
-                dc.l    $0003FF00,$00000000,Def_4ADBC
+                dc.l    $0003FF00,$00000000,Def_Dop
                 dc.w    $0336,$0167,$001D
-                dc.l    $0001001E,$00000000,Def_4AEFE
+                dc.l    $0001001E,$00000000,Def_Capsule
                 dc.w    $0346,$0000,$00B0
-                dc.l    $01010003,$FF000000,Def_4ADBC
+                dc.l    $01010003,$FF000000,Def_Dop
                 dc.w    $0352,$0000,$0030
-                dc.l    $00010203,$000102FF,Def_4ADBC
+                dc.l    $00010203,$000102FF,Def_Dop
                 dc.w    $0366,$015D,$00B0
-                dc.l    $00030001,$020300FF,Def_4ADBC
+                dc.l    $00030001,$020300FF,Def_Dop
                 dc.w    $03A2,$0000,$0030
-                dc.l    $00010203,$000102FF,Def_4ADBC
+                dc.l    $00010203,$000102FF,Def_Dop
                 dc.w    $03F2,$015D,$0030
-                dc.l    $00030203,$FF000000,Def_4ADBC
+                dc.l    $00030203,$FF000000,Def_Dop
                 dc.w    $042C,$0167,$001D
-                dc.l    $0001001E,$00000000,Def_4AEFE
+                dc.l    $0001001E,$00000000,Def_Capsule
                 dc.w    $0438,$0000,$00B0
-                dc.l    $00010003,$0203FF00,Def_4ADBC
+                dc.l    $00010003,$0203FF00,Def_Dop
                 dc.w    $0460,$015C,$0072
-                dc.l    $00000023,$00000000,Def_4AEFE
+                dc.l    $00000023,$00000000,Def_Capsule
                 dc.w    $0492,$00BE,$00E0
-                dc.l    $00000302,$03FF0000,Def_4ADBC
+                dc.l    $00000302,$03FF0000,Def_Dop
                 dc.w    $049C,$00F5,$00E0
-                dc.l    $00000102,$FF000000,Def_4ADBC
+                dc.l    $00000102,$FF000000,Def_Dop
                 dc.w    $04CE,$0110,$0000
-                dc.l    $0002FF00,$00000000,Def_4ADBC
+                dc.l    $0002FF00,$00000000,Def_Dop
                 dc.w    $052F,$00FA,$0003
-                dc.l    $FFFE0000,$00000000,Def_4AE1E
+                dc.l    $FFFE0000,$00000000,Def_Bink
                 dc.w    $053C,$00FA,$00E0
-                dc.l    $000001FF,$00000000,Def_4ADBC
+                dc.l    $000001FF,$00000000,Def_Dop
                 dc.w    $058C,$00C8,$0003
-                dc.l    $FFFE0000,$00000000,Def_4AE1E
+                dc.l    $FFFE0000,$00000000,Def_Bink
                 dc.w    $0591,$0064,$0003
-                dc.l    $00020000,$00000000,Def_4AE1E
+                dc.l    $00020000,$00000000,Def_Bink
                 dc.w    $05A3,$0104,$0003
-                dc.l    $FFFE0000,$00000000,Def_4AE1E
+                dc.l    $FFFE0000,$00000000,Def_Bink
                 dc.w    $05A4,$006E,$0003
-                dc.l    $00020000,$00000000,Def_4AE1E
+                dc.l    $00020000,$00000000,Def_Bink
                 dc.w    $05AA,$0064,$0003
-                dc.l    $00020000,$00000000,Def_4AE1E
+                dc.l    $00020000,$00000000,Def_Bink
 WavesFrom_057F:
                 dc.w    $05BB,$0064,$0003
-                dc.l    $00020000,$00000000,Def_4AE1E
+                dc.l    $00020000,$00000000,Def_Bink
                 dc.w    $05C5,$005F,$0003
-                dc.l    $00020000,$00000000,Def_4AE1E
+                dc.l    $00020000,$00000000,Def_Bink
                 dc.w    $05CF,$005A,$0003
-                dc.l    $00020000,$00000000,Def_4AE1E
+                dc.l    $00020000,$00000000,Def_Bink
                 dc.w    $05D9,$0055,$0003
-                dc.l    $00020000,$00000000,Def_4AE1E
+                dc.l    $00020000,$00000000,Def_Bink
                 dc.w    $05E1,$015D,$0084
                 dc.l    $0002FFFC,$00000000,$FFFFFFFF ; POW Armor
                 dc.w    $05E3,$0050,$0003
-                dc.l    $00020000,$00000000,Def_4AE1E
+                dc.l    $00020000,$00000000,Def_Bink
                 dc.w    $05ED,$004B,$0003
-                dc.l    $00020000,$00000000,Def_4AE1E
+                dc.l    $00020000,$00000000,Def_Bink
                 dc.w    $05F7,$0046,$0003
-                dc.l    $00020000,$00000000,Def_4AE1E
+                dc.l    $00020000,$00000000,Def_Bink
                 dc.w    $0601,$0041,$0003
-                dc.l    $00020000,$00000000,Def_4AE1E
+                dc.l    $00020000,$00000000,Def_Bink
                 dc.w    $060B,$003C,$0003
-                dc.l    $00020000,$00000000,Def_4AE1E
+                dc.l    $00020000,$00000000,Def_Bink
                 dc.w    $0615,$0037,$0003
-                dc.l    $00020000,$00000000,Def_4AE1E
+                dc.l    $00020000,$00000000,Def_Bink
                 dc.w    $061F,$0032,$0003
-                dc.l    $00020000,$00000000,Def_4AE1E
+                dc.l    $00020000,$00000000,Def_Bink
                 dc.w    $0640,$0082,$0003
-                dc.l    $FFFE0000,$00000000,Def_4AE1E
+                dc.l    $FFFE0000,$00000000,Def_Bink
                 dc.w    $064A,$00AF,$0018
-                dc.l    $00020000,$00000000,Def_4AE1E
+                dc.l    $00020000,$00000000,Def_Bink
                 dc.w    $066D,$015D,$00B0
-                dc.l    $00030001,$020300FF,Def_4ADBC
+                dc.l    $00030001,$020300FF,Def_Dop
                 dc.w    $0688,$015D,$00B0
-                dc.l    $00030001,$020300FF,Def_4ADBC
+                dc.l    $00030001,$020300FF,Def_Dop
                 dc.w    $06A4,$015D,$00B0
-                dc.l    $00030001,$020300FF,Def_4ADBC
+                dc.l    $00030001,$020300FF,Def_Dop
                 dc.w    $06A6,$0170,$0084
                 dc.l    $0000FFFC,$00000000,$FFFFFFFF ; POW Armor
                 dc.w    $06AE,$0167,$005C
-                dc.l    $00010028,$00000000,Def_4AEFE
+                dc.l    $00010028,$00000000,Def_Capsule
                 dc.w    $06BC,$015D,$00B0
-                dc.l    $00030001,$020300FF,Def_4ADBC
+                dc.l    $00030001,$020300FF,Def_Dop
                 dc.w    $06BE,$015E,$008C
-                dc.l    $00010028,$00000000,Def_4AEFE
+                dc.l    $00010028,$00000000,Def_Capsule
                 dc.w    $06D6,$015D,$00B0
-                dc.l    $00030001,$020300FF,Def_4ADBC
+                dc.l    $00030001,$020300FF,Def_Dop
                 dc.w    $071C,$0167,$001D
-                dc.l    $00010032,$00000000,Def_4AEFE
+                dc.l    $00010032,$00000000,Def_Capsule
                 dc.w    $0753,$0167,$005C
-                dc.l    $0001001E,$00000000,Def_4AEFE
+                dc.l    $0001001E,$00000000,Def_Capsule
                 dc.w    $0754,$0167,$008C
-                dc.l    $0001001E,$00000000,Def_4AEFE
+                dc.l    $0001001E,$00000000,Def_Capsule
                 dc.w    $0780,$015D,$0070
-                dc.l    $00030201,$FF000000,Def_4ADBC
+                dc.l    $00030201,$FF000000,Def_Dop
                 dc.w    $07B0,$015D,$0030
-                dc.l    $00030201,$0003FF00,Def_4ADBC
+                dc.l    $00030201,$0003FF00,Def_Dop
                 dc.w    $07B1,$015C,$00B0
-                dc.l    $00030001,$02FF0000,Def_4ADBC
+                dc.l    $00030001,$02FF0000,Def_Dop
                 dc.w    $07C3,$0168,$0028
-                dc.l    $00000014,$00000000,Def_4AEFE
+                dc.l    $00000014,$00000000,Def_Capsule
                 dc.w    $07C4,$0167,$00B4
-                dc.l    $0002000A,$00000000,Def_4AEFE
+                dc.l    $0002000A,$00000000,Def_Capsule
                 dc.w    $07F3,$015D,$0070
-                dc.l    $0003FF00,$00000000,Def_4ADBC
+                dc.l    $0003FF00,$00000000,Def_Dop
                 dc.w    $082A,$015E,$001D
-                dc.l    $0001001E,$00000000,Def_4AEFE
+                dc.l    $0001001E,$00000000,Def_Capsule
                 dc.w    $082F,$00A0,$0000
-                dc.l    $000203FF,$00000000,Def_4ADBC
+                dc.l    $000203FF,$00000000,Def_Dop
                 dc.w    $0834,$0170,$00B0
                 dc.l    $0003FFFC,$00000000,$FFFFFFFF ; POW Armor
                 dc.w    $0889,$0000,$0070
-                dc.l    $00010203,$FF000000,Def_4ADBC
+                dc.l    $00010203,$FF000000,Def_Dop
                 dc.w    $08DE,$015E,$001D
-                dc.l    $00010023,$00000000,Def_4AEFE
+                dc.l    $00010023,$00000000,Def_Capsule
                 dc.w    $08DF,$015E,$00CC
-                dc.l    $00010078,$00000000,Def_4AEFE
+                dc.l    $00010078,$00000000,Def_Capsule
                 dc.w    $7530   ; end: never reached
 LevelPalette:
                 dc.w    $0555,$0BBB,$0777,$0500,$005F,$0066,$0044,$0955
                 dc.w    $0B00,$09BF,$000B,$0F77,$0C70,$0FF0,$0FFF
+; Level 6 has no boss.  At scroll x $900 the scroll stops and a queue of
+; Dops (DopQueueList: their route lists) comes in, one every 50 frames
+; (longer pauses where marked); when the queue ends the level is over.
 LevelInit:
-                clr.w   (D_4AD2E).l
-                move.l  #D_4AD50,(D_4AD2A).l
+                clr.w   (DopTimer).l
+                move.l  #DopQueueList,(DopQueue).l
                 rts
 LevelFrame:
                 cmpi.w  #$8FC,(ScrollX).w
@@ -236,37 +240,43 @@ LevelFrame:
                 rts
 .4A962:
                 clr.b   (ScrollActive).w
-                subq.w  #$1,(D_4AD2E).l
+                subq.w  #$1,(DopTimer).l
                 bpl.b   .4A960
-                move.w  #$32,(D_4AD2E).l
-                movea.l (D_4AD2A).l,a1
+                move.w  #$32,(DopTimer).l
+                movea.l (DopQueue).l,a1
                 move.l  (a1)+,d0
                 bmi.b   .4A9AA
                 tst.w   (a1)
                 bpl.b   .4A98C
-                move.w  #$D2,(D_4AD2E).l
+                move.w  #$D2,(DopTimer).l
 .4A98C:
-                move.l  a1,(D_4AD2A).l
+                move.l  a1,(DopQueue).l
                 movea.l d0,a1
                 move.w  #$B1,d0
                 moveq   #0,d1
                 moveq   #4,d2
-                lea.l   (Def_4ADBC).l,a2
+                lea.l   (Def_Dop).l,a2
                 jsr     (jt_ObjCreate).w
-                bra.w   L_4A9C0
+                bra.w   Dop_Start
 .4A9AA:
                 st.b    (LevelComplete).w
                 rts
-Spawn_4A9B0:
+; Dop: an armoured transport container running along the rails in the map.
+; Its route (bytes: direction changes, $FF = turn back one) is followed
+; whenever the rail ahead ends (DopMoves: per direction the step, the probe
+; point and the map offset of the next rail cell).  Only its pink core is
+; a weak point: while the ship is on its armoured side it is
+; indestructible; 4 hits from the core side destroy it.
+Spawn_Dop:
                 movem.w $2(a1),d0-d1
                 moveq   #4,d2
                 jsr     (jt_ObjCreate).w
                 lea.l   $6(a1),a1
-L_4A9C0:
+Dop_Start:
                 moveq   #0,d0
                 move.b  (a1)+,d0
                 bne.b   .4A9CE
-                move.l  #D_4AE19,$2A(a0)
+                move.l  #DopAnimLeft,$2A(a0)
 .4A9CE:
                 move.b  d0,$33(a0)
                 move.b  (a1)+,$32(a0)
@@ -275,7 +285,7 @@ L_4A9C0:
                 move.b  #$2,$21(a0)
                 move.w  #$7D0,$24(a0)
                 jmp     (jt_ObjInsert).w
-Upd_4A9EE:
+Upd_Dop:
                 move.w  $A(a0),d0
                 move.w  $26(a0),d1
                 clr.w   $26(a0)
@@ -307,7 +317,7 @@ Upd_4A9EE:
                 jsr     (jt_AdjustForScroll).w
                 moveq   #0,d2
                 move.b  $32(a0),d2
-                lea.l   (D_4AD94).l,a1
+                lea.l   (DopMoves).l,a1
                 lsl.w   #$1,d2
                 adda.l  d2,a1
                 lsl.w   #$2,d2
@@ -348,24 +358,24 @@ Upd_4A9EE:
 .4AABA:
                 move.b  d2,$32(a0)
                 addq.l  #$1,$36(a0)
-                bra.w   Upd_4A9EE
-Spawn_4AAC6:
+                bra.w   Upd_Dop
+Spawn_Bink:
                 move.w  $2(a1),d0
                 move.w  $4(a1),d1
                 move.w  $8(a2),d2
                 jsr     (jt_ObjCreate).w
-                move.l  #D_4AE50,$2A(a0)
+                move.l  #BinkWalkRight,$2A(a0)
                 move.w  $6(a1),$32(a0)
                 bpl.b   .4AAEE
-                move.l  #D_4AE46,$2A(a0)
+                move.l  #BinkWalkLeft,$2A(a0)
 .4AAEE:
                 move.w  $32(a0),d2
-                bsr.w   L_4AB9E
+                bsr.w   Bink_Jump
                 move.w  #$200,$34(a0)
                 clr.w   $1E(a0)
-                bsr.w   L_4AC08
+                bsr.w   Bink_Fall
                 jmp     (jt_ObjInsert).w
-Upd_4AB08:
+Upd_Bink:
                 cmpi.w  #$10,$A(a0)
                 bcs.b   .4AB20
                 cmpi.w  #$170,$A(a0)
@@ -378,9 +388,9 @@ Upd_4AB08:
                 move.b  $34(a0),d0
                 beq.b   .4AB70
                 cmp.b   #$1,d0
-                beq.w   L_4ABD2
+                beq.w   Bink_Jumping
                 cmp.b   #$2,d0
-                beq.w   L_4AC08
+                beq.w   Bink_Fall
                 subq.w  #$1,$A(a0)
                 subq.b  #$1,$35(a0)
                 bmi.b   .4AB56
@@ -388,10 +398,10 @@ Upd_4AB08:
 .4AB46:
                 st.b    $34(a0)
                 clr.b   $22(a0)
-                move.l  #D_4AE46,$2A(a0)
+                move.l  #BinkWalkLeft,$2A(a0)
 .4AB56:
                 move.b  #$A,$35(a0)
-                bsr.w   L_4AC48
+                bsr.w   ShipDistX
                 move.w  #$B,$1E(a0)
                 tst.w   d2
                 bpl.b   .4AB6E
@@ -411,31 +421,31 @@ Upd_4AB08:
                 bne.b   .4AB46
                 adda.l  (MapRowBytes).w,a4
                 btst.b  #$7,(a4)
-                beq.b   L_4AB9E
+                beq.b   Bink_Jump
                 add.w   d2,$A(a0)
                 rts
-L_4AB9E:
+Bink_Jump:
                 move.b  #$1,$34(a0)
                 clr.w   $36(a0)
                 move.w  #$23,$38(a0)
-                move.l  #D_4AE55,$2A(a0)
+                move.l  #BinkJumpRight,$2A(a0)
                 tst.w   d2
                 bpl.b   .4ABC2
-                move.l  #D_4AE4B,$2A(a0)
+                move.l  #BinkJumpLeft,$2A(a0)
 .4ABC2:
                 move.w  #$3,$1E(a0)
                 clr.b   $20(a0)
                 st.b    $22(a0)
                 rts
-L_4ABD2:
-                lea.l   (D_4AEBA).l,a2
+Bink_Jumping:
+                lea.l   (BinkJumpArc).l,a2
                 move.w  $36(a0),d0
                 moveq   #3,d2
                 move.b  (a2,d0.w),d3
                 cmp.b   #$7F,d3
                 bne.b   .4ABF0
                 move.b  #$2,$34(a0)
-                bra.b   L_4AC08
+                bra.b   Bink_Fall
 .4ABF0:
                 ext.w   d3
                 tst.w   $32(a0)
@@ -446,7 +456,7 @@ L_4ABD2:
                 add.w   d3,$C(a0)
                 addq.w  #$1,$36(a0)
                 rts
-L_4AC08:
+Bink_Fall:
                 subq.w  #$1,$A(a0)
                 movem.w $A(a0),d0-d1
                 addq.w  #$8,d0
@@ -457,15 +467,15 @@ L_4AC08:
                 rts
 .4AC24:
                 clr.w   $34(a0)
-                move.l  #D_4AE50,$2A(a0)
+                move.l  #BinkWalkRight,$2A(a0)
                 clr.b   $20(a0)
                 clr.w   $1E(a0)
                 tst.w   $32(a0)
                 bpl.b   .4AC46
-                move.l  #D_4AE46,$2A(a0)
+                move.l  #BinkWalkLeft,$2A(a0)
 .4AC46:
                 rts
-L_4AC48:
+ShipDistX:
                 moveq   #1,d2
                 move.w  (ShipPos).w,d0
                 sub.w   $A(a0),d0
@@ -484,7 +494,10 @@ L_4AC48:
                 neg.w   d2
 .4AC6E:
                 rts
-Spawn_4AC70:
+; Capsule (arcade name not identified): moves in a list of modes (entry
+; $06: CapsuleModes - animation, duration, direction; CapsuleSteps) and
+; fires at the ship every 60-120 frames.
+Spawn_Capsule:
                 movem.w $2(a1),d0-d1
                 moveq   #2,d2
                 jsr     (jt_ObjCreate).w
@@ -492,14 +505,14 @@ Spawn_4AC70:
                 clr.w   $36(a0)
                 clr.w   $38(a0)
                 jmp     (jt_ObjInsert).w
-Upd_4AC8E:
+Upd_Capsule:
                 movem.w $A(a0),d0-d1
                 jsr     (jt_AdjustForScroll).w
                 move.w  $32(a0),d2
                 subq.w  #$1,$36(a0)
                 bpl.b   .4ACC6
                 move.w  $34(a0),$36(a0)
-                lea.l   (D_4AEDE).l,a2
+                lea.l   (CapsuleModes).l,a2
                 lsl.w   #$3,d2
                 move.l  (a2,d2.w),$2A(a0)
                 clr.b   $20(a0)
@@ -508,7 +521,7 @@ Upd_4AC8E:
                 move.w  d2,$32(a0)
 .4ACC6:
                 lsl.w   #$2,d2
-                lea.l   (D_4AECE).l,a2
+                lea.l   (CapsuleSteps).l,a2
                 add.w   $2(a2,d2.w),d1
                 add.w   (a2,d2.w),d0
                 bmi.b   .4ACEA
@@ -543,49 +556,50 @@ Upd_4AC8E:
                 move.w  d0,$38(a0)
 .4AD28:
                 rts
-D_4AD2A:
+DopQueue:
                 dc.w    $0000,$0000
-D_4AD2E:
+DopTimer:
                 dc.w    $0000,$0002,$0300,$0102,$03FF,$0002,$0100,$0302
                 dc.w    $01FF,$0102,$0300,$0102,$03FF,$0102,$0100,$0302
                 dc.w    $01FF
-D_4AD50:
+DopQueueList:
                 dc.w    $0004,$AD38,$0004,$AD30,$0004,$AD30,$0004,$AD38
                 dc.w    $0004,$AD30,$0004,$AD38,$0004,$AD38,$0004,$AD30
                 dc.w    $0004,$AD48,$0004,$AD30,$0004,$AD30,$0004,$AD40
                 dc.w    $0004,$AD38,$0004,$AD30,$0004,$AD48,$0004,$AD38
                 dc.w    $FFFF,$FFFF
-D_4AD94:
+DopMoves:
                 dc.w    $0000,$FFFD,$0006,$0002,$0004,$0003,$0000,$002E
                 dc.w    $0005,$0148,$0000,$0003,$0006,$001E,$0004,$FFFD
                 dc.w    $0000,$0002,$0005,$0148
-; object definition: 48x32, 3 frames, gfx $604B0, score 1000, update Upd_4A9EE, spawn Spawn_4A9B0
-Def_4ADBC:
+; object definition: 48x32, 3 frames, gfx $604B0, score 1000, update Upd_Dop, spawn Spawn_Dop
+Def_Dop:
                 dc.w    $2004,$002C,$0600,$0003,$0000,$0000,$0006,$04B0
                 dc.w    $0000,$0300,$0004,$AE14,$0004,$ADE4
-                dc.l    Upd_4A9EE
-                dc.l    Spawn_4A9B0
+                dc.l    Upd_Dop
+                dc.l    Spawn_Dop
                 dc.w    $0000,$1000,$0005,$0004,$0028,$0018,$0005,$0004
                 dc.w    $0028,$0018,$0005,$0004,$0028,$0018,$0002,$0003
                 dc.w    $0028,$0019,$0002,$0003,$0028,$0019,$0002,$0003
                 dc.b    $00,$28,$00,$19,$00,$01,$00,$02,$FF
-D_4AE19:
+DopAnimLeft:
                 dc.b    $03,$04,$03,$05,$FF
-; object definition: 32x26, 4 frames, gfx $64930, 1 hit point, fires every ~9 frames, score 200, update Upd_4AB08, spawn Spawn_4AAC6
-Def_4AE1E:
+; Bink: as in level 1 (the same code)
+; (32x26, 4 frames, gfx $64930, 1 hit point, fires every ~9 frames, score 200, update Upd_Bink, spawn Spawn_Bink)
+Def_Bink:
                 dc.b    $1A,$03,$00,$2E,$03,$40,$00,$03,$00,$01,$00
                 dc.b    $09,$00,$06,$49,$30,$00,$00,$01,$A0,$00,$04,$AE,$46,$00,$04,$AE
                 dc.b    $5A
-                dc.l    Upd_4AB08
-                dc.l    Spawn_4AAC6
+                dc.l    Upd_Bink
+                dc.l    Spawn_Bink
                 dc.w    $0000,$0200
-D_4AE46:
+BinkWalkLeft:
                 dc.b    $00,$01,$02,$03,$FF
-D_4AE4B:
+BinkJumpLeft:
                 dc.b    $04,$05,$FF,$03,$FF
-D_4AE50:
+BinkWalkRight:
                 dc.b    $06,$07,$08,$09,$FF
-D_4AE55:
+BinkJumpRight:
                 dc.b    $0A,$0B,$FF,$09,$FF,$00,$03,$00,$01,$00,$15,$00,$19,$00,$02,$00
                 dc.b    $03,$00,$18,$00,$16,$00,$04,$00,$01,$00,$15,$00,$19,$00,$03,$00
                 dc.b    $04,$00,$18,$00,$15,$00,$02,$00,$02,$00,$18,$00,$17,$00,$02,$00
@@ -593,20 +607,20 @@ D_4AE55:
                 dc.b    $04,$00,$18,$00,$15,$00,$04,$00,$02,$00,$17,$00,$17,$00,$03,$00
                 dc.b    $04,$00,$18,$00,$14,$00,$04,$00,$02,$00,$18,$00,$16,$00,$04,$00
                 dc.b    $03,$00,$18,$00,$15
-D_4AEBA:
+BinkJumpArc:
                 dc.w    $FEFE,$FEFF,$FFFF,$FF00,$0000,$0101,$0101,$0202
                 dc.w    $027F,$7F00
-D_4AECE:
+CapsuleSteps:
                 dc.w    $0000,$FFFE,$0002,$0000,$0000,$0002,$FFFE,$0000
-D_4AEDE:
+CapsuleModes:
                 dc.w    $0004,$AF82,$0000,$0002,$0004,$AF88,$0000,$0003
                 dc.w    $0004,$AF76,$0000,$0000,$0004,$AF7C,$0000,$0001
-; object definition: 32x26, 5 frames, gfx $628B0, score 300, update Upd_4AC8E, spawn Spawn_4AC70
-Def_4AEFE:
+; object definition: 32x26, 5 frames, gfx $628B0, score 300, update Upd_Capsule, spawn Spawn_Capsule
+Def_Capsule:
                 dc.w    $1A03,$002E,$0340,$0002,$0000,$0000,$0006,$28B0
                 dc.w    $0000,$01A0,$0004,$AF76,$0004,$AF26
-                dc.l    Upd_4AC8E
-                dc.l    Spawn_4AC70
+                dc.l    Upd_Capsule
+                dc.l    Spawn_Capsule
                 dc.w    $0000,$0300,$FFFF,$0002,$0019,$0015,$FFFF,$0001
                 dc.w    $0019,$0018,$FFFF,$0001,$0019,$0018,$FFFF,$0001
                 dc.w    $0019,$0018,$FFFF,$0002,$0018,$0015,$0002,$FFFF
