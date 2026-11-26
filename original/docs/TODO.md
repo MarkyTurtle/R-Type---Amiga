@@ -73,10 +73,28 @@ Replace the custom-track loader with one that reads a standard AmigaDOS (11-sect
 - [ ] **Loader**: use the 4489 byte loader from [MarkyTurtle/infinitedreams](https://github.com/MarkyTurtle/infinitedreams) (`src-singledisk/demo-redux/4489Loader/`: disassembled, TOD-timed fork of [4489/4489_byteloader](https://github.com/4489/4489_byteloader)).
   - Interface: d0 = disk offset, d1 = length, d2 = drive, a0 = destination, a1 = MFM buffer. It returns d0 = 0 on success.
   - It needs `$1760` words of MFM buffer. The game's `TRACK_BUFFER` at `$7C400` has room (`$7C400`–`$7F2C0`); check nothing else uses that area while loading.
-- [ ] **Space problem, solve first.** The files don't fit on an 880K disk as they are. The data on the custom tracks comes to about 987K, which is why the original uses long tracks. A standard disk holds 901,120 bytes raw, about 837K of file data on FFS. Options:
-  - **Crunch the uncrunched files** with the game's own ByteKiller format, so `Decrunch` can unpack them. Candidates: music, game program, `$6000` block, shared file, title picture, level A files. Deflate as a guide shrinks them from about 475K to 241K. That gives about 752K with the already-crunched level B files, which fits, but ByteKiller packs less tightly than deflate.
-  - Also trim the track padding: files are stored padded to whole tracks, so their real lengths are shorter.
-  - Check there's enough free memory to decrunch into for each file; the level B files already decrunch from `$4CB00` to `$4D300`.
+- [ ] **Compress the files with ZX0.** The files don't fit on an 880K disk as they are. The custom tracks hold about 987K, which is why the original uses long tracks.
+  - Use the 68000 ZX0 decompressor already in infinitedreams (`src-singledisk/demo-redux/zx0/unzx0_68000.s`, Emmanuel Marty, 88 bytes; a0 = packed data, a1 = destination). Pack with [salvador](https://github.com/emmanuel-marty/salvador) `-classic`.
+  - Measured with salvador (track padding trimmed, level B files packed from their unpacked form):
+
+    | | on disk now | ZX0 |
+    |---|---:|---:|
+    | bootblock (stays unpacked) | 1,024 | 1,024 |
+    | title picture | 41,920 | 17,846 |
+    | stage 2 | 5,184 | 1,817 |
+    | music (`$52300`) | 131,296 | 92,982 |
+    | game program | 23,872 | 13,030 |
+    | `$6000` block | 161,136 | 77,918 |
+    | shared file | 32,760 | 11,463 |
+    | level A files (8) | 78,624 | 25,887 |
+    | level B files (8; now ByteKiller) | 511,056 | 334,246 |
+    | **total** | **986,872** | **576,213** |
+
+  - The total of about 563K leaves roughly 300K free on an FFS disk (about 869K of file space). ZX0 also beats the original ByteKiller packing of the level B files by about 35%.
+  - **Where to unpack.** ZX0 unpacks forwards, the opposite of the original's backwards `Decrunch`, so the in-place trick changes:
+    - Load the packed data at the *end* of the destination area plus salvador's safety margin and unpack forwards. Or use salvador's backwards mode (`-b`, which needs the backwards 68000 decompressor) to keep the original's layout.
+    - Check memory per file. Level B now loads at `$4CB00` and unpacks to `$4D300`, ending at up to `$7975B`, close to `TRACK_BUFFER` at `$7C400`.
+  - Time how long the 68000 takes to unpack the largest files (`$6000` block, level B) on an A500 against the original load times.
 - [ ] **File-system layout**: make an **FFS** disk (`DOS\1`) with each file in **contiguous** blocks.
   - FFS data blocks hold 512 bytes of plain data, with no 24-byte header as on OFS. A contiguous file can therefore be read directly by the byte loader at a known disk offset, with no file-system code in the game.
   - Have the build tool write the disk and an offset/length table that the loader assembles in.
