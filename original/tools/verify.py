@@ -11,6 +11,7 @@ VASM = os.environ.get('VASM', 'vasmm68k_mot')
 PAIRS = [
     ('src/bootblock.s', 'files/bootblock.bin'),
     ('src/stage2.s',    'files/stage2_79360.bin'),
+    ('src/game.s',      'files/game_low_000a4.bin'),
 ]
 
 def main():

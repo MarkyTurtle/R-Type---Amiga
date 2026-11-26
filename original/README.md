@@ -10,18 +10,20 @@ Reverse-engineering of the Amiga R-Type (Electric Dreams 1989; Amiga version by 
 - [x] Bootblock disassembled and annotated – `src/bootblock.s`, byte-identical
 - [x] Stage-2 loader / credits sequence disassembled and annotated – `src/stage2.s`, byte-identical
 - [x] Disk formats, game loader, track cache, decruncher and level table documented – `docs/DISK_FORMAT.md`
-- [ ] Game low code (`game_low_000a4.bin`, $A4–$5DE3)
-- [ ] Game main code (`game_main_06000.bin`, $6000–$2D56F)
-- [ ] Level data formats (`levelN_a`, `levelN_b` decrunched)
+- [x] Game program (`game_low_000a4.bin`) – `src/game.s`, first pass, byte-identical; see `docs/GAME.md`
+- [ ] Line-by-line comments for `src/game.s`
+- [ ] Level code (`levelN_a`), shared title file, data formats (`$6000` block, level B)
 
 ## Layout
 
 ```
 src/bootblock.s        annotated bootblock
 src/stage2.s           annotated stage-2 loader ($79360)
+src/game.s             the game program ($000A4): engine, all game code
 files/                 extracted disk files (not in git - run extract.py);
                        manifest.json lists names, load addresses, SHA-1s
 docs/DISK_FORMAT.md    track formats, boot sequence, level table, memory map
+docs/GAME.md           how the game is organised: interfaces, frame, objects
 tools/
   ipf2mfm.py           IPF -> raw MFM bitstreams per track
   mfmlib.py            MFM helpers + AmigaDOS sector decoder
@@ -31,6 +33,8 @@ tools/
   verify.py            assemble src/*.s and compare with files/
   dis68k.py            quick capstone listing of any region
   bootstrap_source.py  one-off first-pass source generator (not part of the build)
+  trace68k.py          recursive-descent code/data separation
+  gen_source.py        first-pass source from a trace (bootstrap only)
 ```
 
 ## Use

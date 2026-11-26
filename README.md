@@ -8,16 +8,17 @@ Reverse-engineering and annotated disassembly of the Amiga **R-Type** (Electric 
 |---|---|
 | [`original/`](original/) | Byte-identical, annotated disassembly of the original disk, the extraction tools and documentation |
 
-Start with [`original/docs/DISK_FORMAT.md`](original/docs/DISK_FORMAT.md) for how the disk, the boot process and the level loading work.
+Start with [`original/docs/DISK_FORMAT.md`](original/docs/DISK_FORMAT.md) for the disk and boot process, then [`original/docs/GAME.md`](original/docs/GAME.md) for how the game itself is organised.
 
 ## Progress
 
 - [x] IPF decoded, all files extracted with checksums verified
 - [x] Bootblock – [`original/src/bootblock.s`](original/src/bootblock.s)
 - [x] Stage-2 loader / credits – [`original/src/stage2.s`](original/src/stage2.s)
-- [ ] Game low code ($A4–$5DE3)
-- [ ] Game main code ($6000–$2D56F)
-- [ ] Level data formats
+- [x] Game program – [`original/src/game.s`](original/src/game.s): first pass, byte-identical, code and data separated, main systems named
+- [ ] Game program: line-by-line comments
+- [ ] Level code (level A files, 8 levels) and the shared title file
+- [ ] Data formats: the $6000 graphics block, level B (tiles, map), waves, scroll script
 
 ## Game data
 
