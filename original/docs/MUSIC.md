@@ -24,7 +24,7 @@ The `mdat` uses the classic layout (the offset fields at `$1D0` are 0): text at 
 
 With extra memory the game keeps a copy of the music there (stage 2 copies `$52300`–`$71A3B`, which ends exactly at the end of the mdat).
 
-**Version.** ExoticA files R-Type under the original TFMX format, together with Turrican, X-Out and Rock 'n Roll; TFMX Pro (Turrican II, Monkey Island, ...) and TFMX 7V came later. Its archive has the same tune as `mdat.title` (7,432 bytes) and `smpl.title` (115,968 bytes); ours are 7,444 and 116,160 bytes, the extra being the padding to the next part on the disk. It lists the in-game music under a separate "Darius Zendeh" format, i.e. the small sequencer below.
+**Version.** ExoticA files R-Type under the original TFMX format, together with Turrican, X-Out and Rock 'n Roll; TFMX Pro (Turrican II, Monkey Island, ...) and TFMX 7V came later. Its archive has the same tune as `mdat.title` (7,432 bytes) and `smpl.title` (115,968 bytes); ours are 7,444 and 116,160 bytes - probably the same data plus padding to the next part on the disk (not compared byte for byte). It lists the in-game music under a separate "Darius Zendeh" format, i.e. the small sequencer below.
 
 The data and replay work: `tools/render_music.py` runs the game's own TFMX replay in a 68000 emulator (init, start song 0, play every VBL, as stage 2 does) and the result is `music/songs/title.mp3`. `mdat.rtypetitle` + `smpl.rtypetitle` should also play in a TFMX-capable player (UADE / DeliTracker); not tried.
 

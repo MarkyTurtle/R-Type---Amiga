@@ -48,7 +48,7 @@ State on 26 Nov 2026. All 12 sources reassemble byte-identical (`tools/verify.py
 - [ ] (Low priority) **ProTracker conversion** of the songs, to edit them in a tracker.
 - [x] **Level 8's ending music**: a third player variant with 32-row (`$82`) patterns.
 - [x] **The music players' command interface**: MUSIC.md, *Commands*.
-- [x] **Which TFMX**: the original TFMX format (ExoticA lists R-Type with Turrican and X-Out, before TFMX Pro); the same mdat/smpl are in its archive.
+- [x] **Which TFMX**: the original TFMX format (ExoticA lists R-Type with Turrican and X-Out, before TFMX Pro); its archive has the tune as mdat.title / smpl.title (not compared byte for byte).
 - [ ] (Optional) **Disassemble the TFMX replay** (`files/tfmx_player_52300.exe`) as a source of its own.
 - [x] **Test the TFMX data**: the game's own replay plays it in the emulator (`music/songs/title.mp3`). (Not yet tried in UADE / DeliTracker.)
 
