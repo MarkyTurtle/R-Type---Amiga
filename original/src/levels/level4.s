@@ -10,8 +10,9 @@
 ; $4BE90 on: unused track padding (only $4A2E4-$4CAFF survives the load
 ; of part B to $4CB00)
 ;
-; First pass: code and data separated, entry points from the level table
-; named.  L_xxxxx = code, D_xxxxx = data, still to be named.
+; Stage 4, the cell factory.  Enemies: level 1's Pata-Pata,
+; Bug, P-Staff, Bink and Cancer (the same code), Cytron, Geld, the POW
+; Armor; the boss is the Compiler, three sections (5000 points each).
 ;==============================================================================
                 include "engine.i"
 
@@ -31,7 +32,7 @@ LevelInterface:
                 dc.l    WaveList
                 dc.l    LevelPalette
                 dc.l    $6EA6A
-                dc.l    D_4D300
+                dc.l    $4D300                  ; tiles: the start of level B
                 dc.l    ScrollScript
                 dc.l    $0
                 dc.l    $0
@@ -51,203 +52,203 @@ WaveList:
 ; for the spawn routine, definition (-1 = POW Armor, the default).
 Waves:
                 dc.w    $0066,$0170,$007D
-                dc.l    $00000000,$0004BCA6,Def_4BD08
+                dc.l    $00000000,$0004BCA6,Def_Cytron
                 dc.w    $0076,$0170,$007A
-                dc.l    $FFFA0000,$00000000,Def_4BD08
+                dc.l    $FFFA0000,$00000000,Def_Cytron
                 dc.w    $00C8,$0170,$0096
                 dc.l    $0000FFFC,$00000000,$FFFFFFFF ; POW Armor
                 dc.w    $00DE,$0170,$00B6
-                dc.l    $00090007,$00000000,Def_4B7E4
+                dc.l    $00090007,$00000000,Def_PStaff
                 dc.w    $0115,$0170,$002B
-                dc.l    $FFFA0000,$00000000,Def_4BD08
+                dc.l    $FFFA0000,$00000000,Def_Cytron
                 dc.w    $0127,$0000,$0000
-                dc.l    $03E8000E,$0004BA0C,Def_4BA4A
+                dc.l    $03E8000E,$0004BA0C,Def_Cancer
                 dc.w    $0128,$0000,$0000
-                dc.l    $0004B6A2,$00000000,Def_4B6F2
+                dc.l    $0004B6A2,$00000000,Def_PataPata
                 dc.w    $015E,$0170,$00B6
-                dc.l    $00090007,$00000000,Def_4B7E4
+                dc.l    $00090007,$00000000,Def_PStaff
                 dc.w    $015F,$0000,$0000
-                dc.l    $0004B6B8,$00000000,Def_4B6F2
+                dc.l    $0004B6B8,$00000000,Def_PataPata
                 dc.w    $018B,$0000,$0000
-                dc.l    $0004B6CA,$00000000,Def_4B6F2
+                dc.l    $0004B6CA,$00000000,Def_PataPata
                 dc.w    $0192,$000A,$002B
-                dc.l    $00060000,$00000000,Def_4BD08
+                dc.l    $00060000,$00000000,Def_Cytron
                 dc.w    $01A2,$00B6,$000A
-                dc.l    $FFFF0006,$00000000,Def_4BD08
+                dc.l    $FFFF0006,$00000000,Def_Cytron
                 dc.w    $01B8,$0170,$0032
                 dc.l    $0003FFFC,$00000000,$FFFFFFFF ; POW Armor
                 dc.w    $01E3,$0000,$0000
-                dc.l    $0004B6DC,$00000000,Def_4B6F2
+                dc.l    $0004B6DC,$00000000,Def_PataPata
                 dc.w    $01EF,$0118,$0004
-                dc.l    $00010000,$0004BCB4,Def_4BD08
+                dc.l    $00010000,$0004BCB4,Def_Cytron
                 dc.w    $01F4,$0170,$00B6
-                dc.l    $FFFE0000,$00000000,Def_4B95C
+                dc.l    $FFFE0000,$00000000,Def_Bink
                 dc.w    $020A,$0170,$007B
-                dc.l    $FFFA0000,$00000000,Def_4BD08
+                dc.l    $FFFA0000,$00000000,Def_Cytron
                 dc.w    $0210,$0170,$00B6
-                dc.l    $00090007,$00000000,Def_4B7E4
+                dc.l    $00090007,$00000000,Def_PStaff
                 dc.w    $023A,$0170,$0028
                 dc.l    $0001FFFC,$00000000,$FFFFFFFF ; POW Armor
                 dc.w    $0260,$00CD,$0002
-                dc.l    $FFFE0000,$00000000,Def_4B95C
+                dc.l    $FFFE0000,$00000000,Def_Bink
                 dc.w    $0271,$0069,$000A
-                dc.l    $FFFF0006,$00000000,Def_4BD08
+                dc.l    $FFFF0006,$00000000,Def_Cytron
                 dc.w    $0284,$00BA,$0002
-                dc.l    $00020000,$00000000,Def_4B95C
+                dc.l    $00020000,$00000000,Def_Bink
                 dc.w    $029E,$0000,$0000
-                dc.l    $FFFF000A,$0004BA16,Def_4BA4A
+                dc.l    $FFFF000A,$0004BA16,Def_Cancer
                 dc.w    $02BA,$011A,$000B
-                dc.l    $0004B764,$0008FFFF,Def_4B772
+                dc.l    $0004B764,$0008FFFF,Def_Bug
                 dc.w    $0338,$00D0,$00DF
-                dc.l    $FFFFFFFA,$00000000,Def_4BD08
+                dc.l    $FFFFFFFA,$00000000,Def_Cytron
                 dc.w    $033E,$0170,$003A
-                dc.l    $FFFA0000,$00000000,Def_4BD08
+                dc.l    $FFFA0000,$00000000,Def_Cytron
                 dc.w    $034A,$00D0,$0005
-                dc.l    $FFFF0006,$00000000,Def_4BD08
+                dc.l    $FFFF0006,$00000000,Def_Cytron
                 dc.w    $034E,$0005,$002B
-                dc.l    $00060000,$00000000,Def_4BD08
+                dc.l    $00060000,$00000000,Def_Cytron
                 dc.w    $035B,$0000,$0000
-                dc.l    $FFFF000A,$0004BA16,Def_4BA4A
+                dc.l    $FFFF000A,$0004BA16,Def_Cancer
                 dc.w    $0375,$0170,$007B
-                dc.l    $FFFA0000,$00000000,Def_4BD08
+                dc.l    $FFFA0000,$00000000,Def_Cytron
                 dc.w    $0376,$0064,$0005
-                dc.l    $0002FFFF,$00000000,Def_4BDC2
+                dc.l    $0002FFFF,$00000000,Def_Geld
                 dc.w    $0384,$0000,$0000
-                dc.l    $FFFF000A,$0004BA1C,Def_4BA4A
+                dc.l    $FFFF000A,$0004BA1C,Def_Cancer
                 dc.w    $0396,$0005,$009B
-                dc.l    $00060000,$00000000,Def_4BD08
+                dc.l    $00060000,$00000000,Def_Cytron
                 dc.w    $03C6,$0064,$0002
-                dc.l    $00020000,$00000000,Def_4B95C
+                dc.l    $00020000,$00000000,Def_Bink
                 dc.w    $03CA,$0170,$006B
-                dc.l    $FFFA0000,$00000000,Def_4BD08
+                dc.l    $FFFA0000,$00000000,Def_Cytron
                 dc.w    $03DE,$0064,$0002
-                dc.l    $00020000,$00000000,Def_4B95C
+                dc.l    $00020000,$00000000,Def_Bink
                 dc.w    $03EC,$0064,$0002
-                dc.l    $00020000,$00000000,Def_4B95C
+                dc.l    $00020000,$00000000,Def_Bink
                 dc.w    $03ED,$009B,$0002
-                dc.l    $FFFE0000,$00000000,Def_4B95C
+                dc.l    $FFFE0000,$00000000,Def_Bink
                 dc.w    $03FA,$0170,$007B
-                dc.l    $FFFA0000,$00000000,Def_4BD08
+                dc.l    $FFFA0000,$00000000,Def_Cytron
                 dc.w    $0407,$0170,$0032
                 dc.l    $0005FFFC,$00000000,$FFFFFFFF ; POW Armor
                 dc.w    $0427,$0170,$00AA
                 dc.l    $0004FFFC,$00000000,$FFFFFFFF ; POW Armor
                 dc.w    $042E,$0118,$0005
-                dc.l    $0002FFFF,$00000000,Def_4BDC2
+                dc.l    $0002FFFF,$00000000,Def_Geld
                 dc.w    $0432,$0170,$003B
-                dc.l    $FFFA0000,$00000000,Def_4BD08
+                dc.l    $FFFA0000,$00000000,Def_Cytron
                 dc.w    $045C,$00BE,$0002
-                dc.l    $00020000,$00000000,Def_4B95C
+                dc.l    $00020000,$00000000,Def_Bink
                 dc.w    $045D,$000A,$002B
-                dc.l    $00060000,$00000000,Def_4BD08
+                dc.l    $00060000,$00000000,Def_Cytron
                 dc.w    $0465,$0170,$00B6
-                dc.l    $FFFE0000,$00000000,Def_4B95C
+                dc.l    $FFFE0000,$00000000,Def_Bink
                 dc.w    $047C,$0170,$00B6
-                dc.l    $FFFE0000,$00000000,Def_4B95C
+                dc.l    $FFFE0000,$00000000,Def_Bink
                 dc.w    $047D,$002D,$0002
-                dc.l    $00020000,$00000000,Def_4B95C
+                dc.l    $00020000,$00000000,Def_Bink
                 dc.w    $047E,$006E,$0002
-                dc.l    $00020000,$00000000,Def_4B95C
+                dc.l    $00020000,$00000000,Def_Bink
                 dc.w    $0482,$0011,$00B6
-                dc.l    $00020000,$00000000,Def_4B95C
+                dc.l    $00020000,$00000000,Def_Bink
                 dc.w    $0483,$0014,$00B6
-                dc.l    $00090007,$00000000,Def_4B7E4
+                dc.l    $00090007,$00000000,Def_PStaff
                 dc.w    $0486,$0170,$00B6
-                dc.l    $00090007,$00000000,Def_4B7E4
+                dc.l    $00090007,$00000000,Def_PStaff
                 dc.w    $048B,$012C,$0005
-                dc.l    $00010000,$0004BCD0,Def_4BD08
+                dc.l    $00010000,$0004BCD0,Def_Cytron
                 dc.w    $048C,$0005,$0090
-                dc.l    $00010000,$0004BCC2,Def_4BD08
+                dc.l    $00010000,$0004BCC2,Def_Cytron
 WavesFrom_04A1:
                 dc.w    $04DD,$0000,$0000
-                dc.l    $FFFF000A,$0004BA22,Def_4BA4A
+                dc.l    $FFFF000A,$0004BA22,Def_Cancer
                 dc.w    $04E0,$00CA,$0005
-                dc.l    $FFFF0006,$00000000,Def_4BD08
+                dc.l    $FFFF0006,$00000000,Def_Cytron
                 dc.w    $04ED,$006A,$0005
-                dc.l    $FFFF0006,$00000000,Def_4BD08
+                dc.l    $FFFF0006,$00000000,Def_Cytron
                 dc.w    $0543,$00C6,$00DF
-                dc.l    $FFFFFFFA,$00000000,Def_4BD08
+                dc.l    $FFFFFFFA,$00000000,Def_Cytron
                 dc.w    $0554,$0170,$002D
                 dc.l    $0002FFFC,$00000000,$FFFFFFFF ; POW Armor
                 dc.w    $0556,$0131,$00DF
-                dc.l    $FFFFFFFA,$00000000,Def_4BD08
+                dc.l    $FFFFFFFA,$00000000,Def_Cytron
                 dc.w    $0558,$0120,$00DF
-                dc.l    $0000FFFF,$00000000,Def_4BDC2
+                dc.l    $0000FFFF,$00000000,Def_Geld
                 dc.w    $055F,$0170,$003B
-                dc.l    $FFFA0000,$00000000,Def_4BD08
+                dc.l    $FFFA0000,$00000000,Def_Cytron
                 dc.w    $0561,$0170,$006B
-                dc.l    $FFFA0000,$00000000,Def_4BD08
+                dc.l    $FFFA0000,$00000000,Def_Cytron
                 dc.w    $0578,$0170,$009B
-                dc.l    $FFFA0000,$00000000,Def_4BD08
+                dc.l    $FFFA0000,$00000000,Def_Cytron
                 dc.w    $059B,$0118,$0002
-                dc.l    $FFFE0000,$00000000,Def_4B95C
+                dc.l    $FFFE0000,$00000000,Def_Bink
                 dc.w    $05AC,$00A0,$0002
-                dc.l    $00020000,$00000000,Def_4B95C
+                dc.l    $00020000,$00000000,Def_Bink
                 dc.w    $05BA,$0170,$0073
                 dc.l    $0003FFFC,$00000000,$FFFFFFFF ; POW Armor
                 dc.w    $05BB,$0000,$0000
-                dc.l    $FFFF0006,$0004BA28,Def_4BA4A
+                dc.l    $FFFF0006,$0004BA28,Def_Cancer
                 dc.w    $05D1,$0068,$00DF
-                dc.l    $00010000,$0004BCDE,Def_4BD08
+                dc.l    $00010000,$0004BCDE,Def_Cytron
                 dc.w    $0614,$0005,$0080
-                dc.l    $00000000,$0004BCC2,Def_4BD08
+                dc.l    $00000000,$0004BCC2,Def_Cytron
                 dc.w    $062C,$0108,$0004
-                dc.l    $00000000,$0004BCB4,Def_4BD08
+                dc.l    $00000000,$0004BCB4,Def_Cytron
                 dc.w    $066B,$0170,$006D
-                dc.l    $FFFA0000,$00000000,Def_4BD08
+                dc.l    $FFFA0000,$00000000,Def_Cytron
                 dc.w    $0670,$0170,$004A
-                dc.l    $FFFA0000,$00000000,Def_4BD08
+                dc.l    $FFFA0000,$00000000,Def_Cytron
                 dc.w    $0673,$0170,$009C
-                dc.l    $FFFA0000,$00000000,Def_4BD08
+                dc.l    $FFFA0000,$00000000,Def_Cytron
                 dc.w    $067A,$0170,$007B
-                dc.l    $FFFA0000,$00000000,Def_4BD08
+                dc.l    $FFFA0000,$00000000,Def_Cytron
                 dc.w    $067B,$0010,$007B
-                dc.l    $00060000,$00000000,Def_4BD08
+                dc.l    $00060000,$00000000,Def_Cytron
                 dc.w    $0684,$0170,$002B
-                dc.l    $FFFA0000,$00000000,Def_4BD08
+                dc.l    $FFFA0000,$00000000,Def_Cytron
                 dc.w    $06BE,$0170,$0098
                 dc.l    $0001FFFC,$00000000,$FFFFFFFF ; POW Armor
                 dc.w    $0740,$0000,$0000
-                dc.l    $FFFF0005,$0004BA36,Def_4BA4A
+                dc.l    $FFFF0005,$0004BA36,Def_Cancer
                 dc.w    $076F,$00BA,$0005
-                dc.l    $0002FFFF,$00000000,Def_4BDC2
+                dc.l    $0002FFFF,$00000000,Def_Geld
                 dc.w    $07D0,$0170,$0060
                 dc.l    $0003FFFC,$00000000,$FFFFFFFF ; POW Armor
                 dc.w    $07D1,$0170,$00B0
                 dc.l    $0000FFFC,$00000000,$FFFFFFFF ; POW Armor
                 dc.w    $07D2,$0110,$00DF
-                dc.l    $0000FFFF,$00000000,Def_4BDC2
+                dc.l    $0000FFFF,$00000000,Def_Geld
                 dc.w    $07D3,$0170,$0021
                 dc.l    $0005FFFC,$00000000,$FFFFFFFF ; POW Armor
                 dc.w    $07E4,$0098,$00DF
-                dc.l    $0000FFFF,$00000000,Def_4BDC2
+                dc.l    $0000FFFF,$00000000,Def_Geld
                 dc.w    $07E5,$0011,$0060
-                dc.l    $0001FFFF,$00000000,Def_4BDC2
+                dc.l    $0001FFFF,$00000000,Def_Geld
                 dc.w    $07E6,$0011,$008D
-                dc.l    $0001FFFF,$00000000,Def_4BDC2
+                dc.l    $0001FFFF,$00000000,Def_Geld
                 dc.w    $07E7,$0011,$00B0
-                dc.l    $0001FFFF,$00000000,Def_4BDC2
+                dc.l    $0001FFFF,$00000000,Def_Geld
                 dc.w    $07E9,$0011,$0032
-                dc.l    $0001FFFF,$00000000,Def_4BDC2
+                dc.l    $0001FFFF,$00000000,Def_Geld
                 dc.w    $0828,$0011,$0060
-                dc.l    $0001FFFF,$00000000,Def_4BDC2
+                dc.l    $0001FFFF,$00000000,Def_Geld
                 dc.w    $082A,$0098,$0005
-                dc.l    $0002FFFF,$00000000,Def_4BDC2
+                dc.l    $0002FFFF,$00000000,Def_Geld
                 dc.w    $082B,$011C,$0005
-                dc.l    $0002FFFF,$00000000,Def_4BDC2
+                dc.l    $0002FFFF,$00000000,Def_Geld
                 dc.w    $0852,$0000,$0000
-                dc.l    $FFFF001E,$0004BA40,Def_4BA4A
+                dc.l    $FFFF001E,$0004BA40,Def_Cancer
                 dc.w    $08DC,$0170,$003C
-                dc.l    $00000000,$0004BCEC,Def_4BD08
+                dc.l    $00000000,$0004BCEC,Def_Cytron
                 dc.w    $0911,$0170,$004B
-                dc.l    $FFFA0000,$00000000,Def_4BD08
+                dc.l    $FFFA0000,$00000000,Def_Cytron
                 dc.w    $091B,$0010,$004B
-                dc.l    $00000000,$0004BCFA,Def_4BD08
+                dc.l    $00000000,$0004BCFA,Def_Cytron
                 dc.w    $7530   ; end: never reached
 LevelPalette:
                 dc.w    $0555,$0BBB,$0777,$0500,$005F,$00F0,$0050,$0955
                 dc.w    $0B00,$09BF,$000B,$0F77,$0B70,$0FF0,$0FFF
-Spawn_4AA24:
+Spawn_PataPata:
                 movea.l $6(a1),a3
 .4AA28:
                 move.w  (a3)+,d1
@@ -262,7 +263,7 @@ Spawn_4AA24:
                 bra.b   .4AA28
 .4AA48:
                 rts
-Upd_4AA4A:
+Upd_PataPata:
                 tst.b   $32(a0)
                 beq.b   .4AA56
                 subq.b  #$1,$32(a0)
@@ -285,7 +286,7 @@ Upd_4AA4A:
                 jmp     (jt_ObjKillSelf).w
 .4AA88:
                 rts
-Spawn_4AA8A:
+Spawn_Bug:
                 move.w  $A(a1),d7
                 clr.w   d6
 .4AA90:
@@ -302,7 +303,7 @@ Spawn_4AA8A:
                 addq.b  #$7,d6
                 dbra    d7,.4AA90
                 rts
-Upd_4AAC2:
+Upd_Bug:
                 move.w  $3A(a0),d0
                 add.w   d0,$A(a0)
                 tst.b   $38(a0)
@@ -333,17 +334,17 @@ Upd_4AAC2:
                 move.b  (a2,d0.w),d2
                 ext.w   d2
                 rts
-Spawn_4AB12:
+Spawn_PStaff:
                 move.w  $2(a1),d0
                 move.w  $4(a1),d1
                 move.w  $8(a2),d2
                 jsr     (jt_ObjCreate).w
                 move.w  $6(a2),$38(a0)
                 move.w  $8(a2),$3A(a0)
-                bsr.w   L_4AC5A
+                bsr.w   PStaff_Approach
                 move.b  #$1,$4(a0)
                 jmp     (jt_ObjInsert).w
-Upd_4AB3C:
+Upd_PStaff:
                 cmpi.w  #$10,$A(a0)
                 bhi.b   .4AB48
                 jmp     (jt_ObjKillSelf).w
@@ -355,10 +356,10 @@ Upd_4AB3C:
                 subq.w  #$1,$A(a0)
                 subq.b  #$1,$37(a0)
                 bpl.b   .4ABCA
-                bsr.w   L_4ABE8
+                bsr.w   PStaff_TryFire
                 rts
 .4AB66:
-                bsr.w   L_4AC5A
+                bsr.w   PStaff_Approach
                 movem.w $A(a0),d0-d1
                 add.w   #$B,d1
                 tst.w   $32(a0)
@@ -369,7 +370,7 @@ Upd_4AB3C:
                 add.w   #$21,d0
 .4AB84:
                 jsr     (jt_GetMapCell).w
-                bne.b   L_4ABD0
+                bne.b   PStaff_Halt
                 move.w  $32(a0),d0
                 add.w   d0,$A(a0)
                 rts
@@ -382,8 +383,8 @@ Upd_4AB3C:
                 move.w  #$A,$34(a0)
                 subq.b  #$1,$37(a0)
                 bpl.b   .4ABCC
-                bsr.w   L_4AC5A
-                move.l  #D_4B822,d0
+                bsr.w   PStaff_Approach
+                move.l  #PStaffFireAnimEnd,d0
                 sub.l   $2A(a0),d0
                 move.w  d0,$1E(a0)
                 move.b  #$2,$36(a0)
@@ -391,31 +392,31 @@ Upd_4AB3C:
 .4ABCA:
                 rts
 .4ABCC:
-                bra.w   L_4ACB8
-L_4ABD0:
+                bra.w   PStaff_Fire
+PStaff_Halt:
                 move.b  #$2,$36(a0)
                 move.b  #$14,$37(a0)
                 clr.b   $22(a0)
                 move.w  #$3,$1E(a0)
                 rts
-L_4ABE8:
-                bsr.w   L_4AC2E
+PStaff_TryFire:
+                bsr.w   ShipDistX
                 cmp.w   #$37,d0
-                blt.b   L_4AC5A
+                blt.b   PStaff_Approach
                 cmp.w   #$55,d0
-                bgt.b   L_4AC5A
-                bsr.w   L_4AC5A
+                bgt.b   PStaff_Approach
+                bsr.w   PStaff_Approach
                 move.b  #$1,$36(a0)
                 move.b  $3B(a0),$37(a0)
                 move.w  $38(a0),$34(a0)
                 st.b    $22(a0)
-                move.l  #D_4B81A,$2A(a0)
+                move.l  #PStaffFireAnim,$2A(a0)
                 move.w  #$3,$1E(a0)
                 clr.b   $20(a0)
-                bsr.w   L_4AC2E
+                bsr.w   ShipDistX
                 move.w  d2,$3C(a0)
                 rts
-L_4AC2E:
+ShipDistX:
                 moveq   #1,d2
                 move.w  (ShipPos).w,d0
                 sub.w   $A(a0),d0
@@ -425,7 +426,7 @@ L_4AC2E:
                 add.w   #$1E,d0
 .4AC42:
                 rts
-L_4AC44:
+ShipDistY:
                 moveq   #1,d2
                 move.w  ($F0).w,d0
                 sub.w   #$1F,d0
@@ -435,12 +436,12 @@ L_4AC44:
                 neg.w   d2
 .4AC58:
                 rts
-L_4AC5A:
-                bsr.b   L_4AC2E
+PStaff_Approach:
+                bsr.b   ShipDistX
                 cmp.w   #$3C,d0
                 blt.b   .4AC6A
                 cmp.w   #$50,d0
-                bcs.w   L_4ABD0
+                bcs.w   PStaff_Halt
 .4AC6A:
                 clr.b   $36(a0)
                 moveq   #70,d1
@@ -459,23 +460,23 @@ L_4AC5A:
                 move.w  #$FFFE,$32(a0)
 .4AC96:
                 move.b  #$0,$36(a0)
-                lea.l   (D_4B80C).l,a1
+                lea.l   (PStaffWalkLeft).l,a1
                 tst.w   $32(a0)
                 bmi.b   .4ACAE
-                lea.l   (D_4B813).l,a1
+                lea.l   (PStaffWalkRight).l,a1
 .4ACAE:
                 move.l  a1,$2A(a0)
                 st.b    $22(a0)
                 rts
-L_4ACB8:
+PStaff_Fire:
                 movea.l a0,a4
                 movem.w $A(a0),d0-d1
                 moveq   #1,d2
                 subq.w  #$8,d1
                 add.w   #$14,d0
-                lea.l   (Def_4B8A0).l,a2
+                lea.l   (Def_PStaffMissile).l,a2
                 jsr     (jt_ObjCreate).w
-                bsr.w   L_4AC44
+                bsr.w   ShipDistY
                 lsr.w   #$3,d0
                 moveq   #16,d1
                 move.w  d0,-(a7)
@@ -487,7 +488,7 @@ L_4ACB8:
                 clr.w   d1
 .4ACEA:
                 move.w  d1,$32(a0)
-                bsr.w   L_4AC2E
+                bsr.w   ShipDistX
                 lsr.w   #$3,d0
                 moveq   #19,d1
                 move.w  d0,-(a7)
@@ -505,7 +506,7 @@ L_4ACB8:
                 jsr     (jt_ObjInsert).w
                 movea.l a4,a0
                 rts
-Upd_4AD22:
+Upd_PStaffMissile:
                 lea.l   ($6C899).l,a3
                 lea.l   ($6C83B).l,a1
                 lea.l   ($6C8F7).l,a2
@@ -559,23 +560,23 @@ Upd_4AD22:
                 clr.l   $6(a0)
 .4ADC0:
                 rts
-Spawn_4ADC2:
+Spawn_Bink:
                 move.w  $2(a1),d0
                 move.w  $4(a1),d1
                 move.w  $8(a2),d2
                 jsr     (jt_ObjCreate).w
-                move.l  #D_4B98E,$2A(a0)
+                move.l  #BinkWalkRight,$2A(a0)
                 move.w  $6(a1),$32(a0)
                 bpl.b   .4ADEA
-                move.l  #D_4B984,$2A(a0)
+                move.l  #BinkWalkLeft,$2A(a0)
 .4ADEA:
                 move.w  $32(a0),d2
-                bsr.w   L_4AE9A
+                bsr.w   Bink_Jump
                 move.w  #$200,$34(a0)
                 clr.w   $1E(a0)
-                bsr.w   L_4AF04
+                bsr.w   Bink_Fall
                 jmp     (jt_ObjInsert).w
-Upd_4AE04:
+Upd_Bink:
                 cmpi.w  #$10,$A(a0)
                 bcs.b   .4AE1C
                 cmpi.w  #$170,$A(a0)
@@ -588,9 +589,9 @@ Upd_4AE04:
                 move.b  $34(a0),d0
                 beq.b   .4AE6C
                 cmp.b   #$1,d0
-                beq.w   L_4AECE
+                beq.w   Bink_Jumping
                 cmp.b   #$2,d0
-                beq.w   L_4AF04
+                beq.w   Bink_Fall
                 subq.w  #$1,$A(a0)
                 subq.b  #$1,$35(a0)
                 bmi.b   .4AE52
@@ -598,10 +599,10 @@ Upd_4AE04:
 .4AE42:
                 st.b    $34(a0)
                 clr.b   $22(a0)
-                move.l  #D_4B984,$2A(a0)
+                move.l  #BinkWalkLeft,$2A(a0)
 .4AE52:
                 move.b  #$A,$35(a0)
-                bsr.w   L_4AC2E
+                bsr.w   ShipDistX
                 move.w  #$B,$1E(a0)
                 tst.w   d2
                 bpl.b   .4AE6A
@@ -621,31 +622,31 @@ Upd_4AE04:
                 bne.b   .4AE42
                 adda.l  (MapRowBytes).w,a4
                 btst.b  #$7,(a4)
-                beq.b   L_4AE9A
+                beq.b   Bink_Jump
                 add.w   d2,$A(a0)
                 rts
-L_4AE9A:
+Bink_Jump:
                 move.b  #$1,$34(a0)
                 clr.w   $36(a0)
                 move.w  #$23,$38(a0)
-                move.l  #D_4B993,$2A(a0)
+                move.l  #BinkJumpRight,$2A(a0)
                 tst.w   d2
                 bpl.b   .4AEBE
-                move.l  #D_4B989,$2A(a0)
+                move.l  #BinkJumpLeft,$2A(a0)
 .4AEBE:
                 move.w  #$3,$1E(a0)
                 clr.b   $20(a0)
                 st.b    $22(a0)
                 rts
-L_4AECE:
-                lea.l   (D_4B9F8).l,a2
+Bink_Jumping:
+                lea.l   (BinkJumpArc).l,a2
                 move.w  $36(a0),d0
                 moveq   #2,d2
                 move.b  (a2,d0.w),d3
                 cmp.b   #$7F,d3
                 bne.b   .4AEEC
                 move.b  #$2,$34(a0)
-                bra.b   L_4AF04
+                bra.b   Bink_Fall
 .4AEEC:
                 ext.w   d3
                 tst.w   $32(a0)
@@ -656,7 +657,7 @@ L_4AECE:
                 add.w   d3,$C(a0)
                 addq.w  #$1,$36(a0)
                 rts
-L_4AF04:
+Bink_Fall:
                 subq.w  #$1,$A(a0)
                 movem.w $A(a0),d0-d1
                 addq.w  #$8,d0
@@ -667,15 +668,15 @@ L_4AF04:
                 rts
 .4AF20:
                 clr.w   $34(a0)
-                move.l  #D_4B98E,$2A(a0)
+                move.l  #BinkWalkRight,$2A(a0)
                 clr.b   $20(a0)
                 clr.w   $1E(a0)
                 tst.w   $32(a0)
                 bpl.b   .4AF42
-                move.l  #D_4B984,$2A(a0)
+                move.l  #BinkWalkLeft,$2A(a0)
 .4AF42:
                 rts
-Spawn_4AF44:
+Spawn_Cancer:
                 movea.l $A(a1),a3
                 move.w  $8(a1),d7
                 clr.w   d6
@@ -693,7 +694,7 @@ Spawn_4AF44:
                 bra.b   .4AF4E
 .4AF72:
                 rts
-Upd_4AF74:
+Upd_Cancer:
                 tst.w   $32(a0)
                 beq.b   .4AF80
                 subq.w  #$1,$32(a0)
@@ -728,11 +729,11 @@ Upd_4AF74:
                 movem.w (ShipPos).w,d6-d7
 .4AFCC:
                 moveq   #2,d4
-                lea.l   (D_4BA72).l,a1
+                lea.l   (CancerAnimRight).l,a1
                 cmp.w   d6,d0
                 bcs.b   .4AFE0
                 moveq   #-1,d4
-                lea.l   (D_4BA77).l,a1
+                lea.l   (CancerAnimLeft).l,a1
 .4AFE0:
                 move.l  a1,$2A(a0)
                 moveq   #1,d5
@@ -786,6 +787,8 @@ Upd_4AF74:
 ; The level 4 map is stored at $50F00 (level B) and copied to $6EA6A, the
 ; address in LvMap, at every (re)start: the level code changes the map while
 ; it plays, so a clean copy is needed for restarts.
+; LevelInit: copies $1178 bytes of map from $50F00 to $6EA6A (the part of
+; level B the map is read from) and sets three Compiler sections to go.
 LevelInit:
                 move.w  #$8BB,d0
                 lea.l   ($50F00).l,a0
@@ -793,22 +796,26 @@ LevelInit:
 .4B062:
                 move.w  (a0)+,(a1)+
                 dbra    d0,.4B062
-                clr.b   (D_4BAAC).l
-                move.b  #$3,(D_4BAAE).l
-L_4B076:
+                clr.b   (BossStarted).l
+                move.b  #$3,(SectionsLeft).l
+InitRts:
                 rts
+; LevelFrame: at scroll x $970 the scroll stops, three palette colours are
+; set, and the Compiler (the boss) is built: three sections
+; (CompilerSections: definition, x, y, priority), each with an invisible
+; core target and a gun turret.  The level ends when SectionsLeft is 0.
 LevelFrame:
                 cmpi.w  #$970,(ScrollX).w
-                bcs.b   L_4B076
-                tst.b   (D_4BAAC).l
+                bcs.b   InitRts
+                tst.b   (BossStarted).l
                 bne.w   .4B186
                 clr.b   (ScrollActive).w
                 movea.l (PalettePtr).w,a4
                 move.w  #$F99,$1E(a4)
                 move.w  #$3,$2A(a4)
                 move.w  #$F55,$2E(a4)
-                lea.l   (D_4BAB0).l,a4
-                lea.l   (D_4BC02).l,a1
+                lea.l   (CompilerSections).l,a4
+                lea.l   (CompilerGunParents).l,a1
                 moveq   #2,d7
                 moveq   #0,d6
                 move.l  #$6CFB2,d5
@@ -827,12 +834,12 @@ LevelFrame:
                 move.b  d6,$32(a0)
                 clr.w   $34(a0)
                 move.l  d5,$36(a0)
-                st.b    (D_4BAAD).l
+                st.b    (CompilerEntering).l
                 jsr     (jt_ObjInsert).w
                 moveq   #1,d0
                 moveq   #1,d1
                 moveq   #-1,d2
-                lea.l   (D_4BB64).l,a2
+                lea.l   (Def_CompilerCore).l,a2
                 jsr     (jt_ObjCreate).w
                 move.w  #$11,$3C(a0)
                 move.b  #$A,$4(a0)
@@ -851,12 +858,12 @@ LevelFrame:
                 dbra    d7,.4B0BA
                 moveq   #2,d7
                 moveq   #0,d6
-                lea.l   (D_4BC02).l,a1
+                lea.l   (CompilerGunParents).l,a1
 .4B13E:
                 moveq   #1,d0
                 moveq   #1,d1
                 moveq   #-1,d2
-                lea.l   (Def_4BBAC).l,a2
+                lea.l   (Def_CompilerGun).l,a2
                 jsr     (jt_ObjCreate).w
                 move.b  #$B,$4(a0)
                 move.l  (a1)+,$32(a0)
@@ -870,25 +877,29 @@ LevelFrame:
                 jsr     (jt_ObjInsert).w
                 addq.w  #$4,d6
                 dbra    d7,.4B13E
-                st.b    (D_4BAAC).l
+                st.b    (BossStarted).l
                 st.b    (MusicFadeReq).w
                 rts
 .4B186:
-                tst.b   (D_4BAAE).l
+                tst.b   (SectionsLeft).l
                 bne.b   .4B192
                 st.b    (LevelComplete).w
 .4B192:
                 rts
-Upd_4B194:
+; Upd_CompilerSection: the sections fly in from the left (3 pixels a
+; frame) to their start, then each follows its own path ($6CFB2 + n *
+; $8E8: $474 x bytes, then $474 y bytes) round the screen.  Section 2 also
+; fires CompilerLasers forwards when the ship is level with it and ahead.
+Upd_CompilerSection:
                 tst.b   $3C(a0)
                 beq.b   .4B1AC
                 clr.l   $6(a0)
                 move.b  #$1,$5(a0)
-                subq.b  #$1,(D_4BAAE).l
+                subq.b  #$1,(SectionsLeft).l
                 rts
 .4B1AC:
                 bsr.w   .4B216
-                tst.b   (D_4BAAD).l
+                tst.b   (CompilerEntering).l
                 bpl.b   .4B1DA
                 addq.w  #$3,$A(a0)
                 moveq   #0,d0
@@ -897,7 +908,7 @@ Upd_4B194:
                 add.w   #$20,d0
                 cmp.w   $A(a0),d0
                 bgt.b   .4B1D8
-                clr.b   (D_4BAAD).l
+                clr.b   (CompilerEntering).l
                 subq.w  #$3,$A(a0)
 .4B1D8:
                 rts
@@ -947,14 +958,17 @@ Upd_4B194:
                 movem.w (a7)+,d0
                 add.w   #$3C,d0
                 moveq   #-1,d2
-                lea.l   (Def_4BC5E).l,a2
+                lea.l   (Def_CompilerLaser).l,a2
                 jsr     (jt_ObjCreate).w
                 bset.b  #$2,$23(a0)
                 jsr     (jt_ObjInsert).w
                 movem.l (a7)+,a0
                 move.b  #$E,$33(a0)
                 rts
-L_4B288:
+; Upd_CompilerCore: the target inside a section; hits flash the section.
+; After 30 hits the section is destroyed: explosions, 5000 points, one
+; section fewer.
+Upd_CompilerCore:
                 tst.b   $3C(a0)
                 bne.w   .4B2DC
                 movea.l $32(a0),a1
@@ -995,7 +1009,7 @@ L_4B288:
                 add.w   $A(a0),d0
                 add.w   $C(a0),d1
                 moveq   #1,d2
-                lea.l   (D_4BB64).l,a2
+                lea.l   (Def_CompilerCore).l,a2
                 jsr     (jt_ObjCreate).w
                 move.b  #$14,$4(a0)
                 clr.l   $6(a0)
@@ -1003,7 +1017,10 @@ L_4B288:
                 jsr     (jt_ObjInsert).w
                 movea.l (a7)+,a0
                 rts
-Upd_4B332:
+; Upd_CompilerGun: a turret on a section (CompilerGunOffsets), turned
+; towards the ship, firing every 35-105 frames from its muzzle when the
+; ship is behind it (directions 8-15).
+Upd_CompilerGun:
                 movea.l $32(a0),a1
                 tst.b   $3C(a1)
                 beq.b   .4B348
@@ -1011,7 +1028,7 @@ Upd_4B332:
                 move.b  #$1,$5(a0)
                 rts
 .4B348:
-                lea.l   (D_4BC22).l,a2
+                lea.l   (CompilerGunOffsets).l,a2
                 move.w  $36(a0),d2
                 movem.w (a2,d2.w),d2-d3
                 movea.l $32(a0),a1
@@ -1028,7 +1045,7 @@ Upd_4B332:
                 subq.w  #$1,$38(a0)
                 bpl.b   .4B3AC
                 subq.w  #$8,d0
-                lea.l   (D_4BC3E).l,a1
+                lea.l   (CompilerGunMuzzles).l,a1
                 lsl.w   #$2,d0
                 add.w   (a1,d0.w),d5
                 add.w   $2(a1,d0.w),d1
@@ -1039,19 +1056,19 @@ Upd_4B332:
                 add.w   #$23,d0
                 move.w  d0,$38(a0)
 .4B3AC:
-                lea.l   (D_4BC2E).l,a1
+                lea.l   (CompilerGunFrames).l,a1
                 move.b  (a1,d6.w),d0
                 ext.w   d0
                 move.w  d0,$1E(a0)
                 rts
-Upd_4B3BE:
+Upd_CompilerLaser:
                 addq.w  #$6,$A(a0)
                 cmpi.w  #$170,$A(a0)
                 bcs.b   .4B3CE
                 jmp     (jt_ObjKillSelf).w
 .4B3CE:
                 rts
-Spawn_4B3D0:
+Spawn_Cytron:
                 move.w  $2(a1),d0
                 move.w  $4(a1),d1
                 move.w  $8(a2),d2
@@ -1078,7 +1095,7 @@ Spawn_4B3D0:
                 clr.w   $3A(a0)
                 move.l  $A(a1),$36(a0)
                 jmp     (jt_ObjInsert).w
-Upd_4B418:
+Upd_Cytron:
                 movem.w $A(a0),d0-d1
                 add.w   #$C,d0
                 add.w   #$C,d1
@@ -1131,7 +1148,7 @@ Upd_4B418:
                 move.b  (a2,d0.w),d2
                 ext.w   d2
                 rts
-Spawn_4B4A6:
+Spawn_Geld:
                 move.w  $2(a1),d0
                 move.w  $4(a1),d1
                 move.w  $8(a2),d2
@@ -1139,18 +1156,18 @@ Spawn_4B4A6:
                 st.b    $22(a0)
                 move.w  $6(a1),d0
                 lsl.w   #$2,d0
-                lea.l   (D_4B4E6).l,a3
+                lea.l   (GeldStates).l,a3
                 move.l  (a3,d0.w),$34(a0)
                 move.l  $10(a3,d0.w),$2A(a0)
                 move.w  $8(a1),$3A(a0)
                 clr.b   $3C(a0)
                 move.w  #$12,$32(a0)
                 jmp     (jt_ObjInsert).w
-D_4B4E6:
-                dc.l    L_4B588
-                dc.w    $0004,$B64C,$0004,$B5CA,$0004,$B60C,$0004,$BDEA
-                dc.w    $0004,$BDF3,$0004,$BDFC,$0004,$BE05
-Upd_4B506:
+GeldStates:
+                dc.l    Geld_Up
+                dc.l    Geld_Right,Geld_Down,Geld_Left          ; up, right, down, left
+                dc.l    GeldAnimUp,GeldAnimRight,GeldAnimDown,GeldAnimLeft    ; their animations
+Upd_Geld:
                 subq.w  #$1,$A(a0)
                 movem.w $A(a0),d0-d1
                 add.w   #$10,d0
@@ -1197,44 +1214,79 @@ Upd_4B506:
                 jmp     (jt_ObjKillSelf).w
 .4B586:
                 rts
-L_4B588:
+Geld_Up:
                 bne.b   .4B5C4
                 cmp.w   $C(a0),d1
                 bcs.b   .4B5C4
-                bsr.w   L_4B68C
+                bsr.w   Geld_Turn
                 move.w  #$5,$1E(a0)
                 cmp.w   $A(a0),d0
                 bcs.b   .4B5B2
-                move.l  #D_4BDF3,$2A(a0)
-                move.l  #D_4B64C,$34(a0)
+                move.l  #GeldAnimRight,$2A(a0)
+                move.l  #Geld_Right,$34(a0)
                 rts
 .4B5B2:
-                move.l  #D_4BE05,$2A(a0)
-                move.l  #D_4B60C,$34(a0)
+                move.l  #GeldAnimLeft,$2A(a0)
+                move.l  #Geld_Left,$34(a0)
                 rts
 .4B5C4:
                 subq.w  #$2,$C(a0)
                 rts
-                dc.w    $663A,$B268,$000C,$6234,$6100,$00B8,$317C,$0007
-                dc.w    $001E,$B068,$000A,$6512,$217C,$0004,$BDF3,$002A
-                dc.w    $217C,$0004,$B64C,$0034,$4E75,$217C,$0004,$BE05
-                dc.w    $002A,$217C,$0004,$B60C,$0034,$4E75,$5468,$000C
-                dc.w    $4E75
-D_4B60C:
-                dc.w    $6638,$B068,$000A,$6532,$6176,$317C,$0005,$001E
-                dc.w    $B268,$000C,$6512,$217C,$0004,$BDFC,$002A,$217C
-                dc.w    $0004,$B5CA,$0034,$4E75,$217C,$0004,$BDEA,$002A
-                dc.w    $217C
-                dc.l    L_4B588
-                dc.w    $0034,$4E75,$5568,$000A,$4E75
-D_4B64C:
-                dc.w    $6638,$B068,$000A,$6232,$6136,$317C,$0007,$001E
-                dc.w    $B268,$000C,$6512,$217C,$0004,$BDFC,$002A,$217C
-                dc.w    $0004,$B5CA,$0034,$4E75,$217C,$0004,$BDEA,$002A
-                dc.w    $217C
-                dc.l    L_4B588
-                dc.w    $0034,$4E75,$5468,$000A,$4E75
-L_4B68C:
+Geld_Down:
+                bne.b   .Geld_Down_move                ; still in the turn delay
+                cmp.w   $C(a0),d1
+                bhi.b   .Geld_Down_move                ; not level with the ship yet
+                bsr.w   Geld_Turn                     ; turn: pause
+                move.w  #$7,$1E(a0)
+                cmp.w   $A(a0),d0
+                bcs.b   .Geld_Down_2
+                move.l  #GeldAnimRight,$2A(a0)
+                move.l  #Geld_Right,$34(a0)
+                rts
+.Geld_Down_2:
+                move.l  #GeldAnimLeft,$2A(a0)
+                move.l  #Geld_Left,$34(a0)
+                rts
+.Geld_Down_move:
+                addq.w  #$2,$C(a0)
+                rts
+Geld_Left:
+                bne.b   .GL_move                ; still in the turn delay
+                cmp.w   $A(a0),d0
+                bcs.b   .GL_move                ; not level with the ship yet
+                bsr.b   Geld_Turn                     ; turn: pause
+                move.w  #$5,$1E(a0)
+                cmp.w   $C(a0),d1
+                bcs.b   .GL_2
+                move.l  #GeldAnimDown,$2A(a0)
+                move.l  #Geld_Down,$34(a0)
+                rts
+.GL_2:
+                move.l  #GeldAnimUp,$2A(a0)
+                move.l  #Geld_Up,$34(a0)
+                rts
+.GL_move:
+                subq.w  #$2,$A(a0)
+                rts
+Geld_Right:
+                bne.b   .GR_move                ; still in the turn delay
+                cmp.w   $A(a0),d0
+                bhi.b   .GR_move                ; not level with the ship yet
+                bsr.b   Geld_Turn                     ; turn: pause
+                move.w  #$7,$1E(a0)
+                cmp.w   $C(a0),d1
+                bcs.b   .GR_2
+                move.l  #GeldAnimDown,$2A(a0)
+                move.l  #Geld_Down,$34(a0)
+                rts
+.GR_2:
+                move.l  #GeldAnimUp,$2A(a0)
+                move.l  #Geld_Up,$34(a0)
+                rts
+.GR_move:
+                addq.w  #$2,$A(a0)
+                rts
+Geld_Turn:
                 move.b  #$6,$3C(a0)
                 move.w  #$12,$32(a0)
                 clr.b   $20(a0)
@@ -1245,45 +1297,48 @@ L_4B68C:
                 dc.w    $1300,$005F,$1D00,$FFFF,$0041,$0000,$0055,$0A00
                 dc.w    $005A,$1400,$004D,$2800,$FFFF,$0061,$0000,$003C
                 dc.w    $0900,$0061,$1B00,$007D,$2700,$004A,$3300,$FFFF
-; object definition: 32x19, 8 frames, gfx $55378, 1 hit point, fires every ~65 frames, score 200, update Upd_4AA4A, spawn Spawn_4AA24
-Def_4B6F2:
+; PataPata: as in level 1 (the same code)
+; (32x19, 8 frames, gfx $55378, 1 hit point, fires every ~65 frames, score 200, update Upd_PataPata, spawn Spawn_PataPata)
+Def_PataPata:
                 dc.w    $1303,$002E,$0260,$0001,$0001,$0041,$0005,$5378
                 dc.w    $0000,$0130,$0004,$B71A,$0004,$B724
-                dc.l    Upd_4AA4A
-                dc.l    Spawn_4AA24
+                dc.l    Upd_PataPata
+                dc.l    Spawn_PataPata
                 dc.w    $0000,$0200,$0001,$0203,$0405,$0607,$FF00,$0005
                 dc.w    $0000,$000E,$0012,$0005,$0003,$000F,$000E,$0000
                 dc.w    $0006,$0014,$0006,$0005,$0003,$000E,$000E,$0003
                 dc.w    $0001,$0010,$0011,$0004,$0003,$000F,$000E,$0000
                 dc.w    $0007,$0014,$0006,$0004,$0003,$000F,$000E,$0044
                 dc.w    $0006,$C95D,$0006,$C9AA,$0006,$C9F7
-; object definition: 32x21, 8 frames, gfx $56678, 1 hit point, fires every ~48 frames, score 200, update Upd_4AAC2, spawn Spawn_4AA8A
-Def_4B772:
+; Bug: as in level 1 (the same code)
+; (32x21, 8 frames, gfx $56678, 1 hit point, fires every ~48 frames, score 200, update Upd_Bug, spawn Spawn_Bug)
+Def_Bug:
                 dc.w    $1503,$002E
                 dc.w    $02A0,$0000,$0001,$0030,$0005,$6678,$0000,$0150
                 dc.w    $0004,$B79A,$0004,$B7A4
-                dc.l    Upd_4AAC2
-                dc.l    Spawn_4AA8A
+                dc.l    Upd_Bug
+                dc.l    Spawn_Bug
                 dc.w    $0000,$0200,$0001,$0203,$0405,$0607,$FF00,$0002
                 dc.w    $0003,$0011,$0011,$0002,$0002,$0011,$0012,$0001
                 dc.w    $0002,$0011,$0011,$0002,$0001,$0011,$0011,$0002
                 dc.w    $0001,$0011,$0012,$0003,$0001,$0010,$0011,$0002
                 dc.w    $0002,$0012,$0011,$0003,$0002,$0011,$0012
-; object definition: 32x26, 6 frames, gfx $57B78, 6 hit points, score 500, update Upd_4AB3C, spawn Spawn_4AB12
-Def_4B7E4:
+; PStaff: as in level 1 (the same code)
+; (32x26, 6 frames, gfx $57B78, 6 hit points, score 500, update Upd_PStaff, spawn Spawn_PStaff)
+Def_PStaff:
                 dc.w    $1A03
                 dc.w    $002E,$0340,$0002,$0006,$0000,$0005,$7B78,$0000
                 dc.w    $01A0,$0004,$B80C,$0004,$B828
-                dc.l    Upd_4AB3C
-                dc.l    Spawn_4AB12
+                dc.l    Upd_PStaff
+                dc.l    Spawn_PStaff
                 dc.w    $0000,$0500
-D_4B80C:
+PStaffWalkLeft:
                 dc.b    $00,$01,$02,$03,$04,$05,$FF
-D_4B813:
+PStaffWalkRight:
                 dc.b    $06,$07,$08,$09,$0A,$0B,$FF
-D_4B81A:
+PStaffFireAnim:
                 dc.w    $0D0E,$FF03,$0C0D,$0EFF
-D_4B822:
+PStaffFireAnimEnd:
                 dc.w    $0E0D,$0C03,$FF00,$0005,$0009,$0019,$0011,$0004
                 dc.w    $0009,$001A,$0010,$0005,$0006,$0019,$0013,$0003
                 dc.w    $0009,$001A,$0010,$0004,$0007,$0019,$0012,$0004
@@ -1292,11 +1347,12 @@ D_4B822:
                 dc.w    $0008,$001B,$0012,$0003,$0007,$0019,$0012,$0004
                 dc.w    $0007,$0019,$0012,$000C,$0004,$000F,$0015,$0012
                 dc.w    $0002,$000D,$0018,$0012,$0002,$000D,$0018
-; object definition: 16x13, 16 frames, gfx $5AC38, update Upd_4AD22
-Def_4B8A0:
+; PStaffMissile: as in level 1 (the same code)
+; (16x13, 16 frames, gfx $5AC38, update Upd_PStaffMissile)
+Def_PStaffMissile:
                 dc.w    $0D02,$0030,$00D0,$0000,$0000,$0000,$0005,$AC38
                 dc.w    $0000,$0068,$0004,$B8C8,$0004,$B8DC
-                dc.l    Upd_4AD22
+                dc.l    Upd_PStaffMissile
                 dc.w    $0000,$0000,$0000,$0000,$0001,$0203,$0405,$0607
                 dc.w    $0800,$0F0E,$0D0C,$0B0A,$0908,$FF00,$0003,$0000
                 dc.w    $0008,$000D,$0003,$0001,$0008,$000C,$0001,$0001
@@ -1307,21 +1363,22 @@ Def_4B8A0:
                 dc.w    $000B,$000B,$0000,$0003,$000D,$0008,$0000,$0003
                 dc.w    $000D,$0007,$0001,$0003,$000E,$0008,$0001,$0002
                 dc.w    $000B,$000A,$0002,$0001,$0009,$000C
-; object definition: 32x26, 4 frames, gfx $5B938, 1 hit point, fires every ~30 frames, score 200, update Upd_4AE04, spawn Spawn_4ADC2
-Def_4B95C:
+; Bink: as in level 1 (the same code)
+; (32x26, 4 frames, gfx $5B938, 1 hit point, fires every ~30 frames, score 200, update Upd_Bink, spawn Spawn_Bink)
+Def_Bink:
                 dc.w    $1A03,$002E
                 dc.w    $0340,$0003,$0001,$001E,$0005,$B938,$0000,$01A0
                 dc.w    $0004,$B984,$0004,$B998
-                dc.l    Upd_4AE04
-                dc.l    Spawn_4ADC2
+                dc.l    Upd_Bink
+                dc.l    Spawn_Bink
                 dc.w    $0000,$0200
-D_4B984:
+BinkWalkLeft:
                 dc.b    $00,$01,$02,$03,$FF
-D_4B989:
+BinkJumpLeft:
                 dc.b    $04,$05,$FF,$03,$FF
-D_4B98E:
+BinkWalkRight:
                 dc.b    $06,$07,$08,$09,$FF
-D_4B993:
+BinkJumpRight:
                 dc.b    $0A,$0B,$FF,$09,$FF,$00,$03,$00,$01,$00,$15,$00,$19,$00,$02,$00
                 dc.b    $03,$00,$18,$00,$16,$00,$04,$00,$01,$00,$15,$00,$19,$00,$03,$00
                 dc.b    $04,$00,$18,$00,$15,$00,$02,$00,$02,$00,$18,$00,$17,$00,$02,$00
@@ -1329,90 +1386,91 @@ D_4B993:
                 dc.b    $04,$00,$18,$00,$15,$00,$04,$00,$02,$00,$17,$00,$17,$00,$03,$00
                 dc.b    $04,$00,$18,$00,$14,$00,$04,$00,$02,$00,$18,$00,$16,$00,$04,$00
                 dc.b    $03,$00,$18,$00,$15
-D_4B9F8:
+BinkJumpArc:
                 dc.w    $FEFE,$FEFF,$FFFF,$FF00,$0000,$0101,$0101,$0202
                 dc.w    $027F,$7F00,$0170,$0062,$0170,$00B8,$FFFF,$0170
                 dc.w    $009B,$FFFF,$0011,$009B,$FFFF,$0170,$0050,$FFFF
                 dc.w    $0011,$0053,$0064,$0004,$0136,$0004,$FFFF,$0170
                 dc.w    $0070,$014A,$0010,$FFFF,$0064,$0010,$0069,$0010
                 dc.w    $FFFF
-; object definition: 32x26, 6 frames, gfx $5E038, 1 hit point, fires every ~40 frames, score 300, update Upd_4AF74, spawn Spawn_4AF44
-Def_4BA4A:
+; Cancer: as in level 1 (the same code)
+; (32x26, 6 frames, gfx $5E038, 1 hit point, fires every ~40 frames, score 300, update Upd_Cancer, spawn Spawn_Cancer)
+Def_Cancer:
                 dc.w    $1A03,$002E,$0340,$0005,$0001,$0028,$0005
                 dc.w    $E038,$0000,$01A0,$0004,$BA72,$0004,$BA7C
-                dc.l    Upd_4AF74
-                dc.l    Spawn_4AF44
+                dc.l    Upd_Cancer
+                dc.l    Spawn_Cancer
                 dc.w    $0000,$0300
-D_4BA72:
+CancerAnimRight:
                 dc.b    $03,$04,$05,$04,$FF
-D_4BA77:
+CancerAnimLeft:
                 dc.b    $00,$01,$02,$01,$FF,$00,$04,$00,$02,$00,$18,$00,$16,$00,$02,$00
                 dc.b    $03,$00,$1B,$00,$14,$00,$04,$00,$04,$00,$18,$00,$13,$00,$05,$00
                 dc.b    $04,$00,$18,$00,$14,$00,$04,$00,$03,$00,$19,$00,$15,$00,$05,$00
                 dc.b    $03,$00,$18,$00,$15
-D_4BAAC:
+BossStarted:
                 dc.b    $00
-D_4BAAD:
+CompilerEntering:
                 dc.b    $00
-D_4BAAE:
+SectionsLeft:
                 dc.w    $0000
-D_4BAB0:
+CompilerSections:
                 dc.w    $0004,$BACE,$FFE5,$006B,$0006,$0004,$BAF6,$FFC5
                 dc.w    $0044,$0005,$0004,$BB1E,$0000,$0041,$0007
-; object definition: 96x81, 1 frame, gfx $665B8, update Upd_4B194
-Def_4BACE:
+; object definition: 96x81, 1 frame, gfx $665B8, update Upd_CompilerSection
+Def_CompilerA:
                 dc.w    $5107
                 dc.w    $0026,$1E60,$0000,$0000,$0000,$0006,$65B8,$0000
                 dc.w    $0F30,$0004,$BB46,$0004,$BB4C
-                dc.l    Upd_4B194
+                dc.l    Upd_CompilerSection
                 dc.w    $0000,$0000,$0000,$0000
-; object definition: 112x58, 1 frame, gfx $68418, update Upd_4B194
-Def_4BAF6:
+; object definition: 112x58, 1 frame, gfx $68418, update Upd_CompilerSection
+Def_CompilerB:
                 dc.w    $3A08,$0024,$1960,$0000
                 dc.w    $0000,$0000,$0006,$8418,$0000,$0CB0,$0004,$BB46
                 dc.w    $0004,$BB54
-                dc.l    Upd_4B194
+                dc.l    Upd_CompilerSection
                 dc.w    $0000,$0000,$0000,$0000
-; object definition: 96x68, 1 frame, gfx $69D78, update Upd_4B194
-Def_4BB1E:
+; object definition: 96x68, 1 frame, gfx $69D78, update Upd_CompilerSection
+Def_CompilerC:
                 dc.w    $4407,$0026,$1980,$0000
                 dc.w    $0000,$0000,$0006,$9D78,$0000,$0CC0,$0004,$BB46
                 dc.w    $0004,$BB5C
-                dc.l    Upd_4B194
+                dc.l    Upd_CompilerSection
                 dc.w    $0000,$0000,$0000,$0000,$0001,$0203,$FF00,$0008
                 dc.w    $001B,$004D,$0032,$0005,$0002,$0064,$002E,$000D
                 dc.w    $0004,$0049,$003D
-D_4BB64:
+Def_CompilerCore:
                 dc.w    $0041,$0032,$0000,$0000,$0000,$0000,$0004,$BC12
                 dc.w    $0000,$0000,$0004,$BB46,$0004,$BB8C
-                dc.l    L_4B288
+                dc.l    Upd_CompilerCore
                 dc.w    $0000,$0000,$0000,$0000,$0030,$000D,$0022,$000E
                 dc.w    $0027,$002E,$001D,$000C,$0001,$000E,$000C,$001F
                 dc.w    $01A4,$000A,$0002,$0002
-; object definition: 32x25, 5 frames, gfx $6B6F8, update Upd_4B332
-Def_4BBAC:
+; object definition: 32x25, 5 frames, gfx $6B6F8, update Upd_CompilerGun
+Def_CompilerGun:
                 dc.w    $1903,$002E,$0320,$0000,$0000,$0000,$0006,$B6F8
                 dc.w    $0000,$0190,$0004,$BBD4,$0004,$BBDA
-                dc.l    Upd_4B332
+                dc.l    Upd_CompilerGun
                 dc.w    $0000,$0000,$0000,$0000,$0001,$0203,$04FF,$0004
                 dc.w    $FFE6,$001E,$0032,$0004,$FFE6,$001E,$0032,$0004
                 dc.w    $FFE6,$001E,$0032,$0004,$FFE6,$001E,$0032,$0004
                 dc.w    $FFE6,$001E,$0032
-D_4BC02:
+CompilerGunParents:
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-D_4BC22:
+CompilerGunOffsets:
                 dc.w    $0003,$0022,$000B,$003A,$FFFC,$0010
-D_4BC2E:
+CompilerGunFrames:
                 dc.w    $0000,$0101,$0202,$0304,$0403,$0302,$0201,$0100
-D_4BC3E:
+CompilerGunMuzzles:
                 dc.w    $FFFE,$0012,$FFF9,$000E,$FFF9,$000E,$FFF6,$0006
                 dc.w    $FFF6,$0006,$FFF9,$FFFD,$FFF9,$FFFD,$FFFD,$FFF8
-; object definition: 32x3, 4 frames, gfx $6C698, update Upd_4B3BE
-Def_4BC5E:
+; object definition: 32x3, 4 frames, gfx $6C698, update Upd_CompilerLaser
+Def_CompilerLaser:
                 dc.w    $0303,$002E,$0060,$0002,$0000,$0000,$0006,$C698
                 dc.w    $0000,$0030,$0004,$BB46,$0004,$BC86
-                dc.l    Upd_4B3BE
+                dc.l    Upd_CompilerLaser
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0020,$0003
                 dc.w    $0000,$0000,$0020,$0003,$0000,$0000,$0020,$0003
                 dc.w    $0000,$0000,$0020,$0003,$004B,$0006,$CA3C,$0006
@@ -1422,13 +1480,18 @@ Def_4BC5E:
                 dc.w    $0054,$0006,$CD84,$0006,$CDD9,$0006,$CE2E,$0031
                 dc.w    $0006,$CE83,$0006,$CEB5,$0006,$CEE7,$0032,$0006
                 dc.w    $CF19,$0006,$CF4C,$0006,$CF7F
-; object definition: 32x25, 16 frames, gfx $5F3B8, 3 hit points, score 400, update Upd_4B418, spawn Spawn_4B3D0
-Def_4BD08:
+; Cytron: built to destroy asteroids, it rebuilds the cell walls - every
+; frame it writes a solid, destructible cell ($9013) into the map cell
+; under it if that one is empty.
+; Flies straight (entry $06/$08 = dx, dy, which also pick the frame) or
+; along a path (entry $0A).  3 hit points.
+; (32x25, 16 frames, gfx $5F3B8, 3 hit points, score 400, update Upd_Cytron, spawn Spawn_Cytron)
+Def_Cytron:
                 dc.w    $1903,$002E,$0320
                 dc.w    $0000,$0003,$0000,$0005,$F3B8,$0000,$0190,$0004
                 dc.w    $BD30,$0004,$BD42
-                dc.l    Upd_4B418
-                dc.l    Spawn_4B3D0
+                dc.l    Upd_Cytron
+                dc.l    Spawn_Cytron
                 dc.w    $0000,$0400,$0001,$0203,$0405,$0607,$0809,$0A0B
                 dc.w    $0C0D,$0E0F,$FF00,$0007,$0005,$0010,$000E,$0007
                 dc.w    $0004,$0010,$000E,$0007,$0004,$000F,$0010,$0006
@@ -1439,18 +1502,27 @@ Def_4BD08:
                 dc.w    $0004,$000D,$0011,$0008,$0004,$000D,$0010,$0007
                 dc.w    $0005,$000E,$000D,$0007,$0005,$000E,$000E,$0007
                 dc.w    $0005,$0011,$000E
-; object definition: 32x32, 3 frames, gfx $625B8, 1 hit point, score 200, update Upd_4B506, spawn Spawn_4B4A6
-Def_4BDC2:
+; Geld: eats the cell walls - it clears any destructible cell it touches.
+; It moves in straight lines (GeldStates: up, right, down, left, picked by
+; entry $06) and turns towards the ship when level with it, pausing 6
+; frames at each turn (Geld_Turn) and not turning again for 18; after
+; scroll x (entry $08) it stops turning.
+; (32x32, 3 frames, gfx $625B8, 1 hit point, score 200, update Upd_Geld, spawn Spawn_Geld)
+Def_Geld:
                 dc.w    $2003,$002E,$0400,$0002,$0001
                 dc.w    $0000,$0006,$25B8,$0000,$0200,$0004,$BDEA,$0004
                 dc.w    $BE0E
-                dc.l    Upd_4B506
-                dc.l    Spawn_4B4A6
-                dc.b    $00,$00,$02,$00,$00,$01,$00,$02,$FF,$0F,$FF,$03,$FF
-D_4BDF3:
-                dc.b    $04,$05,$04,$06,$FF,$03,$FF,$07,$FF,$08,$09,$08,$0A,$FF,$0B,$FF
+                dc.l    Upd_Geld
+                dc.l    Spawn_Geld
+                dc.b    $00,$00,$02,$00
+GeldAnimUp:
+                dc.b    $00,$01,$00,$02,$FF,$0F,$FF,$03,$FF
+GeldAnimRight:
+                dc.b    $04,$05,$04,$06,$FF,$03,$FF,$07,$FF
+GeldAnimDown:
+                dc.b    $08,$09,$08,$0A,$FF,$0B,$FF
                 dc.b    $07,$FF
-D_4BE05:
+GeldAnimLeft:
                 dc.b    $0C,$0D,$0C,$0E,$FF,$0F,$FF,$0B,$FF,$00,$04,$00,$07,$00,$15,$00
                 dc.b    $15,$00,$05,$00,$06,$00,$14,$00,$17,$00,$05,$00,$08,$00,$14,$00
                 dc.b    $15,$00,$08,$00,$06,$00,$0E,$00,$15,$00,$03,$00,$07,$00,$15,$00
@@ -1787,7 +1859,6 @@ D_4BE05:
                 dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
                 dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
                 dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-D_4D300:
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
