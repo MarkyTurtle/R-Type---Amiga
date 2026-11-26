@@ -60,6 +60,7 @@ State on 26 Nov 2026. All 12 sources reassemble byte-identical (`tools/verify.py
 
 ## 6. Tooling
 
+- [x] **Continuous build**: a GitHub Action assembles and verifies the sources and publishes the ADF built from them.
 - [x] **Build**: `tools/build_disk.py --from-source` assembles every source into a disk image (`tools/verify.py` checks them against `files/`).
 - [x] **Cross-reference**: `tools/xref.py` (which routines read/write each label).
 - [ ] Retire `work`-style one-off generators once all sources are hand-maintained (`bootstrap_source.py`, `gen_source.py`, `trace68k.py` are kept only for reference).

@@ -1,5 +1,7 @@
 # R-Type – Amiga
 
+[![Build](https://github.com/MarkyTurtle/R-Type---Amiga/actions/workflows/build.yml/badge.svg)](https://github.com/MarkyTurtle/R-Type---Amiga/actions/workflows/build.yml)
+
 Reverse-engineering and annotated disassembly of the Amiga **R-Type** (Electric Dreams, 1989; Amiga version by Factor 5, produced by Rainbow Arts). The aim is to learn how the game was put together.
 
 ![title](original/docs/title.png)
@@ -54,3 +56,5 @@ python3 -I original/tools/verify.py      # needs vasmm68k_mot
 # rebuild a bootable disk image (WinUAE extended ADF) from the sources
 VASM=vasmm68k_mot python3 -I original/tools/build_disk.py --from-source R-Type.adf
 ```
+
+The same is done on every push by a GitHub Action (`.github/workflows/build.yml`): it builds vasm, checks that all 12 sources assemble byte-identical, builds `R-Type.adf` from the sources and attaches it to the run as an artifact (*Actions* → the run → *Artifacts*).

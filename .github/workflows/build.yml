@@ -1,0 +1,56 @@
+# Assemble every source, check it is byte-identical to the original files,
+# and build a bootable disk image (WinUAE extended ADF) from the sources.
+name: Build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      # vasm (Volker Barthelmann / Frank Wille), from the GitHub mirror,
+      # pinned so builds stay reproducible
+      VASM_REPO: https://github.com/StarWolf3000/vasm-mirror
+      VASM_COMMIT: a13e7e728a3dd5a9ba468bf479119e0bc23e70fd
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Cache vasm
+        id: vasm-cache
+        uses: actions/cache@v4
+        with:
+          path: vasm/vasmm68k_mot
+          key: vasm-${{ env.VASM_COMMIT }}
+
+      - name: Build vasm
+        if: steps.vasm-cache.outputs.cache-hit != 'true'
+        run: |
+          git clone --quiet "$VASM_REPO" vasm
+          git -C vasm checkout --quiet "$VASM_COMMIT"
+          make -C vasm CPU=m68k SYNTAX=mot -j"$(nproc)"
+
+      - name: Assemble and verify against the original files
+        env:
+          VASM: ${{ github.workspace }}/vasm/vasmm68k_mot
+        run: python3 -I original/tools/verify.py
+
+      - name: Build the disk image from the sources
+        env:
+          VASM: ${{ github.workspace }}/vasm/vasmm68k_mot
+        run: |
+          mkdir -p build
+          python3 -I original/tools/build_disk.py --from-source build/R-Type.adf
+
+      - name: Upload the disk image
+        uses: actions/upload-artifact@v4
+        with:
+          name: R-Type-adf
+          path: build/R-Type.adf
+          if-no-files-found: error
