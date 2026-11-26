@@ -19,14 +19,14 @@ State on 26 Nov 2026. All 12 sources reassemble byte-identical (`tools/verify.py
 
 ## 2. Level code (`src/levels/level1-8.s`)
 
-- [ ] **Name the objects**: the 73 `Def_xxxxx` definitions and their `Upd_`/`Spawn_` routines have structural names only. Give them their R-Type names (Patapata, Bink, Cancer, Pow Armor, Gains, Dobkeratops…) by matching against `gfx/levelN_bobs.png`, ideally with an object gallery (one image per definition, see below) to check each name.
-- [x] **Object gallery** (`docs/OBJECTS.md`): one picture per definition with its stats and routines. Fill in the Name column (`NAMES` in `tools/object_gallery.py`).
-- [ ] **Comment the enemy and boss behaviours**: movement, firing, hit boxes, the bosses' multi-part structure (e.g. level 4's 96×81 / 112×58 / 96×68 pieces).
-- [ ] **Level start / per-frame routines** (`LevelInit`, `LevelFrame`) for each level.
-- [ ] **Wave lists**: decode the per-wave parameters (`$06`–`$0D`), which differ per spawn routine.
-- [ ] **Tile animation routines** (`LV_TileAnims`, level 1) and **map patches**.
+- [ ] **Name the objects**: level 1 done (Pata-Pata, Bug, P-Staff, Scant, Bink, Cancer, Shell, Tabrok, Blasters, Dobkeratops's tail and core); levels 2-8 to do.
+- [x] **Object gallery** (`docs/OBJECTS.md`): one picture per definition with its stats and routines. Named objects are listed by name (`NAMES` in `tools/object_gallery.py`).
+- [ ] **Comment the enemy and boss behaviours** (level 1 done): movement, firing, hit boxes, the bosses' multi-part structure (e.g. level 4's 96×81 / 112×58 / 96×68 pieces).
+- [ ] **Level start / per-frame routines** (`LevelInit`, `LevelFrame`) for each level (level 1 done: the Dobkeratops sequence).
+- [ ] **Wave lists**: one entry per line with the definition names (`tools/format_waves.py`); level 1's parameters decoded (Pata-Pata groups, Bug chains). Levels 2-8 to do.
+- [x] **Tile animation routines** (`LV_TileAnims`, level 1) and **map patches**: level 1's are the Blasters, gun batteries built into the map.
 - [ ] **Level 3** (the battleship): how its 26-row map moves and how its parts are destroyed.
-- [ ] **Unnamed labels**: 52–215 per level.
+- [ ] **Unnamed labels**: level 1 has none left (`tools/localise_labels.py` turns branch labels local, `tools/format_waves.py` lays out the wave lists); levels 2-8 to do.
 
 ## 3. Data and assets
 
