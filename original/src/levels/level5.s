@@ -10,8 +10,8 @@
 ; $4B666 on: unused track padding (only $4A2E4-$4CAFF survives the load
 ; of part B to $4CB00)
 ;
-; First pass: code and data separated, entry points from the level table
-; named.  L_xxxxx = code, D_xxxxx = data, still to be named.
+; Stage 5.  Enemies: Cancer (level 1's), Slither, Pursuer, Cheetah and the
+; Mid-phase Cheetah, the POW Armor; the boss is Bellmite with its shells.
 ;==============================================================================
                 include "engine.i"
 
@@ -51,143 +51,143 @@ WaveList:
 ; for the spawn routine, definition (-1 = POW Armor, the default).
 Waves:
                 dc.w    $005A,$016D,$0082
-                dc.l    $00080124,$00000000,Def_4B0D0
+                dc.l    $00080124,$00000000,Def_SlitherHead
                 dc.w    $00C8,$016D,$00A0
-                dc.l    $0006032A,$00000000,Def_4B0D0
+                dc.l    $0006032A,$00000000,Def_SlitherHead
                 dc.w    $0103,$0170,$0087
                 dc.l    $0003FFFC,$00000000,$FFFFFFFF ; POW Armor
                 dc.w    $0134,$0082,$00DF
-                dc.l    $00060221,$00000000,Def_4B0D0
+                dc.l    $00060221,$00000000,Def_SlitherHead
                 dc.w    $0136,$0000,$0000
-                dc.l    $03E8000F,$0004B010,Def_4B02C
+                dc.l    $03E8000F,$0004B010,Def_Cancer
                 dc.w    $01A0,$003C,$0012
-                dc.l    $00060418,$00000000,Def_4B0D0
+                dc.l    $00060418,$00000000,Def_SlitherHead
                 dc.w    $0205,$0050,$00DF
-                dc.l    $00060221,$00000000,Def_4B0D0
+                dc.l    $00060221,$00000000,Def_SlitherHead
                 dc.w    $0268,$0136,$0014
-                dc.l    $00080000,$00000000,Def_4B2DA
+                dc.l    $00080000,$00000000,Def_Pursuer
                 dc.w    $026A,$0136,$00DF
-                dc.l    $00000000,$00000000,Def_4B2DA
+                dc.l    $00000000,$00000000,Def_Pursuer
                 dc.w    $026C,$0104,$0012
-                dc.l    $00060530,$00000000,Def_4B0D0
+                dc.l    $00060530,$00000000,Def_SlitherHead
                 dc.w    $02CB,$016D,$0078
-                dc.l    $0006032A,$00000000,Def_4B0D0
+                dc.l    $0006032A,$00000000,Def_SlitherHead
                 dc.w    $02D0,$008C,$0014
-                dc.l    $00080000,$00000000,Def_4B2DA
+                dc.l    $00080000,$00000000,Def_Pursuer
                 dc.w    $02F0,$008C,$00DF
-                dc.l    $00000000,$00000000,Def_4B2DA
+                dc.l    $00000000,$00000000,Def_Pursuer
                 dc.w    $030D,$0014,$0064
-                dc.l    $00040000,$00000000,Def_4B2DA
+                dc.l    $00040000,$00000000,Def_Pursuer
                 dc.w    $0338,$0064,$00DF
-                dc.l    $00060221,$00000000,Def_4B0D0
+                dc.l    $00060221,$00000000,Def_SlitherHead
                 dc.w    $0339,$00C8,$00DF
-                dc.l    $00000000,$00000000,Def_4B2DA
+                dc.l    $00000000,$00000000,Def_Pursuer
                 dc.w    $039D,$0170,$0028
-                dc.l    $00060618,$00000000,Def_4B0D0
+                dc.l    $00060618,$00000000,Def_SlitherHead
                 dc.w    $03D4,$0170,$005A
                 dc.l    $0002FFFC,$00000000,$FFFFFFFF ; POW Armor
                 dc.w    $03E2,$0014,$0078
-                dc.l    $00040000,$00000000,Def_4B2DA
+                dc.l    $00040000,$00000000,Def_Pursuer
                 dc.w    $040B,$0096,$00DF
-                dc.l    $00000000,$00000000,Def_4B2DA
+                dc.l    $00000000,$00000000,Def_Pursuer
                 dc.w    $041A,$0046,$0014
-                dc.l    $00060418,$00000000,Def_4B0D0
+                dc.l    $00060418,$00000000,Def_SlitherHead
                 dc.w    $044B,$0136,$0014
-                dc.l    $00080000,$00000000,Def_4B2DA
+                dc.l    $00080000,$00000000,Def_Pursuer
                 dc.w    $044C,$0000,$0000
-                dc.l    $07D0000F,$0004B010,Def_4B02C
+                dc.l    $07D0000F,$0004B010,Def_Cancer
                 dc.w    $04B0,$016D,$0078
-                dc.l    $00050032,$00320000,Def_4B452
+                dc.l    $00050032,$00320000,Def_MidCheetah
                 dc.w    $04B4,$016D,$0078
-                dc.l    $00050032,$00820000,Def_4B452
+                dc.l    $00050032,$00820000,Def_MidCheetah
                 dc.w    $0514,$0096,$00DF
-                dc.l    $00000000,$00000000,Def_4B2DA
+                dc.l    $00000000,$00000000,Def_Pursuer
                 dc.w    $0516,$0064,$0014
-                dc.l    $00080000,$00000000,Def_4B2DA
+                dc.l    $00080000,$00000000,Def_Pursuer
                 dc.w    $0541,$016D,$0078
-                dc.l    $000C0000,$00000000,Def_4B2DA
+                dc.l    $000C0000,$00000000,Def_Pursuer
                 dc.w    $0582,$016D,$00A0
-                dc.l    $00070733,$00000000,Def_4B0D0
+                dc.l    $00070733,$00000000,Def_SlitherHead
                 dc.w    $05DC,$0046,$0014
-                dc.l    $00080000,$00000000,Def_4B2DA
+                dc.l    $00080000,$00000000,Def_Pursuer
                 dc.w    $05FA,$012C,$00DF
-                dc.l    $00000000,$00000000,Def_4B2DA
+                dc.l    $00000000,$00000000,Def_Pursuer
 WavesFrom_0604:
                 dc.w    $0640,$016D,$0096
-                dc.l    $00000000,$00000000,Def_4B422
+                dc.l    $00000000,$00000000,Def_Cheetah
                 dc.w    $0654,$016D,$0078
-                dc.l    $00000000,$00000000,Def_4B422
+                dc.l    $00000000,$00000000,Def_Cheetah
                 dc.w    $06A4,$0170,$005A
                 dc.l    $0004FFFC,$00000000,$FFFFFFFF ; POW Armor
                 dc.w    $06CC,$005A,$0014
-                dc.l    $00080000,$00000000,Def_4B2DA
+                dc.l    $00080000,$00000000,Def_Pursuer
                 dc.w    $06CE,$016D,$0046
-                dc.l    $00000000,$00000000,Def_4B422
+                dc.l    $00000000,$00000000,Def_Cheetah
                 dc.w    $06F4,$016D,$00B4
-                dc.l    $000C0000,$00000000,Def_4B2DA
+                dc.l    $000C0000,$00000000,Def_Pursuer
                 dc.w    $06F6,$0000,$0000
-                dc.l    $07D0000F,$0004B01A,Def_4B02C
+                dc.l    $07D0000F,$0004B01A,Def_Cancer
                 dc.w    $06F9,$016D,$0032
-                dc.l    $000C0000,$00000000,Def_4B2DA
+                dc.l    $000C0000,$00000000,Def_Pursuer
                 dc.w    $0747,$012C,$00DF
-                dc.l    $00000000,$00000000,Def_4B2DA
+                dc.l    $00000000,$00000000,Def_Pursuer
                 dc.w    $0780,$0170,$0078
                 dc.l    $0003FFFC,$00000000,$FFFFFFFF ; POW Armor
                 dc.w    $0796,$0170,$00A0
-                dc.l    $000C0000,$00000000,Def_4B2DA
+                dc.l    $000C0000,$00000000,Def_Pursuer
                 dc.w    $07BC,$016D,$006E
-                dc.l    $00000000,$00000000,Def_4B422
+                dc.l    $00000000,$00000000,Def_Cheetah
                 dc.w    $07BD,$0140,$00DF
-                dc.l    $00000000,$00000000,Def_4B2DA
+                dc.l    $00000000,$00000000,Def_Pursuer
                 dc.w    $07DA,$016D,$009B
-                dc.l    $00000000,$00000000,Def_4B422
+                dc.l    $00000000,$00000000,Def_Cheetah
                 dc.w    $07F3,$016D,$0046
-                dc.l    $00000000,$00000000,Def_4B422
+                dc.l    $00000000,$00000000,Def_Cheetah
                 dc.w    $0804,$0140,$0014
-                dc.l    $00080000,$00000000,Def_4B2DA
+                dc.l    $00080000,$00000000,Def_Pursuer
                 dc.w    $0831,$00F0,$00DF
-                dc.l    $00000000,$00000000,Def_4B2DA
+                dc.l    $00000000,$00000000,Def_Pursuer
                 dc.w    $0866,$0000,$0000
-                dc.l    $0BB8000F,$0004B020,Def_4B02C
+                dc.l    $0BB8000F,$0004B020,Def_Cancer
                 dc.w    $0884,$00E6,$00DF
-                dc.l    $00000000,$00000000,Def_4B2DA
+                dc.l    $00000000,$00000000,Def_Pursuer
                 dc.w    $0886,$0154,$00DF
-                dc.l    $00000000,$00000000,Def_4B2DA
+                dc.l    $00000000,$00000000,Def_Pursuer
                 dc.w    $088D,$016D,$0046
-                dc.l    $00000000,$00000000,Def_4B422
+                dc.l    $00000000,$00000000,Def_Cheetah
                 dc.w    $0897,$016D,$0073
-                dc.l    $00000000,$00000000,Def_4B422
+                dc.l    $00000000,$00000000,Def_Cheetah
                 dc.w    $08A1,$016D,$00A0
-                dc.l    $00000000,$00000000,Def_4B422
+                dc.l    $00000000,$00000000,Def_Cheetah
                 dc.w    $08A4,$0154,$0014
-                dc.l    $00080000,$00000000,Def_4B2DA
+                dc.l    $00080000,$00000000,Def_Pursuer
                 dc.w    $08CE,$0078,$0014
-                dc.l    $00080000,$00000000,Def_4B2DA
+                dc.l    $00080000,$00000000,Def_Pursuer
                 dc.w    $08CF,$0000,$0000
-                dc.l    $0FA0000F,$0004B026,Def_4B02C
+                dc.l    $0FA0000F,$0004B026,Def_Cancer
                 dc.w    $08E5,$0064,$00DF
-                dc.l    $00000000,$00000000,Def_4B2DA
+                dc.l    $00000000,$00000000,Def_Pursuer
                 dc.w    $0953,$0096,$00DF
-                dc.l    $00060221,$00000000,Def_4B0D0
+                dc.l    $00060221,$00000000,Def_SlitherHead
                 dc.w    $0977,$0136,$0014
-                dc.l    $00080000,$00000000,Def_4B2DA
+                dc.l    $00080000,$00000000,Def_Pursuer
                 dc.w    $0995,$0064,$0014
-                dc.l    $00080000,$00000000,Def_4B2DA
+                dc.l    $00080000,$00000000,Def_Pursuer
                 dc.w    $09C6,$010E,$0014
-                dc.l    $00060530,$00000000,Def_4B0D0
+                dc.l    $00060530,$00000000,Def_SlitherHead
                 dc.w    $09EC,$0136,$00DF
-                dc.l    $00000000,$00000000,Def_4B2DA
+                dc.l    $00000000,$00000000,Def_Pursuer
                 dc.w    $0A1E,$0064,$00DF
-                dc.l    $00000000,$00000000,Def_4B2DA
+                dc.l    $00000000,$00000000,Def_Pursuer
                 dc.w    $0A50,$0170,$0064
                 dc.l    $0002FFFC,$00000000,$FFFFFFFF ; POW Armor
                 dc.w    $0AC0,$0168,$0064
-                dc.l    $00000000,$00000000,Def_4B5F8
+                dc.l    $00000000,$00000000,Def_Bellmite
                 dc.w    $7530   ; end: never reached
 LevelPalette:
                 dc.w    $0555,$0BBB,$0777,$0500,$005F,$00F0,$0050,$0955
                 dc.w    $0B00,$09BF,$000B,$0F77,$0B70,$0FF0,$0FFF
-Spawn_4A808:
+Spawn_Cancer:
                 movea.l $A(a1),a3
                 move.w  $8(a1),d7
                 clr.w   d6
@@ -205,7 +205,7 @@ Spawn_4A808:
                 bra.b   .4A812
 .4A836:
                 rts
-Upd_4A838:
+Upd_Cancer:
                 tst.w   $32(a0)
                 beq.b   .4A844
                 subq.w  #$1,$32(a0)
@@ -240,11 +240,11 @@ Upd_4A838:
                 movem.w (ShipPos).w,d6-d7
 .4A890:
                 moveq   #2,d4
-                lea.l   (D_4B054).l,a1
+                lea.l   (CancerAnimRight).l,a1
                 cmp.w   d6,d0
                 bcs.b   .4A8A4
                 moveq   #-1,d4
-                lea.l   (D_4B058).l,a1
+                lea.l   (CancerAnimLeft).l,a1
 .4A8A4:
                 move.l  a1,$2A(a0)
                 moveq   #1,d5
@@ -297,16 +297,22 @@ Upd_4A838:
                 rts
 LevelInit:
                 rts
+; LevelFrame: from scroll x $BC0 the background loops back to $B40 (the
+; boss fight scrolls on the spot).  LevelInit does nothing.
 LevelFrame:
                 cmpi.w  #$BC0,(ScrollX).w
                 bne.b   .4A926
                 move.w  #$B40,(ScrollX).w
 .4A926:
                 rts
-Spawn_4A928:
+; Slither: a multi-jointed crustacean - a head, entry $06 body segments
+; and a tail, 4 frames apart on the head's path.  When the head is
+; destroyed (10 hits) the body breaks apart: the segments fly off in
+; their own directions (SlitherScatter).
+Spawn_Slither:
                 movem.w $2(a1),d0-d1
                 move.w  #$3E8,d2
-                lea.l   (Def_4B0D0).l,a2
+                lea.l   (Def_SlitherHead).l,a2
                 jsr     (jt_ObjCreate).w
                 move.w  #$FF00,$32(a0)
                 move.w  $8(a1),$34(a0)
@@ -318,7 +324,7 @@ Spawn_4A928:
                 move.w  $6(a1),d7
                 moveq   #0,d6
                 moveq   #0,d5
-                lea.l   (Def_4B18A).l,a2
+                lea.l   (Def_SlitherBody).l,a2
                 bra.b   .4A9A4
 .4A96E:
                 movea.l a0,a3
@@ -343,7 +349,7 @@ Spawn_4A928:
                 movem.w $2(a1),d0-d1
                 addq.w  #$2,d1
                 move.w  #$7D0,d2
-                lea.l   (Def_4B232).l,a2
+                lea.l   (Def_SlitherTail).l,a2
                 jsr     (jt_ObjCreate).w
                 st.b    $32(a0)
                 move.b  d6,$33(a0)
@@ -357,7 +363,7 @@ Spawn_4A928:
                 move.w  d0,$3C(a3)
                 move.w  d0,$3A(a0)
                 rts
-Upd_4A9F0:
+Upd_Slither:
                 move.b  $32(a0),d0
                 beq.b   .4AA50
                 cmp.b   #$1,d0
@@ -373,7 +379,7 @@ Upd_4A9F0:
                 moveq   #0,d0
                 move.b  $33(a0),d0
                 lsl.w   #$2,d0
-                lea.l   (D_4B08C).l,a1
+                lea.l   (SlitherScatter).l,a1
                 movem.w (a1,d0.w),d0-d1
                 add.w   d0,$A(a0)
                 add.w   d1,$C(a0)
@@ -402,7 +408,7 @@ Upd_4A9F0:
                 movea.l a0,a1
                 clr.w   $3A(a0)
                 move.w  $1E(a0),d0
-                lea.l   (D_4B0B0).l,a2
+                lea.l   (SlitherHeadFrames).l,a2
                 lsl.w   #$1,d0
                 move.w  (a2,d0.w),d1
                 move.w  $34(a0),d2
@@ -482,7 +488,10 @@ Upd_4A9F0:
                 move.w  #$7FFF,$36(a0)
                 clr.b   $32(a0)
                 bra.w   .4AAEA
-Spawn_4AB76:
+; Pursuer (probably): fast and homing - for 100 steps it turns towards the
+; ship every 5 frames (16 directions, PursuerSteps), then flies straight
+; on; fires at its definition's rate.
+Spawn_Pursuer:
                 movem.w $2(a1),d0-d1
                 moveq   #1,d2
                 jsr     (jt_ObjCreate).w
@@ -492,7 +501,7 @@ Spawn_4AB76:
                 move.w  #$64,$36(a0)
                 move.w  $6(a1),$1E(a0)
                 jmp     (jt_ObjInsert).w
-Upd_4ABA0:
+Upd_Pursuer:
                 subq.w  #$1,$34(a0)
                 bpl.b   .4ABD2
                 move.w  #$4,$34(a0)
@@ -509,7 +518,7 @@ Upd_4ABA0:
                 move.w  $1E(a0),d0
                 lsl.w   #$2,d0
                 movem.w $A(a0),d1-d2
-                lea.l   (D_4B394).l,a1
+                lea.l   (PursuerSteps).l,a1
                 add.w   (a1,d0.w),d1
                 add.w   $2(a1,d0.w),d2
                 cmp.w   #$10,d1
@@ -525,7 +534,11 @@ Upd_4ABA0:
 .4AC08:
                 movem.w d1-d2,$A(a0)
                 rts
-Spawn_4AC10:
+; Cheetah (48x41) and its Mid-phase form (32x20, groups of entry $06+1 at
+; random heights, 24 frames apart): they drift left and fire beams
+; (CheetahBeam, 7 pixels a frame) - the Cheetah every 25 frames at a
+; random height, the mid-phase every 50 from its middle.
+Spawn_Cheetah:
                 movem.w $2(a1),d0-d1
                 moveq   #20,d2
                 jsr     (jt_ObjCreate).w
@@ -535,7 +548,7 @@ Spawn_4AC10:
                 move.b  #$A,$4(a0)
                 move.b  #$2,$21(a0)
                 jmp     (jt_ObjInsert).w
-Spawn_4AC36:
+Spawn_MidCheetah:
                 move.w  $6(a1),d7
                 moveq   #0,d6
                 moveq   #0,d5
@@ -562,12 +575,12 @@ Spawn_4AC36:
 .4AC80:
                 dbra    d7,.4AC3E
                 rts
-Upd_4AC86:
+Upd_Cheetah:
                 moveq   #2,d1
                 moveq   #32,d7
                 moveq   #25,d6
-                bra.b   L_4ACA0
-Upd_4AC8E:
+                bra.b   Cheetah_MoveFire
+Upd_MidCheetah:
                 tst.w   $34(a0)
                 beq.b   .4AC9A
                 subq.w  #$1,$34(a0)
@@ -576,7 +589,7 @@ Upd_4AC8E:
                 moveq   #3,d1
                 moveq   #-10,d7
                 moveq   #50,d6
-L_4ACA0:
+Cheetah_MoveFire:
                 sub.w   d1,$A(a0)
                 bpl.b   .4ACAA
                 jmp     (jt_ObjKillSelf).w
@@ -599,23 +612,28 @@ L_4ACA0:
                 move.w  $A(a0),d0
                 moveq   #-1,d2
                 move.l  a0,-(a7)
-                lea.l   (Def_4B3D4).l,a2
+                lea.l   (Def_CheetahBeam).l,a2
                 jsr     (jt_ObjCreate).w
                 bset.b  #$2,$23(a0)
                 jsr     (jt_ObjInsert).w
                 movea.l (a7)+,a0
 .4ACEC:
                 rts
-Upd_4ACEE:
+Upd_CheetahBeam:
                 subq.w  #$7,$A(a0)
                 cmpi.w  #$10,$A(a0)
                 bhi.b   .4ACFE
                 jmp     (jt_ObjKillSelf).w
 .4ACFE:
                 rts
-Spawn_4AD00:
+; Bellmite (the boss): a control centre (10000 hit points, but 30 hits
+; kill it: LevelComplete, 2000 points) guarded by 8 shells that hold
+; formations round it (BellmiteShells, ShellFormations).  It drifts in
+; straight lines, bouncing (BellmiteBounce/BellmiteSteps); shells scatter
+; (ShellScatter) when hit or when the formation changes.
+Spawn_Bellmite:
                 movem.w $2(a1),d0-d1
-                movem.w d0-d1,(D_4B534).l
+                movem.w d0-d1,(BellmiteX).l
                 move.w  #$2710,d2
                 jsr     (jt_ObjCreate).w
                 clr.w   $3C(a0)
@@ -628,10 +646,10 @@ Spawn_4AD00:
                 moveq   #7,d7
                 moveq   #0,d6
                 moveq   #1,d5
-                lea.l   (D_4B4F4).l,a4
-                lea.l   (Def_4B628).l,a2
+                lea.l   (BellmiteShells).l,a4
+                lea.l   (Def_BellmiteShell).l,a2
 .4AD4A:
-                movem.w (D_4B534).l,d0-d1
+                movem.w (BellmiteX).l,d0-d1
                 movem.w (a4),d2-d3
                 add.w   d2,d0
                 add.w   d3,d1
@@ -651,7 +669,7 @@ Spawn_4AD00:
                 dbra    d7,.4AD4A
                 st.b    (MusicFadeReq).w
                 rts
-Upd_4AD94:
+Upd_Bellmite:
                 cmpi.w  #$1E,$26(a0)
                 ble.b   .4ADCA
                 move.b  #$1,$5(a0)
@@ -659,7 +677,7 @@ Upd_4AD94:
                 st.b    (LevelComplete).w
                 move.l  #$2000,d0
                 jsr     (jt_AddScore).w
-                lea.l   (D_4B4F4).l,a1
+                lea.l   (BellmiteShells).l,a1
                 moveq   #7,d0
 .4ADBC:
                 movea.l $4(a1),a2
@@ -672,7 +690,7 @@ Upd_4AD94:
                 subq.w  #$1,$38(a0)
                 bmi.b   .4ADE4
                 subq.w  #$2,$A(a0)
-                move.l  $A(a0),(D_4B534).l
+                move.l  $A(a0),(BellmiteX).l
                 rts
 .4ADE4:
                 clr.b   $3A(a0)
@@ -692,18 +710,18 @@ Upd_4AD94:
                 cmp.w   #$AC,d3
                 bhi.b   .4AE2A
                 movem.w d2-d3,$A(a0)
-                movem.w d2-d3,(D_4B534).l
+                movem.w d2-d3,(BellmiteX).l
                 bra.w   .4AE98
 .4AE2A:
                 lsr.w   $38(a0)
                 moveq   #0,d0
                 moveq   #0,d1
                 move.b  $37(a0),d1
-                lea.l   (D_4B4E4).l,a1
+                lea.l   (BellmiteBounce).l,a1
                 move.b  (a1,d1.w),d0
                 move.b  d0,$37(a0)
                 lsl.w   #$2,d0
-                lea.l   (D_4B598).l,a1
+                lea.l   (BellmiteSteps).l,a1
                 movem.w (a1,d0.w),d2-d3
                 movem.w d2-d3,$32(a0)
                 bra.w   .4ADCA
@@ -714,7 +732,7 @@ Upd_4AD94:
                 move.b  d0,$37(a0)
                 move.w  d0,d1
                 lsl.w   #$2,d1
-                lea.l   (D_4B598).l,a1
+                lea.l   (BellmiteSteps).l,a1
                 movem.w (a1,d1.w),d2-d3
                 movem.w d2-d3,$32(a0)
                 moveq   #100,d0
@@ -729,7 +747,7 @@ Upd_4AD94:
 .4AEA0:
                 move.w  #$23,$3C(a0)
                 moveq   #0,d2
-                movem.w (D_4B534).l,d0-d1
+                movem.w (BellmiteX).l,d0-d1
                 add.w   #$18,d0
                 add.w   #$18,d1
                 sub.w   (ShipPos).w,d0
@@ -741,8 +759,8 @@ Upd_4AD94:
                 addq.w  #$2,d2
 .4AEC8:
                 lsl.w   #$3,d2
-                lea.l   (D_4B5D8).l,a1
-                lea.l   (D_4B4F4).l,a2
+                lea.l   (ShellFormations).l,a1
+                lea.l   (BellmiteShells).l,a2
                 adda.l  d2,a1
                 moveq   #6,d1
 .4AEDA:
@@ -765,7 +783,7 @@ Upd_4AD94:
                 move.w  d0,$32(a3)
                 move.w  #$1,$34(a3)
                 rts
-Upd_4AF14:
+Upd_BellmiteShell:
                 cmpi.w  #$14,$26(a0)
                 blt.b   .4AF40
 .4AF1C:
@@ -773,7 +791,7 @@ Upd_4AF14:
                 clr.l   $6(a0)
                 move.w  $3A(a0),d0
                 lsl.w   #$3,d0
-                lea.l   (D_4B4F4).l,a1
+                lea.l   (BellmiteShells).l,a1
                 clr.l   $4(a1,d0.w)
                 move.l  #$300,d0
                 jmp     (jt_AddScore).w
@@ -784,7 +802,7 @@ Upd_4AF14:
                 beq.w   .4AFEA
                 subq.w  #$1,d0
                 lsl.w   #$2,d0
-                lea.l   (D_4B558).l,a1
+                lea.l   (ShellScatter).l,a1
                 lea.l   (a1,d0.w),a1
                 movem.w $36(a0),d0-d1
                 movem.w (a1),d2-d3
@@ -801,19 +819,19 @@ Upd_4AF14:
                 clr.w   $32(a0)
                 move.w  $3A(a0),d2
                 lsl.w   #$3,d2
-                lea.l   (D_4B4F4).l,a1
+                lea.l   (BellmiteShells).l,a1
                 movem.w (a1,d2.w),d0-d1
 .4AF92:
                 movem.w d0-d1,$36(a0)
-                add.w   (D_4B534).l,d0
-                add.w   (D_4B536).l,d1
+                add.w   (BellmiteX).l,d0
+                add.w   (BellmiteY).l,d1
                 movem.w d0-d1,$A(a0)
                 rts
 .4AFAC:
                 movem.w d0-d1,$36(a0)
                 addq.b  #$1,$35(a0)
-                add.w   (D_4B534).l,d0
-                add.w   (D_4B536).l,d1
+                add.w   (BellmiteX).l,d0
+                add.w   (BellmiteY).l,d1
                 cmp.w   #$30,d0
                 bcs.b   .4AFE2
                 cmp.w   #$148,d0
@@ -826,9 +844,9 @@ Upd_4AF14:
                 rts
 .4AFE2:
                 st.b    $34(a0)
-                bra.w   Upd_4AF14
+                bra.w   Upd_BellmiteShell
 .4AFEA:
-                movem.w (D_4B534).l,d0-d1
+                movem.w (BellmiteX).l,d0-d1
                 add.w   $36(a0),d0
                 add.w   $38(a0),d1
                 move.b  $3D(a0),d2
@@ -840,34 +858,34 @@ Upd_4AF14:
                 rts
                 dc.w    $0014,$0064,$0170,$00AA,$FFFF,$008C,$00DF,$FFFF
                 dc.w    $012C,$00DF,$FFFF,$0014,$0064,$FFFF
-; object definition: 32x26, 6 frames, gfx $54E08, 1 hit point, fires every ~34 frames, score 300, update Upd_4A838, spawn Spawn_4A808
-Def_4B02C:
+; object definition: 32x26, 6 frames, gfx $54E08, 1 hit point, fires every ~34 frames, score 300, update Upd_Cancer, spawn Spawn_Cancer
+Def_Cancer:
                 dc.w    $1A03,$002E
                 dc.w    $0340,$0005,$0001,$0022,$0005,$4E08,$0000,$01A0
                 dc.w    $0004,$B054,$0004,$B05C
-                dc.l    Upd_4A838
-                dc.l    Spawn_4A808
+                dc.l    Upd_Cancer
+                dc.l    Spawn_Cancer
                 dc.w    $0000,$0300
-D_4B054:
+CancerAnimRight:
                 dc.w    $0304,$05FF
-D_4B058:
+CancerAnimLeft:
                 dc.w    $0001,$02FF,$0004,$0002,$0018,$0016,$0002,$0003
                 dc.w    $001B,$0014,$0004,$0004,$0018,$0013,$0005,$0004
                 dc.w    $0018,$0014,$0004,$0003,$0019,$0015,$0005,$0003
                 dc.w    $0018,$0015
-D_4B08C:
+SlitherScatter:
                 dc.w    $0000,$FFFC,$FFFE,$FFFC,$FFFC,$FFFC,$FFFC,$FFFE
                 dc.w    $FFFC,$0000,$FFFC,$0002,$FFFC,$0004,$FFFE,$0004
                 dc.w    $0000,$0004
-D_4B0B0:
+SlitherHeadFrames:
                 dc.w    $0000,$0009,$0015,$001E,$002A,$0036,$0042,$004B
                 dc.w    $0051,$005D,$0063,$006C,$0072,$0084,$0090,$0099
-; object definition: 32x29, 16 frames, gfx $5CDC8, score 500, update Upd_4A9F0, spawn Spawn_4A928
-Def_4B0D0:
+; object definition: 32x29, 16 frames, gfx $5CDC8, score 500, update Upd_Slither, spawn Spawn_Slither
+Def_SlitherHead:
                 dc.w    $1D03,$002E,$03A0,$0000,$0000,$0000,$0005,$CDC8
                 dc.w    $0000,$01D0,$0004,$B0F8,$0004,$B10A
-                dc.l    Upd_4A9F0
-                dc.l    Spawn_4A928
+                dc.l    Upd_Slither
+                dc.l    Spawn_Slither
                 dc.w    $0000,$0500,$0001,$0203,$0405,$0607,$0809,$0A0B
                 dc.w    $0C0D,$0E0F,$FF00,$0006,$0002,$0014,$0018,$0006
                 dc.w    $0001,$0014,$0019,$0006,$0003,$0014,$0016,$0004
@@ -878,12 +896,12 @@ Def_4B0D0:
                 dc.w    $0004,$0019,$0015,$0004,$0004,$0017,$0014,$0003
                 dc.w    $0003,$0017,$0016,$0004,$0002,$0017,$0015,$0005
                 dc.w    $0002,$0014,$0018
-; object definition: 32x29, 16 frames, gfx $607C8, score 300, update Upd_4A9F0, spawn Spawn_4A928
-Def_4B18A:
+; object definition: 32x29, 16 frames, gfx $607C8, score 300, update Upd_Slither, spawn Spawn_Slither
+Def_SlitherBody:
                 dc.w    $1D03,$002E,$03A0,$0000,$0000,$0000,$0006,$07C8
                 dc.w    $0000,$01D0,$0004,$B0F8,$0004,$B1B2
-                dc.l    Upd_4A9F0
-                dc.l    Spawn_4A928
+                dc.l    Upd_Slither
+                dc.l    Spawn_Slither
                 dc.w    $0000,$0300,$0006,$0004,$0012,$0016,$0006,$0003
                 dc.w    $0012,$0016,$0005,$0005,$0014,$0014,$0004,$0003
                 dc.w    $0016,$0015,$0004,$0004,$0016,$0012,$0004,$0003
@@ -893,12 +911,12 @@ Def_4B18A:
                 dc.w    $0015,$0014,$0005,$0006,$0016,$0012,$0004,$0005
                 dc.w    $0017,$0013,$0005,$0004,$0015,$0015,$0005,$0004
                 dc.w    $0015,$0015
-; object definition: 32x23, 16 frames, gfx $641C8, score 300, update Upd_4A9F0, spawn Spawn_4A928
-Def_4B232:
+; object definition: 32x23, 16 frames, gfx $641C8, score 300, update Upd_Slither, spawn Spawn_Slither
+Def_SlitherTail:
                 dc.w    $1703,$002E,$02E0,$0000,$0000,$0000,$0006,$41C8
                 dc.w    $0000,$0170,$0004,$B0F8,$0004,$B25A
-                dc.l    Upd_4A9F0
-                dc.l    Spawn_4A928
+                dc.l    Upd_Slither
+                dc.l    Spawn_Slither
                 dc.w    $0000,$0300,$0003,$0002,$0011,$0012,$0003,$0001
                 dc.w    $0010,$0012,$0003,$0001,$0012,$0012,$0002,$0002
                 dc.w    $0013,$0012,$0002,$0003,$0012,$0010,$0004,$0002
@@ -908,12 +926,12 @@ Def_4B232:
                 dc.w    $0012,$0011,$0002,$0003,$0014,$0010,$0002,$0003
                 dc.w    $0012,$0011,$0001,$0002,$0012,$0012,$0003,$0002
                 dc.w    $0010,$0012
-; object definition: 32x28, 16 frames, gfx $57708, fires every ~10 frames, score 200, update Upd_4ABA0, spawn Spawn_4AB76
-Def_4B2DA:
+; object definition: 32x28, 16 frames, gfx $57708, fires every ~10 frames, score 200, update Upd_Pursuer, spawn Spawn_Pursuer
+Def_Pursuer:
                 dc.w    $1C03,$002E,$0380,$0000,$0000,$000A
                 dc.w    $0005,$7708,$0000,$01C0,$0004,$B302,$0004,$B314
-                dc.l    Upd_4ABA0
-                dc.l    Spawn_4AB76
+                dc.l    Upd_Pursuer
+                dc.l    Spawn_Pursuer
                 dc.w    $0000,$0200,$0001,$0203,$0405,$0607,$0809,$0A0B
                 dc.w    $0C0D,$0E0F,$FF00,$0007,$0004,$0012,$0013,$0006
                 dc.w    $0005,$0012,$0013,$0008,$0004,$0010,$0014,$0006
@@ -924,34 +942,34 @@ Def_4B2DA:
                 dc.w    $0005,$0012,$0013,$0006,$0004,$0012,$0012,$0007
                 dc.w    $0004,$0012,$0014,$0007,$0005,$0012,$0013,$0007
                 dc.w    $0004,$0011,$0015
-D_4B394:
+PursuerSteps:
                 dc.w    $0000,$FFFD,$0002,$FFFD,$0003,$FFFD,$0003,$FFFE
                 dc.w    $0003,$0000,$0003,$0002,$0003,$0003,$0002,$0003
                 dc.w    $0000,$0003,$FFFE,$0003,$FFFD,$0003,$FFFD,$0002
                 dc.w    $FFFD,$0000,$FFFD,$FFFE,$FFFD,$FFFD,$FFFE,$FFFD
-; object definition: 32x3, 4 frames, gfx $56188, update Upd_4ACEE
-Def_4B3D4:
+; object definition: 32x3, 4 frames, gfx $56188, update Upd_CheetahBeam
+Def_CheetahBeam:
                 dc.w    $0303,$002E,$0060,$0002,$0000,$0000,$0005,$6188
                 dc.w    $0000,$0030,$0004,$B41C,$0004,$B3FC
-                dc.l    Upd_4ACEE
+                dc.l    Upd_CheetahBeam
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0020,$0003
                 dc.w    $0000,$0000,$0020,$0003,$0000,$0000,$0020,$0003
                 dc.w    $0000,$0000,$0020,$0003,$0001,$0203,$FF00
-; object definition: 48x41, 4 frames, gfx $5AF08, score 800, update Upd_4AC86, spawn Spawn_4AC10
-Def_4B422:
+; object definition: 48x41, 4 frames, gfx $5AF08, score 800, update Upd_Cheetah, spawn Spawn_Cheetah
+Def_Cheetah:
                 dc.w    $2904
                 dc.w    $002C,$07B0,$0003,$0000,$0000,$0005,$AF08,$0000
                 dc.w    $03D8,$0004,$B44A,$0004,$B47A
-                dc.l    Upd_4AC86
-                dc.l    Spawn_4AC10
+                dc.l    Upd_Cheetah
+                dc.l    Spawn_Cheetah
                 dc.w    $0000,$0800,$0001,$0203,$0201,$FF00
-; object definition: 32x20, 8 frames, gfx $56308, score 400, update Upd_4AC8E, spawn Spawn_4AC36
-Def_4B452:
+; object definition: 32x20, 8 frames, gfx $56308, score 400, update Upd_MidCheetah, spawn Spawn_MidCheetah
+Def_MidCheetah:
                 dc.w    $1403,$002E
                 dc.w    $0280,$0002,$0000,$0000,$0005,$6308,$0000,$0140
                 dc.w    $0004,$B49A,$0004,$B4A4
-                dc.l    Upd_4AC8E
-                dc.l    Spawn_4AC36
+                dc.l    Upd_MidCheetah
+                dc.l    Spawn_MidCheetah
                 dc.w    $0000,$0400,$0002,$0002,$001D,$0025,$0002,$0002
                 dc.w    $001D,$0025,$0002,$0002,$001D,$0025,$0002,$0002
                 dc.w    $001D,$0025,$0001,$0203,$0405,$0607,$FF00,$0001
@@ -959,45 +977,45 @@ Def_4B452:
                 dc.w    $0002,$0018,$000B,$0001,$0002,$0019,$000D,$0002
                 dc.w    $0002,$0017,$0010,$0001,$0005,$0018,$000D,$0001
                 dc.w    $0006,$000E,$000C,$0001,$0005,$0018,$000D
-D_4B4E4:
+BellmiteBounce:
                 dc.w    $0809,$0A0B,$0C0D,$0E0F,$0001,$0203,$0405,$0607
-D_4B4F4:
+BellmiteShells:
                 dc.w    $FFF9,$000D,$0000,$0000,$FFFA,$0020,$0000,$0000
                 dc.w    $0009,$0017,$0000,$0000,$000B,$FFFE,$0000,$0000
                 dc.w    $001E,$FFF6,$0000,$0000,$001F,$000D,$0000,$0000
                 dc.w    $0019,$001D,$0000,$0000,$FFFB,$FFF7,$0000,$0000
-D_4B534:
+BellmiteX:
                 dc.w    $0000
-D_4B536:
+BellmiteY:
                 dc.w    $0000,$0008,$0009,$000A,$000B,$000C,$000D,$000E
                 dc.w    $000F,$0000,$0001,$0002,$0003,$0004,$0005,$0006
                 dc.w    $0007
-D_4B558:
+ShellScatter:
                 dc.w    $0000,$FFFC,$0002,$FFFC,$0004,$FFFC,$0004,$FFFE
                 dc.w    $0004,$0000,$0004,$0002,$0004,$0004,$0002,$0004
                 dc.w    $0000,$0004,$FFFE,$0004,$FFFC,$0004,$FFFC,$0002
                 dc.w    $FFFC,$0000,$FFFC,$FFFE,$FFFC,$FFFC,$FFFE,$FFFC
-D_4B598:
+BellmiteSteps:
                 dc.w    $0000,$FFFE,$0001,$FFFE,$0002,$FFFE,$0002,$FFFF
                 dc.w    $0002,$0000,$0002,$0001,$0002,$0002,$0001,$0002
                 dc.w    $0000,$0002,$FFFF,$0002,$FFFE,$0002,$FFFE,$0001
                 dc.w    $FFFE,$0000,$FFFE,$FFFF,$FFFE,$FFFE,$FFFF,$FFFE
-D_4B5D8:
+ShellFormations:
                 dc.w    $0001,$0305,$0204,$0607,$0506,$0304,$0001,$0702
                 dc.w    $0704,$0603,$0502,$0100,$0201,$0403,$0700,$0605
-; object definition: 48x48, 1 frame, gfx $66FC8, score 1000, update Upd_4AD94, spawn Spawn_4AD00
-Def_4B5F8:
+; object definition: 48x48, 1 frame, gfx $66FC8, score 1000, update Upd_Bellmite, spawn Spawn_Bellmite
+Def_Bellmite:
                 dc.w    $3004,$002C,$0900,$0000,$0000,$0000,$0006,$6FC8
                 dc.w    $0000,$0480,$0004,$B660,$0004,$B620
-                dc.l    Upd_4AD94
-                dc.l    Spawn_4AD00
+                dc.l    Upd_Bellmite
+                dc.l    Spawn_Bellmite
                 dc.w    $0000,$1000,$0011,$0012,$0010,$0010
-; object definition: 32x28, 2 frames, gfx $678C8, score 500, update Upd_4AF14, spawn Spawn_4AD00
-Def_4B628:
+; object definition: 32x28, 2 frames, gfx $678C8, score 500, update Upd_BellmiteShell, spawn Spawn_Bellmite
+Def_BellmiteShell:
                 dc.w    $1C03,$002E,$0380,$0001,$0000,$0000,$0006,$78C8
                 dc.w    $0000,$01C0,$0004,$B660,$0004,$B650
-                dc.l    Upd_4AF14
-                dc.l    Spawn_4AD00
+                dc.l    Upd_BellmiteShell
+                dc.l    Spawn_Bellmite
                 dc.w    $0000,$0500,$0001,$0001,$0018,$0019,$0002,$0001
                 dc.w    $0016,$0019,$0001,$FF00,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
