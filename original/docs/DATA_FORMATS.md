@@ -162,7 +162,7 @@ Every wave entry is `trigger.w, x.w, y.w`, 8 bytes of parameters (`$06`–`$0D`)
 | Pata-Pata (1, 4, 7) | `$06.l` group list: per fighter y.w, delay.b, start frame.b; `$FFFF` ends |
 | Bug (1, 4, 7) | `$06.l` path: steps.w, then dx, dy and frame tables (signed bytes, level B); `$0A.w` number − 1; `$0C.w` extra x speed |
 | Bink (1, 4, 6, 7) | `$06.w` walking step (signed: direction) |
-| Cancer (1, 4, 5, 7) | `$06.w` copied to the object (`$3A`), `$08.w` frames between them, `$0A.l` list of x, y; `$FFFF` ends |
+| Cancer (1, 4, 5, 7) | `$06.w` scroll x after which it stops chasing the ship and leaves, `$08.w` frames between them, `$0A.l` list of x, y; `$FFFF` ends |
 | Gouger (2) | `$06.w` corner 0–3 (which wall it clings to, and its frames) |
 | Wick (2) | `$06.w` number − 1 |
 | Gun tower (3) | `$06.w` non-zero = upside down, `$08.w` hit points |

@@ -174,45 +174,45 @@ LevelPalette:
                 dc.w    $0555,$0BBB,$0777,$0500,$005F,$00F0,$0050,$0955
                 dc.w    $0B00,$09BF,$000B,$0F77,$0B70,$0FF0,$0FFF
 Spawn_PataPata:
-                movea.l $6(a1),a3
+                movea.l $6(a1),a3                   ; the group list
 .4A752:
-                move.w  (a3)+,d1
+                move.w  (a3)+,d1                    ; y ($FFFF ends)
                 bmi.b   .4A772
-                move.w  #$170,d0
+                move.w  #$170,d0                    ; enter at the right edge
                 moveq   #1,d2
                 jsr     (jt_ObjCreate).w
-                move.b  (a3)+,$32(a0)
-                move.b  (a3)+,$1F(a0)
-                clr.w   $34(a0)
+                move.b  (a3)+,$32(a0)               ; delay before it starts
+                move.b  (a3)+,$1F(a0)               ; first animation frame
+                clr.w   $34(a0)                     ; position in the wave table
                 jsr     (jt_ObjInsert).w
                 bra.b   .4A752
 .4A772:
                 rts
 Upd_PataPata:
-                tst.b   $32(a0)
+                tst.b   $32(a0)                     ; still waiting?
                 beq.b   .4A780
                 subq.b  #$1,$32(a0)
                 rts
 .4A780:
-                lea.l   ($78FD8).l,a1
+                lea.l   ($78FD8).l,a1               ; wave: 35 signed y steps (level B)
                 move.w  $34(a0),d0
                 move.b  (a1,d0.w),d1
                 ext.w   d1
-                add.w   d1,$C(a0)
+                add.w   d1,$C(a0)                   ; bob up and down
                 addq.w  #$1,d0
                 cmp.w   #$23,d0
                 bcs.b   .4A79E
                 clr.w   d0
 .4A79E:
                 move.w  d0,$34(a0)
-                subq.w  #$4,$A(a0)
-                cmpi.w  #$20,$A(a0)
+                subq.w  #$4,$A(a0)                  ; 4 pixels left a frame
+                cmpi.w  #$20,$A(a0)                 ; gone off the left edge?
                 bhi.b   .4A7B2
                 jmp     (jt_ObjKillSelf).w
 .4A7B2:
                 rts
 Spawn_Bug:
-                move.w  $A(a1),d7
+                move.w  $A(a1),d7                   ; number of Bugs - 1
                 clr.w   d6
 .4A7BA:
                 move.w  $2(a1),d0
@@ -220,32 +220,32 @@ Spawn_Bug:
                 moveq   #1,d2
                 jsr     (jt_ObjCreate).w
                 clr.b   $22(a0)
-                move.l  $6(a1),$32(a0)
+                move.l  $6(a1),$32(a0)              ; the path
                 clr.w   $36(a0)
-                move.w  $C(a1),$3A(a0)
-                move.b  d6,$38(a0)
+                move.w  $C(a1),$3A(a0)              ; extra x speed
+                move.b  d6,$38(a0)                  ; start delay: 7 frames apart
                 jsr     (jt_ObjInsert).w
                 addq.b  #$7,d6
                 dbra    d7,.4A7BA
                 rts
 Upd_Bug:
-                move.w  $3A(a0),d0
+                move.w  $3A(a0),d0                  ; drift with its own x speed
                 add.w   d0,$A(a0)
-                tst.b   $38(a0)
+                tst.b   $38(a0)                     ; still waiting?
                 beq.b   .4A800
                 subq.b  #$1,$38(a0)
                 rts
 .4A800:
-                movea.l $32(a0),a1
-                move.w  $36(a0),d0
+                movea.l $32(a0),a1                  ; path: steps, dx, dy, frame tables
+                move.w  $36(a0),d0                  ; step number
                 move.w  (a1)+,d1
                 bsr.b   .4A832
-                add.w   d2,$A(a0)
+                add.w   d2,$A(a0)                   ; x += dx[step]
                 bsr.b   .4A832
-                add.w   d2,$C(a0)
+                add.w   d2,$C(a0)                   ; y += dy[step]
                 bsr.b   .4A832
-                move.b  d2,$1F(a0)
-                cmp.w   d1,d0
+                move.b  d2,$1F(a0)                  ; frame = frame[step]
+                cmp.w   d1,d0                       ; at the end it keeps the last step
                 bcc.b   .4A824
                 addq.w  #$1,$36(a0)
 .4A824:
@@ -888,8 +888,8 @@ Bink_Fall:
 .4AF70:
                 rts
 Spawn_Cancer:
-                movea.l $A(a1),a3
-                move.w  $8(a1),d7
+                movea.l $A(a1),a3                   ; list of x, y
+                move.w  $8(a1),d7                   ; frames between them
                 clr.w   d6
 .4AF7C:
                 move.w  (a3)+,d0
@@ -897,21 +897,21 @@ Spawn_Cancer:
                 move.w  (a3)+,d1
                 move.w  $8(a2),d2
                 jsr     (jt_ObjCreate).w
-                move.w  $6(a1),$3A(a0)
+                move.w  $6(a1),$3A(a0)              ; scroll x at which it gives up
                 clr.w   $38(a0)
-                move.w  d6,$32(a0)
+                move.w  d6,$32(a0)                  ; start delay
                 add.w   d7,d6
                 jsr     (jt_ObjInsert).w
                 bra.b   .4AF7C
 .4AFA0:
                 rts
 Upd_Cancer:
-                tst.w   $32(a0)
+                tst.w   $32(a0)                     ; waiting to start?
                 beq.b   .4AFAE
                 subq.w  #$1,$32(a0)
                 rts
 .4AFAE:
-                subq.w  #$1,$A(a0)
+                subq.w  #$1,$A(a0)                  ; scrolls with the map
                 movem.w $A(a0),d0-d1
                 cmp.w   #$10,d0
                 bcs.b   .4AFD0
@@ -925,9 +925,9 @@ Upd_Cancer:
                 jmp     (jt_ObjKillSelf).w
 .4AFD4:
                 move.w  $3A(a0),d4
-                cmp.w   (ScrollX).w,d4
+                cmp.w   (ScrollX).w,d4              ; past its scroll x:
                 bhi.b   .4AFEE
-                moveq   #10,d7
+                moveq   #10,d7                      ; make for the nearer edge
                 cmp.w   #$88,d1
                 bcs.b   .4AFEA
                 move.w  #$E0,d7
@@ -935,19 +935,19 @@ Upd_Cancer:
                 moveq   #4,d6
                 bra.b   .4AFFA
 .4AFEE:
-                subq.w  #$1,$38(a0)
+                subq.w  #$1,$38(a0)                 ; time for a new heading?
                 bpl.b   .4B038
-                movem.w (ShipPos).w,d6-d7
+                movem.w (ShipPos).w,d6-d7           ; target: the ship
 .4AFFA:
                 moveq   #2,d4
-                lea.l   (CancerAnimRight).l,a1
+                lea.l   (CancerAnimRight).l,a1      ; x step +2 / -1, facing it
                 cmp.w   d6,d0
                 bcs.b   .4B00E
                 moveq   #-1,d4
                 lea.l   (CancerAnimLeft).l,a1
 .4B00E:
                 move.l  a1,$2A(a0)
-                moveq   #1,d5
+                moveq   #1,d5                       ; y step +1 / -1
                 cmp.w   d7,d1
                 bcs.b   .4B01A
                 neg.w   d5
@@ -957,7 +957,7 @@ Upd_Cancer:
                 bpl.b   .4B022
                 neg.w   d2
 .4B022:
-                lsr.w   #$1,d2
+                lsr.w   #$1,d2                      ; hold it for |dx|/2 + random 25 frames
                 moveq   #25,d0
                 jsr     (jt_Random).w
                 add.w   d0,d2
@@ -976,9 +976,9 @@ Upd_Cancer:
                 add.w   #$20,d1
 .4B052:
                 addq.w  #$8,d0
-                jsr     (jt_GetMapCell).w
+                jsr     (jt_GetMapCell).w           ; blocked vertically?
                 bne.b   .4B05E
-                add.w   d6,$C(a0)
+                add.w   d6,$C(a0)                   ; no: move up/down
 .4B05E:
                 movem.l (a7)+,d0-d1
                 addq.w  #$8,d1
@@ -990,9 +990,9 @@ Upd_Cancer:
 .4B070:
                 add.w   #$22,d0
 .4B074:
-                jsr     (jt_GetMapCell).w
+                jsr     (jt_GetMapCell).w           ; blocked horizontally?
                 bne.b   .4B07E
-                add.w   d4,$A(a0)
+                add.w   d4,$A(a0)                   ; no: move left/right
 .4B07E:
                 rts
 Spawn_Shell:
@@ -1905,7 +1905,10 @@ BinkJumpArc:
                 dc.w    $005A,$0170,$0046,$0170,$0091,$0170,$0032,$FFFF
                 dc.w    $0170,$00A0,$0170,$0055,$0170,$00A6,$0170,$0046
                 dc.w    $FFFF
-; Cancer: a group from a position list, starting entry $08 frames apart
+; Cancer: hovers after the ship - a group from a position list (entry
+; $0A), $08 frames apart.  It picks a heading towards the ship (x 2 or -1,
+; y 1 or -1 a frame) for |dx|/2 + up to 25 frames, sliding along walls;
+; after scroll x (entry $06) it gives up and makes for the nearer edge.
 ; (32x26, 6 frames, gfx $6DAD8, 1 hit point, fires every ~40 frames, score 300, update Upd_Cancer, spawn Spawn_Cancer)
 Def_Cancer:
                 dc.w    $1A03,$002E,$0340,$0005,$0001,$0028,$0006
