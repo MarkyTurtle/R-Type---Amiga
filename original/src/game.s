@@ -54,7 +54,7 @@ TRACK_BUFFER    equ     $7C400          ; raw MFM buffer
 ;   $08480-$0873F 16x11 diagonal/vertical shots (ShotTypes 1-4)
 ;   $08740-$0B43F explosions (DefExplosion1/2)
 ;   $0B440-$10A4F large explosion         $10A50-$1248F ring burst
-;   $12490-$1294F speed-up flash          $12950-$1564F reflect laser
+;   $12490-$1294F speed-up flash          $12950-$1564F anti-air laser (helix)
 ;   $15650-$15A4F 32x4 shot streams       $15A50-$17ACF cannon walker
 ;   $17AD0-$189CF power-up items          $189D0-$19B8F wave cannon shots
 ;   $19B90-$19D8F lasers                  $19D90-$1A2CF enemy bullets
@@ -329,7 +329,7 @@ GameFrame:
                 move.l  #$FFFF0000,$44(a6)          ; BLTAFWM/LWM: last word masked off (shift word)
                 move.l  #$FFFEFFFE,$62(a6)          ; BLTBMOD/AMOD = -2: source 1 word narrower
                 bsr.w   UpdateShots                 ; ship shots + Force shots
-                bsr.w   UpdateWaveBeam              ; charged beam, shot streams, reflect laser
+                bsr.w   UpdateWaveBeam              ; charged beam, shot streams, anti-air laser
                 bsr.w   UpdateObjects               ; every enemy: its routine, explosion, hits, firing, draw
                 bsr.w   UpdateEnemyBullets          ; 16 aimed bullets
                 bsr.w   UpdateMissiles              ; homing missiles
@@ -1043,7 +1043,7 @@ ClearScreens:
                 bcs.b   .00d0c
                 rts
 InitMapOffsets:
-                lea.l   (D_04D1A).l,a0
+                lea.l   (ReflectLaserMoves).l,a0
                 move.l  (MapRowBytes).l,d0
                 move.l  d0,d1
                 move.l  d0,$6A(a0)
@@ -1060,7 +1060,7 @@ InitMapOffsets:
                 addq.l  #$4,d1
                 move.l  d1,$6(a0)
                 move.l  (MapRowBytes).l,d0
-                lea.l   (D_04E6E).l,a0
+                lea.l   (GroundLaserMoves).l,a0
                 lea.l   (StackTop).l,a1
                 bsr.b   .00d6c
                 neg.l   d0
@@ -1844,7 +1844,7 @@ HitByShots:
                 bsr.w   ObjDamage
                 bra.b   .015d6
 .01592:
-                cmp.w   #$C,d7                      ; 12: reflect laser - 5 damage,
+                cmp.w   #$C,d7                      ; 12: anti-air laser (helix) - 5 damage,
                 bne.b   .015b0
                 move.w  $24(a0),d0
                 sub.w   $26(a0),d0
@@ -1963,6 +1963,12 @@ ObjDamage:
                 bra.w   PlaySound
 .016aa:
                 rts
+; The Force touching an object: 1 damage.  The ship touching it: a power-up
+; (flag bit 3) is collected - 400 points, sound 8, and by its frame:
+; 0/1/2 blue/red/yellow crystal = LaserType (and the Force gets stronger:
+; first crystal level 1, or 2 if docked at the back; later ones level 3),
+; 3 speed-up, 4 missiles, 5 a Bit (upper first, then lower).  Anything else
+; kills the ship.
 HitByForceOrShip:
                 movem.w (ForcePos).l,d0-d1
                 sub.w   #$5F,d0
@@ -2047,7 +2053,7 @@ CollectSpeedUp:
 .017e6:
                 rts
 HitByLasers:
-                move.b  (LaserType2Active).l,d2
+                move.b  (GroundLaserActive).l,d2
                 lea.l   (LaserSegments).l,a1
                 moveq   #7,d7
 .017f6:
@@ -2326,7 +2332,7 @@ UpdateWaveBeam:
                 lea.l   ($15850).l,a1
                 addq.w  #$2,a0
                 bsr.b   UpdateShotStream
-                bra.w   UpdateReflectBeam
+                bra.w   UpdateAntiAirLaser
 ; 32x4 shot streams ($15650 and $15850, 2 frames of $80 each, plus a
 ; mirrored pair $100 on for firing backwards).  Like all player shots, a
 ; hit on a map cell sets bit 13 of the cell (bit 5 of its high byte); a
@@ -2373,7 +2379,7 @@ UpdateShotStream:
                 move.w  d6,(a0)
 .01ba4:
                 rts
-UpdateReflectBeam:
+UpdateAntiAirLaser:
                 move.w  (D_04B8E).l,d6
                 beq.w   UpdateLasers
                 move.w  (D_04BAA).l,d1
@@ -2401,7 +2407,7 @@ UpdateReflectBeam:
                 moveq   #20,d4
 .01bf0:
                 move.w  d4,(D_04BC6).l
-                lea.l   (ReflectLaserFrames).l,a0
+                lea.l   (AntiAirLaserFrames).l,a0
                 movea.l (a0,d4.w),a1
                 movea.l a1,a2
                 adda.l  #$3C0,a2
@@ -2427,6 +2433,16 @@ UpdateReflectBeam:
                 clr.w   d6
 .01c3a:
                 move.w  d6,(D_04B8E).l
+; The two segmented lasers (LaserSegments: 8 parallel word arrays, x +0,
+; y +$14, steps left +$28, delay +$3C, direction +$50):
+;   blue reflect laser: 16x16 segments ($19B90, 2 frames: diagonal up /
+;     down).  Each step tries the moves in ReflectLaserMoves for its
+;     direction (4 x 10 bytes: dx, dy, new direction, map offset.l) until
+;     one isn't solid - i.e. it bounces off walls (sound 2).  Destructible
+;     cells are marked hit instead.  75 steps ($4B) then it is gone.
+;   yellow ground laser (GroundLaserActive): 16x14 segments
+;     (GroundLaserFrames), moves from GroundLaserMoves chosen so that it
+;     keeps to solid surfaces - it crawls along the floor and ceiling.
 UpdateLasers:
                 tst.b   (LaserCount).l
                 beq.w   .01d1c
@@ -2435,7 +2451,7 @@ UpdateLasers:
                 lea.l   (LaserSegments).l,a0
                 moveq   #7,d7
                 moveq   #0,d6
-                tst.b   (LaserType2Active).l
+                tst.b   (GroundLaserActive).l
                 bne.w   .01d1e
 .01c6a:
                 move.w  (a0),d0
@@ -2460,7 +2476,7 @@ UpdateLasers:
                 movea.l a1,a2
                 adda.l  #$80,a2
                 bsr.w   BlitBob
-                lea.l   (D_04D1A).l,a3
+                lea.l   (ReflectLaserMoves).l,a3
                 mulu.w  #$28,d6
                 adda.l  d6,a3
                 movem.w (a7),d0-d1
@@ -2483,7 +2499,7 @@ UpdateLasers:
                 bset.b  #$5,(a1)
                 bra.b   .01d0e
 .01cf0:
-                moveq   #2,d0                       ; sound: laser
+                moveq   #2,d0                       ; sound: reflect laser bounce
                 bsr.w   PlaySound
                 bra.b   .01cd0
 .01cf8:
@@ -2517,7 +2533,7 @@ UpdateLasers:
                 movem.w d0-d1,-(a7)
                 move.w  $50(a0),d6
                 move.w  d6,d5
-                lea.l   (LaserFrames).l,a1
+                lea.l   (GroundLaserFrames).l,a1
                 lsl.w   #$2,d5
                 movea.l (a1,d5.w),a1
                 movea.l a1,a2
@@ -2525,7 +2541,7 @@ UpdateLasers:
                 move.w  #$E02,d1
                 bsr.w   BlitBob
                 mulu.w  #$28,d6
-                lea.l   (D_04E6E).l,a3
+                lea.l   (GroundLaserMoves).l,a3
                 adda.l  d6,a3
                 move.w  $28(a0),d6
                 adda.l  d6,a3
@@ -2578,9 +2594,11 @@ L_01DDE:
 ;      shot; level 1+: up-right and down-right; level 3: also up and down
 ;   docked (ForceSide +/-1, level 1+): by LaserType, the colour of the
 ;      last crystal collected (set in HitByForceOrShip):
-;        1    reflect laser (sound 3)
-;        0/2  segmented lasers in LaserSegments - 4 segments at levels
-;             1-2, 8 at level 3; type 2 sets LaserType2Active (sound 4)
+;        1    red: anti-air laser, the double helix (sound 3)
+;        0    blue: reflect laser - segments bounce off walls diagonally
+;        2    yellow: ground laser - segments crawl along surfaces
+;        0/2  use LaserSegments - 4 segments at levels
+;             1-2, 8 at level 3; the ground laser sets GroundLaserActive (sound 4)
 ;      fired forwards or backwards by the docking side (LaserSide).
 FireForce:
                 tst.b   (ForceActive).l
@@ -2673,7 +2691,7 @@ FireForce:
                 move.w  d0,(a0)+
                 addq.w  #$1,d3
                 dbra    d6,.01ed2
-                clr.b   (LaserType2Active).l
+                clr.b   (GroundLaserActive).l
 .01f08:
                 rts
 .01f0a:
@@ -2710,8 +2728,8 @@ FireForce:
                 move.w  d0,(a0)+
                 addq.w  #$1,d3
                 dbra    d6,.01f4e
-                st.b    (LaserType2Active).l
-                moveq   #4,d0                       ; sound: Force weapon B
+                st.b    (GroundLaserActive).l
+                moveq   #4,d0                       ; sound: ground laser
                 bra.w   PlaySound
 .01f88:
                 tst.b   d7
@@ -2728,7 +2746,7 @@ FireForce:
                 moveq   #2,d4
 .01f9e:
                 move.w  d0,-(a7)
-                moveq   #3,d0                       ; sound: Force weapon A
+                moveq   #3,d0                       ; sound: anti-air laser
                 bsr.w   PlaySound
                 move.w  (a7)+,d0
                 cmp.b   #$2,d6
@@ -4107,6 +4125,12 @@ UpdateMissiles:
                 move.w  #$38,(MissileReload).l
 L_030B6:
                 rts
+; Missile states: Launch - drift up/down for 9 frames; Forward - 6 pixels
+; right for 7 frames; Seek - pick the nearest live, destructible enemy
+; (|dx|+|dy|, MissileBestDist), one missile only above, the other only
+; below, flying on until one is found; Home - every 4th frame turn one of
+; 16 directions towards it (DirectionTo, TurnTowards) and move by
+; MissileVelocities; if the target dies the missile flies straight on.
 Missile_Launch:
                 move.b  $19(a0),d0
                 ext.w   d0
@@ -4124,7 +4148,7 @@ Missile_Forward:
                 rts
 Missile_Seek:
                 movem.w $4(a0),d6-d7
-                move.w  #$FFFF,(D_055A6).l
+                move.w  #$FFFF,(MissileBestDist).l
                 move.l  (ActiveObjects).l,d0
                 beq.b   .03150
 .030fe:
@@ -4141,7 +4165,7 @@ Missile_Seek:
                 moveq   #1,d4
 .03116:
                 add.w   d1,d0
-                cmp.w   (D_055A6).l,d0
+                cmp.w   (MissileBestDist).l,d0
                 bhi.b   .0313c
                 cmp.b   $1A(a0),d4
                 bne.b   .0313c
@@ -4149,7 +4173,7 @@ Missile_Seek:
                 bne.b   .0313c
                 tst.w   $24(a1)
                 bmi.b   .0313c
-                move.w  d0,(D_055A6).l
+                move.w  d0,(MissileBestDist).l
                 move.l  a1,$8(a0)
 .0313c:
                 move.l  (a1),d0
@@ -4177,13 +4201,13 @@ Missile_Home:
                 bsr.w   TurnTowards
                 move.w  d1,$C(a0)
                 lsl.w   #$3,d1
-                lea.l   (D_054EC).l,a1
+                lea.l   (MissileHitboxes).l,a1
                 movem.l (a1,d1.w),d4-d5
                 movem.l d4-d5,$10(a0)
 .031a0:
                 move.w  $C(a0),d0
                 lsl.w   #$2,d0
-                lea.l   (D_0542C).l,a1
+                lea.l   (MissileVelocities).l,a1
                 movem.w (a1,d0.w),d1-d2
                 add.w   d1,$4(a0)
                 add.w   d2,$6(a0)
@@ -5784,7 +5808,7 @@ LaserCount:
                 dc.b    $00
 WaveBeamToggle:
                 dc.b    $00
-LaserType2Active:
+GroundLaserActive:
                 dc.b    $00
 WaveBeamMapOfs:
                 dc.w    $0000
@@ -5849,8 +5873,8 @@ ShotTypes:
                 dc.w    $0000,$85E0,$0000,$8638,$0000,$000C
                 dc.l    $00000B02               ; BLTSIZE: 11 lines x 4 planes, 2 words
                 dc.w    $0000,$8690,$0000,$86E8
-; reflect laser frames: 6 x $780 from $12950 (UpdateReflectBeam)
-ReflectLaserFrames:
+; anti-air laser (red crystal), the double helix: 6 x $780 from $12950 (UpdateAntiAirLaser)
+AntiAirLaserFrames:
                 dc.w    $0001,$2950,$0001,$30D0,$0001,$3850,$0001,$3FD0
                 dc.w    $0001,$4750,$0001,$4ED0
 ; wave cannon shot sizes by charge ($189D0-$19B8F) (FireWaveCannon)
@@ -5870,7 +5894,7 @@ WaveCannonShots:
                 dc.l    GameEntry
                 dc.w    $0006,$001B,$0003,$0002,$0001,$000D,$000A,$0006
                 dc.w    $0030,$0C02,$0005,$0001,$89D0,$0000,$0060
-D_04D1A:
+ReflectLaserMoves:
                 dc.w    $000F,$FFF1,$0000,$FFFF,$FE72,$0010,$0000,$0003
                 dc.w    $0000,$0002,$0000,$FFF0,$0001,$FFFF,$FE70,$0000
                 dc.w    $0000,$0002,$0000,$0000,$FFF1,$FFF1,$0001,$FFFF
@@ -5895,10 +5919,10 @@ LaserSegments:
                 dc.w    $0006,$019E,$019E,$019E,$019E,$019E,$ACCF,$ACCF
                 dc.w    $ACCF,$ACCF,$ACCF,$ACCF,$ACCF,$ACCF,$019E,$019E
                 dc.w    $019E,$019E
-; laser frames: 4 x $E0 from $1C2D0 (UpdateLasers)
-LaserFrames:
+; ground laser (yellow crystal) frames: 4 x $E0 from $1C2D0 (UpdateLasers)
+GroundLaserFrames:
                 dc.w    $0001,$C2D0,$0001,$C3B0,$0001,$C490,$0001,$C570
-D_04E6E:
+GroundLaserMoves:
                 dc.w    $0000,$FFF2,$0000,$FFFF,$FDE8,$000E,$0000,$0001
                 dc.w    $0000,$0002,$0000,$000E,$0002
                 dc.l    L_00218
@@ -6150,7 +6174,7 @@ CopBplcon1:
                 dc.w    $000A,$F001,$FFFE,$0182,$000E,$F101,$FFFE,$0182
                 dc.w    $000A,$F201,$FFFE,$0182,$0006,$F301,$FFFE,$0182
                 dc.w    $0FFF,$FFFF,$FFFE
-D_0542C:
+MissileVelocities:
                 dc.w    $0000,$FFFA,$0004,$FFFA,$0006,$FFFA,$0006,$FFFC
                 dc.w    $0006,$0000,$0006,$0004,$0006,$0006,$0004,$0006
                 dc.w    $0000,$0006,$FFFC,$0006,$FFFA,$0006,$FFFA,$0004
@@ -6165,7 +6189,7 @@ MissileFrames:
                 dc.w    $0001,$B6D0,$0001,$B7D0,$0001,$B8D0,$0001,$B9D0
                 dc.w    $0001,$BAD0,$0001,$BBD0,$0001,$BCD0,$0001,$BDD0
                 dc.w    $0001,$BED0,$0001,$BFD0,$0001,$C0D0,$0001,$C1D0
-D_054EC:
+MissileHitboxes:
                 dc.w    $0005,$0000,$0006,$000B,$0004,$0001,$0009,$000A
                 dc.w    $0006,$0001,$0009,$000A,$0004,$0003,$000C,$0007
                 dc.w    $0005,$0005,$000B,$0006,$0005,$0005,$000A,$0008
@@ -6182,7 +6206,7 @@ Missile2:
                 dc.w    $0000,$0000,$0000,$0000,$0002,$0000
 MissilesEnabled:
                 dc.w    $0000
-D_055A6:
+MissileBestDist:
                 dc.w    $0000
 MissileReload:
                 dc.w    $0000
@@ -6332,7 +6356,8 @@ SoundChannel3:
 ; Sound effects: 14 entries of 12 bytes (samples in the $6000 block)
 ;   +0.l sample  +4.w length (words)  +6.w period  +8.w volume  +$A.b 0
 ;   +$B.b priority.  All are period 428 (8287 Hz), played once.
-;    0 ship shot   1 wave cannon   2 laser   3/4 Force weapons   5 Force docks
+;    0 ship shot   1 wave cannon   2 reflect laser bounce   3 anti-air laser
+;    4 ground laser   5 Force docks
 ;    6 enemy hit   7 ship explodes 8 power-up  9 beam charged
 ;   10-13 explosion types 0-3 (13 also repeats while the beam is full)
 ; WAVs: sfx/ (tools/extract_sounds.py)

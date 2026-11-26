@@ -4,8 +4,8 @@ State on 26 Nov 2026. All 12 sources reassemble byte-identical (`tools/verify.py
 
 ## 1. The game program (`src/game.s`)
 
-- [ ] **Line-by-line comments.** Done for the core (`MainLoop`, the game states, `GameFrame`, `Level3Int`, `SwapScreens`, `SetBitplanes`, `UpdateScroll`, `UpdateObjects`, `ObjExplode`). Also done: `CopperInt`, `ShipControl`/`ShipTilt`, collisions (`ObjCollisions`, `HitByShots`, `BoxTest`, `ObjDamage`), with block comments for the Force states, `FireForce`, the fly-in and autopilot. Also block comments for the Bits and the homing missiles. Next: `UpdateLasers`, the missile steering states, the title sequence.
-- [ ] **Name the remaining labels**: 99 `L_`/`D_` labels left. `tools/xref.py src/game.s` lists who reads and writes each one; `tools/add_labels.py` inserts labels by address safely.
+- [ ] **Line-by-line comments.** Done for the core (`MainLoop`, the game states, `GameFrame`, `Level3Int`, `SwapScreens`, `SetBitplanes`, `UpdateScroll`, `UpdateObjects`, `ObjExplode`). Also done: `CopperInt`, `ShipControl`/`ShipTilt`, collisions (`ObjCollisions`, `HitByShots`, `BoxTest`, `ObjDamage`), with block comments for the Force states, `FireForce`, the fly-in and autopilot. Also block comments for the Bits and the homing missiles. Also the three lasers (`UpdateLasers`, `UpdateAntiAirLaser`), the missile states and power-up collection. Next: the title sequence.
+- [ ] **Name the remaining labels**: 94 `L_`/`D_` labels left. `tools/xref.py src/game.s` lists who reads and writes each one; `tools/add_labels.py` inserts labels by address safely.
 - [ ] **Variables in `DATA`**: 48 named this round (frame pacing, scroll, ship, Bits, Force animation, wave beam). Still unnamed: the missile arrays (`$556C`–`$55AA`), Force state bytes (`$5143`–`$514B`), title variables (`$56F2`–`$56FE`), death/level counters (`$4209`–`$420D`).
 - [ ] **Remaining first-pass artefacts**: check other `dc.l L_xxxxx` / immediates the generator turned into labels when they're really numbers (two blit sizes in `ShotTypes` were found and fixed).
 - [x] **Frame pacing**: the game is locked to 25 Hz (`Flip50Hz` clear); the ship and Bits move at 50 Hz from the VBL. See `GAME.md`.
@@ -13,7 +13,7 @@ State on 26 Nov 2026. All 12 sources reassemble byte-identical (`tools/verify.py
 - [ ] **Title / attract sequence**: comment the title-letter objects, the text lists (`TitleTextList`) and the high-score name entry.
 - [x] **Force behaviour**: state machine, docking, launching and weapon selection commented (`GAME.md`).
 - [x] **Bits**: trailing movement via a position ring buffer (`UpdateBits`).
-- [ ] **Homing missiles**: slots, launch and reload commented; the steering states (`Missile_*`: how targets are picked) still to do.
+- [x] **Homing missiles**: launch, forward, seek (nearest enemy above/below) and home states commented.
 - [ ] **Walker AI** (`ObjUpd_Walker`, `Walker_Walk`) and the power-up carrier (`ReleasePowerUp`).
 - [ ] **Map cell bits 12–14**: confirm the destructible-block and "hit" behaviour against the level tile routines.
 

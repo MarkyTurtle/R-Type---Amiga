@@ -7,7 +7,7 @@ Generated from `../files/` by `python3 -I tools/render_gfx.py files gfx` (run in
 - `levelN_bobs.png`: enemy/object frames, one row per object definition
 - `sprites_ship.png`, `sprites_bits.png`, `sprites_force0-3.png`: hardware sprites from the `$6000` block (3× size)
 - `engine_bobs.png`: the engine's shared BOBs: explosions, ring burst, speed-up flash, cannon walker, power-up items
-- `engine_weapons.png`: shots, reflect laser, lasers, enemy bullets, homing missiles, wave cannon sizes
+- `engine_weapons.png`: shots, the three lasers (anti-air, reflect, ground), enemy bullets, homing missiles, wave cannon sizes
 
 ![ship](sprites_ship.png)
 ![bits](sprites_bits.png)

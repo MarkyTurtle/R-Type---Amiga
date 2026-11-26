@@ -102,9 +102,9 @@ Each player has several songs, selected by the command in d4 (the `lea`s before 
 |---|---|---|---|---|---|---|
 | 0 | ship shot | `ShipFire` | `$1C68A` | 1900 | 40 | 20 |
 | 1 | wave cannon | `FireWaveCannon` | `$1CDF6` | 4142 | 55 | 25 |
-| 2 | laser | `UpdateLasers` | `$1DE24` | 6428 | 52 | 20 |
-| 3 | Force weapon A | `FireForce` | `$1F740` | 7664 | 51 | 20 |
-| 4 | Force weapon B | `FireForce` | `$21530` | 5474 | 56 | 20 |
+| 2 | reflect laser bounce | `UpdateLasers` (segment hits a wall) | `$1DE24` | 6428 | 52 | 20 |
+| 3 | anti-air laser | `FireForce` | `$1F740` | 7664 | 51 | 20 |
+| 4 | ground laser | `FireForce` | `$21530` | 5474 | 56 | 20 |
 | 5 | Force docks | `Force_Attached`, `ForceHitsShip` | `$22A92` | 5598 | 52 | 25 |
 | 6 | enemy hit | `ObjDamage`, `ObjCollisions` | `$24070` | 542 | 60 | 21 |
 | 7 | ship explodes | `ShipDied` | `$2428E` | 7654 | 64 | 30 |

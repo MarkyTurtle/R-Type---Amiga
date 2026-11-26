@@ -11,7 +11,7 @@ playback rate (3546895 / period).  See docs/MUSIC.md.
 """
 import os, struct, sys, wave
 
-NAMES = ['ship_shot', 'wave_cannon', 'laser', 'force_weapon_a', 'force_weapon_b',
+NAMES = ['ship_shot', 'wave_cannon', 'reflect_laser_bounce', 'anti_air_laser', 'ground_laser',
          'force_docks', 'enemy_hit', 'ship_explodes', 'power_up', 'beam_charged',
          'explosion_0', 'explosion_1', 'explosion_2', 'explosion_3']
 PAL_CLOCK = 3546895

@@ -92,15 +92,15 @@ No code at all: shared graphics and the sound-effect samples. The pieces are con
 | `$0B440`–`$10A4F` | large explosion, 48×51, 9 frames | BOB, `DefExplosionLarge` |
 | `$10A50`–`$1248F` | ring burst, 7 frames | BOB, `DefRingBurst` |
 | `$12490`–`$1294F` | speed-up flash, 2 frames | BOB, `DefSpeedFlash` |
-| `$12950`–`$1564F` | reflect laser (the double helix), 64×30, 6 × `$780` | `ReflectLaserFrames`, `UpdateReflectBeam` |
+| `$12950`–`$1564F` | anti-air laser (red crystal: the double helix), 64×30, 6 × `$780` | `AntiAirLaserFrames`, `UpdateAntiAirLaser` |
 | `$15650`–`$15A4F` | two 32×4 shot streams (2 frames + mirrored pair each) | `UpdateShotStream` |
 | `$15A50`–`$17ACF` | cannon walker, 10 frames | BOB, `DefWalker` (default wave object) |
 | `$17AD0`–`$189CF` | power-up items: blue/red/yellow crystal, S, M, bit | BOB, `DefPowerUp` |
 | `$189D0`–`$19B8F` | wave cannon by charge: 16×12, 32×12, 48×14, 64×16, 2 frames each | `WaveCannonShots`, `FireWaveCannon` |
-| `$19B90`–`$19D8F` | lasers, 16×16, 2 frames | `UpdateLasers` |
+| `$19B90`–`$19D8F` | reflect laser segments (blue crystal), 16×16, 2 frames (diagonal up/down) | `UpdateLasers` |
 | `$19D90`–`$1A2CF` | enemy bullet + hit burst, 16×14, 6 frames | `FireEnemyBullet`, `UpdateEnemyBullets` |
 | `$1A2D0`–`$1C2CF` | homing missiles, 16×16, 16 directions × 2 animation frames, `$100` each | `MissileFrames`, `UpdateMissiles` |
-| `$1C2D0`–`$1C64F` | laser frames, 16×14, 4 × `$E0` | `LaserFrames`, `UpdateLasers` |
+| `$1C2D0`–`$1C64F` | ground laser segments (yellow crystal), 16×14, 4 × `$E0` | `GroundLaserFrames`, `UpdateLasers` |
 | `$1C68A`–`$2C7AF` | 14 sound-effect samples | `SoundTable` (see `MUSIC.md`) |
 | `$2C7B0`–`$2CEB7` | HUD bitplanes, 3 × `$258` | see HUD above |
 
@@ -134,7 +134,7 @@ Level 1's tiles end exactly where its map starts, and level 4's where its stored
 | `levelN_bobs.png` | one row per object definition found in the level, all its frames (mask applied) |
 | `sprites_ship.png`, `sprites_bits.png`, `sprites_force0-3.png` | the hardware sprites, 3× size |
 | `engine_bobs.png` | the engine's own BOBs: explosions, ring burst, speed-up flash, walker, power-ups (2× size) |
-| `engine_weapons.png` | ship shots, shot streams, reflect laser, lasers, enemy bullets, homing missiles, wave cannon sizes (2× size) |
+| `engine_weapons.png` | ship shots, shot streams, anti-air, reflect and ground lasers, enemy bullets, homing missiles, wave cannon sizes (2× size) |
 
 The BOB sheets come from searching level A's DATA for object definitions by their signature (mask offset = half the frame size, modulo = 52 − 2 × width, valid pointers). Frame counts are capped at the next known graphics block. Level definitions can also point at engine graphics in the `$6000` block, for example level 7's `$4BE14` uses the large explosion.
 

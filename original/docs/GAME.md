@@ -116,14 +116,19 @@ A state machine in `ForceState`, run from the copper interrupt (details in the c
 
 **The Force's weapon** (`FireForce`) depends on its state:
 - **Free:** its own shots. Level 0 fires forward; level 1+ adds up-right and down-right; level 3 adds up and down (`ShotTypes`).
-- **Docked:** set by the last crystal collected (`LaserType`): type 1 is the reflect laser; types 0 and 2 are segmented lasers (4 segments, or 8 at level 3).
+- **Docked:** set by the last crystal collected (`LaserType`, the crystal's frame number):
+  - **0, blue: reflect laser.** Segments bounce off walls diagonally.
+  - **1, red: anti-air laser.** The double helix.
+  - **2, yellow: ground laser.** Segments crawl along floors and ceilings.
+
+  The two segmented lasers use 4 segments, or 8 at Force level 3.
 
 **Player shots** are 14 entries in parallel word arrays (x, y, hit box, type; see `HitByShots`):
 
 | Entries | Weapon | Damage |
 |---|---|---|
 | 13 | wave cannon beam | its charge; carries on through enemies it doesn't kill |
-| 12 | reflect laser | 5 |
+| 12 | anti-air laser (helix) | 5 |
 | 10–11 | shot streams | 2 |
 | 0–9 | normal shots | 1, then removed |
 
@@ -133,7 +138,15 @@ A state machine in `ForceState`, run from the copper interrupt (details in the c
 
 `BoxTest` is a simple distance test with separate left/right and up/down extents. `ObjDamage` adds the damage, and when it reaches the definition's hit points the object explodes and its score is added. Otherwise it flashes white for 3 frames (hit sound). Objects carrying a power-up release it when hit. Flag bit 2 makes an object immune to weapons, and hit points < 0 make it indestructible.
 
-**Homing missiles** (the M power-up): two missiles are launched together from the ship on a fire press, with a 56-frame reload. They steer through 16 directions (each with 2 animation frames) and explode on solid map cells.
+**Power-ups** (`HitByForceOrShip`): collecting one scores 400. Its frame number decides the effect: 0–2 blue/red/yellow crystal (sets `LaserType` and powers the Force up), 3 speed-up, 4 missiles, 5 a Bit.
+
+**Homing missiles** (the M power-up): two are launched together on a fire press, with a 56-frame reload.
+1. **Launch:** drift up or down.
+2. **Forward:** fly right for 7 frames.
+3. **Seek:** pick the nearest live enemy (one missile only above itself, the other only below).
+4. **Home:** turn one of 16 directions towards it every 4th frame.
+
+They explode on solid map cells.
 
 **The Bits** trail the ship. Each VBL its position goes into a small ring buffer, and each Bit is placed at an older entry (25 pixels above or 29 below), which gives them their lagging movement.
 

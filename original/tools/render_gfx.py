@@ -254,9 +254,9 @@ def render_engine_weapons(files, out, low6000):
         ('diagonal/vertical shots', strip(0x8480, 11, 1, 0xB0, 0x58, 4)),
         ('shot stream A (fwd, back)', strip(0x15650, 4, 2, 0x80, 0x40, 4)),
         ('shot stream B (fwd, back)', strip(0x15850, 4, 2, 0x80, 0x40, 4)),
-        ('reflect laser', strip(0x12950, 30, 4, 0x780, 0x3C0, 6)),
-        ('lasers', strip(0x19B90, 16, 1, 0x100, 0x80, 2)),
-        ('laser frames', strip(0x1C2D0, 14, 1, 0xE0, 0x70, 4)),
+        ('anti-air laser', strip(0x12950, 30, 4, 0x780, 0x3C0, 6)),
+        ('reflect laser', strip(0x19B90, 16, 1, 0x100, 0x80, 2)),
+        ('ground laser', strip(0x1C2D0, 14, 1, 0xE0, 0x70, 4)),
         ('enemy bullets', strip(0x19D90, 14, 1, 0xE0, 0x70, 6)),
         ('homing missiles', strip(0x1A2D0, 16, 1, 0x100, 0x80, 32)),
     ]

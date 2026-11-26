@@ -113,7 +113,7 @@ UpdateShots         equ     $019AC
 BlitBob             equ     $01A28
 UpdateWaveBeam      equ     $01A6C
 UpdateShotStream     equ     $01B3C
-UpdateReflectBeam   equ     $01BA6
+UpdateAntiAirLaser   equ     $01BA6
 UpdateLasers        equ     $01C40
 ClipLaser           equ     $01DBC
 FireForce           equ     $01DE0
