@@ -413,6 +413,9 @@ SpawnShip:
                 move.l  #$6400,(ShipSpriteFrame).l
 SpawnShipDone:
                 rts
+; ShipRespawn: a new ship at x $C8, level tilt, one life fewer (and the
+; HUD redrawn).  In cheat mode no life is lost; instead 1 point is added,
+; so the score counts the deaths.
 ShipRespawn:
                 clr.b   (ShipAlive).l
                 clr.b   (ShipMode).l
@@ -426,6 +429,7 @@ ShipRespawn:
 .00564:
                 moveq   #1,d0
                 bra.w   AddScoreAlways
+; ResetShipWeapons: after a death - no Bits, missiles, laser or Force.
 ResetShipWeapons:
                 bsr.w   InitBits
                 bsr.w   ResetMissiles
@@ -1056,6 +1060,10 @@ ClearScreens:
                 cmpa.l  #$4935A,a0
                 bcs.b   .00d0c
                 rts
+; InitMapOffsets: patches the laser move tables for this level's map width.
+; ReflectLaserMoves gets +/-MapRowBytes (and +/-2 for the diagonals) as the
+; map offsets of its moves; GroundLaserMoves gets +MapRowBytes at the
+; offsets listed in GroundLaserRowDown and -MapRowBytes at GroundLaserRowUp.
 InitMapOffsets:
                 lea.l   (ReflectLaserMoves).l,a0
                 move.l  (MapRowBytes).l,d0
@@ -1573,6 +1581,7 @@ WaitBlit:
                 btst.b  #$6,$2(a6)
                 bne.b   WaitBlit
                 rts
+; ObjPoolPop: a0 = the next free object (0 if none), off FreeObjects.
 ObjPoolPop:
                 move.l  d0,-(a7)
                 move.l  (FreeObjects).l,d0
@@ -1631,6 +1640,8 @@ ObjInsert:
 .012e8:
                 movem.l (a7)+,d0-d1/a0-a2
                 rts
+; ObjAutoFire: if the object has a fire rate ($2E), counts its fire timer
+; ($30) down and fires an enemy bullet at the ship each time it runs out.
 ObjAutoFire:
                 move.w  $2E(a0),d6
                 beq.w   .01308
@@ -2129,6 +2140,7 @@ HitByLasers:
                 addq.l  #$2,a1
                 dbra    d7,.017f6
                 rts
+; ShipHitsMap: the ship's nose (x+18, y+6) in a solid map cell kills it.
 ShipHitsMap:
                 tst.b   (ShipAlive).l
                 beq.b   .01850
@@ -2140,6 +2152,8 @@ ShipHitsMap:
                 st.b    (ShipHit).l
 .01850:
                 rts
+; ObjUpd_SpeedFlash: the speed-up flash sits behind the ship for $32
+; frames, then removes itself.
 ObjUpd_SpeedFlash:
                 movem.w (ShipPos).l,d0-d1
                 sub.w   #$20,d0
@@ -2429,16 +2443,22 @@ UpdateShotStream:
                 move.w  d6,(a0)
 .01ba4:
                 rts
+; UpdateAntiAirLaser: the red crystal's laser, the double helix, in shot
+; slot 12.  A 64x30 BOB (6 frames, AntiAirLaserFrame steps 4 bytes a
+; frame through AntiAirLaserFrames, backwards when fired to the rear)
+; moving 10 pixels a frame.  Its front end (x+46, or x+14 backwards; y+14)
+; hits map cells: it ends on a solid cell, but destroys destructible
+; ones and carries on.  At the screen edge it ends too.  Then UpdateLasers handles the other two lasers.
 UpdateAntiAirLaser:
-                move.w  (AntiAirLaserX).l,d6
+                move.w  (AntiAirLaserX).l,d6        ; not fired: the segment lasers
                 beq.w   UpdateLasers
                 move.w  (AntiAirLaserY).l,d1
-                move.w  #$2A,$60(a6)
+                move.w  #$2A,$60(a6)                ; C/D modulo: 52 - 10 bytes
                 move.w  #$2A,$66(a6)
-                moveq   #10,d5
-                moveq   #46,d7
-                moveq   #4,d2
-                tst.b   (LaserSide).l
+                moveq   #10,d5                      ; speed
+                moveq   #46,d7                      ; front end, x offset
+                moveq   #4,d2                       ; frame step
+                tst.b   (LaserSide).l               ; fired backwards:
                 bpl.b   .01bd6
                 neg.w   d2
                 moveq   #14,d7
@@ -2446,7 +2466,7 @@ UpdateAntiAirLaser:
 .01bd6:
                 move.w  d6,d0
                 move.w  d1,d3
-                move.w  (AntiAirLaserFrame).l,d4
+                move.w  (AntiAirLaserFrame).l,d4    ; next frame (0-20, wraps)
                 add.w   d2,d4
                 bmi.b   .01bee
                 cmp.w   #$14,d4
@@ -2460,27 +2480,27 @@ UpdateAntiAirLaser:
                 lea.l   (AntiAirLaserFrames).l,a0
                 movea.l (a0,d4.w),a1
                 movea.l a1,a2
-                adda.l  #$3C0,a2
+                adda.l  #$3C0,a2                    ; mask follows the graphics
                 move.w  d1,-(a7)
-                move.w  #$1E05,d1
+                move.w  #$1E05,d1                   ; 30 lines, 5 words
                 bsr.w   BlitBob
                 move.w  (a7)+,d1
                 add.w   #$E,d1
                 move.w  d6,d0
                 add.w   d7,d0
-                bsr.w   GetMapCell
+                bsr.w   GetMapCell                  ; front end in a solid cell?
                 beq.b   .01c2e
-                bset.b  #$5,(a4)
+                bset.b  #$5,(a4)                    ; mark it hit
                 btst.b  #$4,(a4)
-                beq.b   .01c38
-                clr.w   (a4)
+                beq.b   .01c38                      ; not destructible: the laser ends
+                clr.w   (a4)                        ; destroy it if destructible
 .01c2e:
-                add.w   d5,d6
+                add.w   d5,d6                       ; move on
                 bmi.b   .01c38
                 cmp.w   #$170,d6
                 bcs.b   .01c3a
 .01c38:
-                clr.w   d6
+                clr.w   d6                          ; off screen: gone
 .01c3a:
                 move.w  d6,(AntiAirLaserX).l
 ; The two segmented lasers (LaserSegments: 8 parallel word arrays, x +0,
@@ -2488,8 +2508,8 @@ UpdateAntiAirLaser:
 ;   blue reflect laser: 16x16 segments ($19B90, 2 frames: diagonal up /
 ;     down).  Each step tries the moves in ReflectLaserMoves for its
 ;     direction (4 x 10 bytes: dx, dy, new direction, map offset.l) until
-;     one isn't solid - i.e. it bounces off walls (sound 2).  Destructible
-;     cells are marked hit instead.  75 steps ($4B) then it is gone.
+;     one isn't solid - i.e. it bounces off walls (sound 2).  A solid
+;     animated cell (map bit 14) is marked hit and stops it instead.  75 steps ($4B) then it is gone.
 ;   yellow ground laser (GroundLaserActive): 16x14 segments
 ;     (GroundLaserFrames), moves from GroundLaserMoves chosen so that it
 ;     keeps to solid surfaces - it crawls along the floor and ceiling.
@@ -2624,6 +2644,8 @@ UpdateLasers:
                 clr.w   d0
                 subq.b  #$1,(LaserCount).l
                 bra.b   .01da0
+; ClipLaser: d0,d1 = a laser segment's position; outside the play area it
+; is removed (d0 = 0, LaserCount - 1).
 ClipLaser:
                 cmp.w   #$26,d0
                 blt.b   .01dd6
@@ -3414,6 +3436,8 @@ SetBitplanes:
                 lea.l   (CopBplPtrs).l,a0
                 moveq   #3,d1
                 moveq   #52,d2                      ; planes are interleaved: 52 bytes apart
+; SetCopperPtrs: a0 = copper pointer pair(s), d0 = address, d1 = count-1,
+; d2 = step: writes the high and low words of each pointer.
 SetCopperPtrs:
                 move.w  d0,$4(a0)
                 swap    d0
@@ -4114,7 +4138,9 @@ PowArmor_Jump:
 ; Homing missiles (the M power-up sets MissilesEnabled): two slots,
 ; Missile1/Missile2, $1C bytes each: +0.l state routine (0 = free), +4 x,y,
 ; +$C direction 0-15, +$E animation toggle (frame = direction + 16 on
-; alternate frames).  Both are launched together from the ship when fire is
+; alternate frames), +8.l target object, +$10 hit-box offset x,y, +$14 size
+; w,h, +$18.b state timer, +$19.b launch y drift (signed), +$1A.b seek half
+; (0 above, 1 below).  Both are launched together from the ship when fire is
 ; pressed and MissileReload ($38 frames) has run out; MissilesInFlight
 ; counts them.  A missile that reaches a solid map cell becomes an explosion
 ; object; one that leaves the screen is freed.
@@ -4126,42 +4152,42 @@ ResetMissiles:
                 clr.l   (Missile2).l
                 rts
 UpdateMissiles:
-                tst.b   (MissilesInFlight).l
+                tst.b   (MissilesInFlight).l        ; reload counts down only while
                 bne.b   .02f96
                 tst.w   (MissileReload).l
                 beq.b   .02f96
-                subq.w  #$1,(MissileReload).l
+                subq.w  #$1,(MissileReload).l       ; both are gone
 .02f96:
                 lea.l   (Missile1).l,a0
                 bsr.b   .02fa4
                 lea.l   (Missile2).l,a0
 .02fa4:
-                move.l  (a0),d0
-                beq.w   .03048
+                move.l  (a0),d0                     ; state routine
+                beq.w   .03048                      ; free: maybe launch
                 movea.l d0,a1
-                jsr     (a1)
+                jsr     (a1)                        ; run the state
                 movem.w $4(a0),d6-d7
                 move.w  d6,d0
                 move.w  d7,d1
                 add.w   #$F,d0
                 addq.w  #$8,d1
-                bsr.w   GetMapCell
+                bsr.w   GetMapCell                  ; nose in a solid cell?
                 beq.b   .02ff2
-                clr.l   (a0)
+                clr.l   (a0)                        ; yes: free the slot
                 subq.b  #$1,(MissilesInFlight).l
                 move.w  d6,d0
                 move.w  d7,d1
                 addq.w  #$8,d0
                 moveq   #-1,d2
-                jsr     (jt_ObjAlloc).w
+                jsr     (jt_ObjAlloc).w             ; and leave an explosion object
                 move.b  #$1,$5(a0)
                 move.b  #$1,$21(a0)
                 clr.l   $6(a0)
                 move.b  #$A,$4(a0)
                 jmp     (jt_ObjInsert).w
 .02ff2:
-                move.w  $C(a0),d0
-                eori.w  #$FFFF,$E(a0)
+                move.w  $C(a0),d0                   ; frame = direction,
+                eori.w  #$FFFF,$E(a0)               ; +16 on alternate frames
                 beq.b   .03002
                 add.w   #$10,d0
 .03002:
@@ -4169,8 +4195,8 @@ UpdateMissiles:
                 lea.l   (MissileFrames).l,a1
                 movea.l (a1,d0.w),a1
                 movea.l a1,a2
-                adda.l  #$80,a2
-                move.w  d6,d0
+                adda.l  #$80,a2                     ; mask follows the graphics
+                move.w  d6,d0                       ; off screen: freed
                 bmi.b   .0302a
                 cmp.w   #$170,d0
                 bhi.b   .0302a
@@ -4185,27 +4211,27 @@ UpdateMissiles:
 .03034:
                 move.w  #$30,$60(a6)
                 move.w  #$30,$66(a6)
-                move.w  #$1002,d1
+                move.w  #$1002,d1                   ; 16x16, 2 words
                 bra.w   BlitBob
 .03048:
-                tst.b   (MissilesEnabled).l
+                tst.b   (MissilesEnabled).l         ; launch: M collected,
                 beq.b   MissilesDone
-                tst.b   (ShipAlive).l
+                tst.b   (ShipAlive).l               ; ship alive,
                 beq.b   MissilesDone
-                tst.w   (MissileReload).l
+                tst.w   (MissileReload).l           ; reloaded,
                 bne.b   MissilesDone
-                btst.b  #$7,(CIAA_PRA).l
+                btst.b  #$7,(CIAA_PRA).l            ; and fire pressed
                 bne.b   MissilesDone
                 movem.w (ShipPos).l,d0-d1
                 addq.w  #$5,d0
                 movem.w d0-d1,$4(a0)
-                move.b  #$9,$18(a0)
-                clr.l   $8(a0)
-                move.w  #$4,$C(a0)
-                move.l  #$E0008,$10(a0)
-                move.l  #$C0006,$14(a0)
+                move.b  #$9,$18(a0)                 ; 9 frames of launch drift
+                clr.l   $8(a0)                      ; no target yet
+                move.w  #$4,$C(a0)                  ; direction 4 = right
+                move.l  #$E0008,$10(a0)             ; hit box at +14,+8,
+                move.l  #$C0006,$14(a0)             ; 12x6
                 move.l  #Missile_Launch,(a0)
-                tst.b   $19(a0)
+                tst.b   $19(a0)                     ; after the second missile:
                 bmi.b   MissilesDone
                 move.b  #$2,(MissilesInFlight).l
                 move.w  #$38,(MissileReload).l
@@ -4234,13 +4260,13 @@ Missile_Forward:
                 rts
 Missile_Seek:
                 movem.w $4(a0),d6-d7
-                move.w  #$FFFF,(MissileBestDist).l
+                move.w  #$FFFF,(MissileBestDist).l  ; no candidate yet
                 move.l  (ActiveObjects).l,d0
                 beq.b   .03150
 .030fe:
-                movea.l d0,a1
+                movea.l d0,a1                       ; each active object:
                 movem.w $A(a1),d0-d1
-                moveq   #0,d4
+                moveq   #0,d4                       ; d4 = 0 above / 1 below
                 sub.w   d6,d0
                 bpl.b   .0310e
                 neg.w   d0
@@ -4250,50 +4276,50 @@ Missile_Seek:
                 neg.w   d1
                 moveq   #1,d4
 .03116:
-                add.w   d1,d0
-                cmp.w   (MissileBestDist).l,d0
+                add.w   d1,d0                       ; distance |dx| + |dy|
+                cmp.w   (MissileBestDist).l,d0      ; nearer than the best,
                 bhi.b   .0313c
-                cmp.b   $1A(a0),d4
+                cmp.b   $1A(a0),d4                  ; in this missile's half,
                 bne.b   .0313c
-                tst.b   $5(a1)
+                tst.b   $5(a1)                      ; alive,
                 bne.b   .0313c
-                tst.w   $24(a1)
+                tst.w   $24(a1)                     ; and destructible
                 bmi.b   .0313c
                 move.w  d0,(MissileBestDist).l
-                move.l  a1,$8(a0)
+                move.l  a1,$8(a0)                   ; new target
 .0313c:
                 move.l  (a1),d0
                 bne.b   .030fe
                 move.l  $8(a0),d0
                 beq.b   .03150
                 clr.b   $18(a0)
-                move.l  #Missile_Home,(a0)
+                move.l  #Missile_Home,(a0)          ; found one: home in
 .03150:
-                addq.w  #$6,$4(a0)
+                addq.w  #$6,$4(a0)                  ; fly on right meanwhile
                 rts
 Missile_Home:
                 movea.l $8(a0),a1
-                move.w  $A(a1),d2
+                move.w  $A(a1),d2                   ; target gone or dying:
                 beq.b   .031a0
-                tst.b   $5(a1)
+                tst.b   $5(a1)                      ; just fly straight on
                 bne.b   .031a0
-                subq.b  #$1,$18(a0)
+                subq.b  #$1,$18(a0)                 ; steer every 4th frame
                 bpl.b   .031a0
                 move.b  #$3,$18(a0)
                 movem.w $4(a0),d0-d1
                 move.w  $C(a1),d3
-                bsr.w   DirectionTo
+                bsr.w   DirectionTo                 ; direction to the target,
                 move.w  $C(a0),d1
-                bsr.w   TurnTowards
+                bsr.w   TurnTowards                 ; turn one step towards it
                 move.w  d1,$C(a0)
                 lsl.w   #$3,d1
-                lea.l   (MissileHitboxes).l,a1
+                lea.l   (MissileHitboxes).l,a1      ; hit box for this direction
                 movem.l (a1,d1.w),d4-d5
                 movem.l d4-d5,$10(a0)
 .031a0:
                 move.w  $C(a0),d0
                 lsl.w   #$2,d0
-                lea.l   (MissileVelocities).l,a1
+                lea.l   (MissileVelocities).l,a1    ; move along the direction
                 movem.w (a1,d0.w),d1-d2
                 add.w   d1,$4(a0)
                 add.w   d2,$6(a0)
@@ -4355,6 +4381,9 @@ TitleSequence:
                 clr.w   (FineScrollY).l
                 clr.w   (TitleDelay).l
                 move.l  #St_HighScore,(TitleState).l
+; TitleLoop: one attract-mode frame - waits for the frame to be shown,
+; leaves for the game on fire, counts TitleDelay down, otherwise runs the
+; current TitleState.
 TitleLoop:
                 tst.b   (FrameReady).l
                 bne.b   TitleLoop
@@ -5394,6 +5423,7 @@ SeekTrack:
 .03e8a:
                 movem.l (a7)+,d0-d1
                 rts
+; SeekZero: step out until the drive reports track 0 (CIA-A PRA bit 4).
 SeekZero:
                 btst.b  #$4,(CIAA_PRA).l
                 beq.b   .03ea2
@@ -5509,6 +5539,7 @@ DecrunchRefill:
                 move.w  #$10,ccr
                 roxr.l  #$1,d0
                 rts
+; GetBits: d1 = n -> d2 = the next n bits of the crunched stream.
 GetBits:
                 subq.w  #$1,d1
                 clr.w   d2
