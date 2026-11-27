@@ -8,7 +8,8 @@
      hooks): the boot file's blocks read and squeezed to end at $7A7A0, the
      jump to stage 2 with MemBase / MemLimit / the drive (booted from DF0 and
      from DF1);
-  2. stage 2 (src/stage2.s): the title picture unpacked; LoadFile for the
+  2. stage 2 (src/stage2.s): the title picture unpacked; its VBL handler
+     leaving DSKBLK alone (the byteloader polls it); LoadFile for the
      music, the engine and the $6000 block, each unpacked in place with stage
      2 intact;
   3. the engine's LoadFile (src/disk.s): every file, with and without extra
@@ -231,13 +232,24 @@ def main():
     picture = open(os.path.join(FILES, 'boot_6efa0.bin'), 'rb').read()[:0xA3C0]
     check(m.mem(0x35FA0, 0xA3C0) == picture, 'stage 2: the title picture + font unpacked to $35FA0')
     m.fd.ranges = [(s2['ByteLoader'], s2['zx0_decompress'])]
+    # its VBL handler must leave DSKBLK alone: the byteloader polls it (the
+    # original's cleared every bit it saw, and the loads never finished)
+    m.w16(0xDFF01E, 0x0022)                                    # VERTB and DSKBLK pending
+    rte = s2['Level3Int']
+    while m.r16(rte) != 0x4E73:                                # run it up to its rte
+        rte += 2
+    m.u.reg_write(UC_M68K_REG_A7, 0x40B60)
+    m.u.emu_start(s2['Level3Int'], rte, count=1_000_000)
+    check(m.r16(0xDFF01E) & 0x0002, "stage 2's VBL handler leaves DSKBLK for the byteloader")
+    m.w16(0xDFF01E, 0)
     s2start = lay['STAGE2_ORG'] - base
+    snapshot = m.mem(lay['STAGE2_ORG'], len(boot) - s2start)    # (its frame counter moved)
     for fid in (1, 2, 3):
         dest, data = exp[fid]
         m.call(s2['LoadFile'], [(UC_M68K_REG_D0, fid), (UC_M68K_REG_D2, dest)], sp=0x40B60)
         now = m.mem(lay['STAGE2_ORG'], len(boot) - s2start)
         state = s2['zx0_decompress'] - 2 - lay['STAGE2_ORG']   # the byteloader's own state word
-        changed = [k for k in range(len(now)) if now[k] != boot[s2start + k] and k not in (state, state + 1)]
+        changed = [k for k in range(len(now)) if now[k] != snapshot[k] and k not in (state, state + 1)]
         check(m.mem(dest, len(data)) == data, 'stage 2 LoadFile %d -> $%X: unpacked in place' % (fid, dest))
         check(not changed, '... stage 2 intact%s' % ('' if not changed else ' (changed at +$%X)' % changed[0]))
 

@@ -68,6 +68,9 @@ after loading the engine.
    at `$7A7A0`):
    - Unpacks the title picture and font to `$35FA0` (the original copied them) and takes the
      machine over.
+   - Its VBL handler acknowledges only its own interrupt bits. The original's cleared every
+     pending bit, DSKBLK included, and the byte loader waits for DSKBLK, so the loads never
+     finished. It still runs during the engine's first loads (high scores, title file).
    - Reads the music, the engine and the `$6000` block with the byte loader. Its MFM buffer is
      the original's at `$32000`.
    - Starts the engine with d3 = the drive (the original passed the head's track).
@@ -103,7 +106,7 @@ decoded back into the disk image with its MFM and checksums checked. It runs:
 - what Kickstart checks before it runs the bootblock (`DOS\0`, the checksum)
 - the bootblock, with exec's calls stubbed, booting from DF0 and from DF1: its read stays within
   `$6EFA0`–`$7A7A0`
-- stage 2 unpacking the title picture
+- stage 2 unpacking the title picture, and its VBL handler leaving DSKBLK pending
 - stage 2's three loads, each unpacked in place with stage 2 intact
 - every file through the engine's `LoadFile`, without and with extra memory (the second loads
   must come from the cache, with no disk reads)

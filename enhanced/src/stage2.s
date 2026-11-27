@@ -529,8 +529,9 @@ Level3Int:
                 clr.b   GameFadeFlag            ; tell the game we're done
                 move.w  #$01C0,(CUSTOM+DMACON).l ; bitplanes, copper, blitter off
 .exit:          move.w  (a7)+,d0
-                andi.w  #$7FFF,d0
-                move.w  d0,(CUSTOM+INTREQ).l
+                andi.w  #$0070,d0               ; (enhanced: only its own level 3 bits -
+                move.w  d0,(CUSTOM+INTREQ).l    ;  the original's $7FFF cleared DSKBLK too,
+                                                ;  which the byteloader waits for)
                 movem.l (a7)+,d0-d7/a0-a6
                 rte
 
