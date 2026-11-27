@@ -463,35 +463,35 @@ Upd_CoreOrb:
                 jmp     (jt_ObjKillSelf).w      ; remove
 Spawn_GunTower:
                 movem.w $2(a1),d0-d1
-                moveq   #-1,d2
+                moveq   #-1,d2                  ; hit points come from the wave entry
                 jsr     (jt_ObjCreate).w
-                move.w  $8(a1),$24(a0)
-                move.w  (ScrollX).w,$38(a0)
+                move.w  $8(a1),$24(a0)          ; entry $08: hit points
+                move.w  (ScrollX).w,$38(a0)     ; scroll position now (FollowScroll)
                 move.w  (ScrollY).w,$3A(a0)
-                clr.b   $37(a0)
-                clr.b   $22(a0)
+                clr.b   $37(a0)                 ; fire at once
+                clr.b   $22(a0)                 ; frame is set by the update
                 clr.w   $32(a0)
-                tst.w   $6(a1)
+                tst.w   $6(a1)                  ; entry $06 non-zero:
                 beq.b   .4AB78
-                move.l  #GunTowerAnimFlipped,$2A(a0)
+                move.l  #GunTowerAnimFlipped,$2A(a0) ; upside down
 .4AB78:
                 jmp     (jt_ObjInsert).w
 Spawn_CannonPod:
                 movem.w $2(a1),d0-d1
-                move.w  #$1F40,d2
+                move.w  #$1F40,d2               ; 8000 hit points: only the hit count matters
                 jsr     (jt_ObjCreate).w
-                move.b  $9(a1),$3C(a0)
-                move.l  $A(a1),$2A(a0)
-                move.w  (ScrollX).w,$38(a0)
+                move.b  $9(a1),$3C(a0)          ; entry $09: hits to knock it out
+                move.l  $A(a1),$2A(a0)          ; entry $0A: its animation
+                move.w  (ScrollX).w,$38(a0)     ; scroll position now (FollowScroll)
                 move.w  (ScrollY).w,$3A(a0)
-                move.l  $A(a0),$32(a0)
-                move.b  #$32,$36(a0)
-                move.b  #$1,$37(a0)
-                clr.b   $22(a0)
+                move.l  $A(a0),$32(a0)          ; its real position
+                move.b  #$32,$36(a0)            ; first shot after 50 frames
+                move.b  #$1,$37(a0)             ; out
+                clr.b   $22(a0)                 ; frame is set by the update
                 jmp     (jt_ObjInsert).w
 Upd_GunTower:
-                bsr.w   FollowScroll
-                movem.w $A(a0),d0-d1
+                bsr.w   FollowScroll            ; move with the hull
+                movem.w $A(a0),d0-d1            ; off the screen:
                 cmp.w   #$10,d0
                 bcs.b   .4ABDE
                 cmp.w   #$172,d0
@@ -501,37 +501,37 @@ Upd_GunTower:
                 cmp.w   #$E0,d1
                 bcs.b   .4ABE2
 .4ABDE:
-                jmp     (jt_ObjKillSelf).w
+                jmp     (jt_ObjKillSelf).w      ; remove
 .4ABE2:
-                movem.w (ShipPos).w,d2-d3
+                movem.w (ShipPos).w,d2-d3       ; turn towards the ship
                 jsr     (jt_DirectionTo).w
                 move.w  d0,$1E(a0)
-                subq.b  #$1,$37(a0)
+                subq.b  #$1,$37(a0)             ; fire timer
                 bpl.b   .4AC2A
-                moveq   #50,d0
+                moveq   #50,d0                  ; next shot in 30-79 frames
                 jsr     (jt_Random).w
                 add.w   #$1E,d0
                 move.b  d0,$37(a0)
                 movem.w $A(a0),d0-d1
-                move.w  $1E(a0),d2
+                move.w  $1E(a0),d2              ; the current frame
                 movea.l $2A(a0),a1
                 move.b  (a1,d2.w),d2
-                lea.l   (GunTowerMuzzles).l,a1
+                lea.l   (GunTowerMuzzles).l,a1  ; its muzzle offset
                 lsl.w   #$2,d2
                 add.w   (a1,d2.w),d0
                 add.w   $2(a1,d2.w),d1
-                jsr     (jt_FireEnemyBullet).w
+                jsr     (jt_FireEnemyBullet).w  ; fire at the ship
 .4AC2A:
                 rts
 Upd_CannonPod:
-                move.l  $32(a0),$A(a0)
-                bsr.w   FollowScroll
+                move.l  $32(a0),$A(a0)          ; back to its real position
+                bsr.w   FollowScroll            ; move with the hull
                 movem.w $A(a0),d0-d1
-                movem.w d0-d1,$32(a0)
-                tst.b   $37(a0)
+                movem.w d0-d1,$32(a0)           ; and remember it
+                tst.b   $37(a0)                 ; blinking (coming out)?
                 bmi.w   .4AD84
-                beq.w   .4AD58
-                cmp.w   #$10,d0
+                beq.w   .4AD58                  ; hidden?
+                cmp.w   #$10,d0                 ; out: off the screen?
                 bcs.b   .4AC66
                 cmp.w   #$172,d0
                 bhi.b   .4AC66
@@ -540,128 +540,128 @@ Upd_CannonPod:
                 cmp.w   #$DC,d1
                 bcs.b   .4AC6A
 .4AC66:
-                jmp     (jt_ObjKillSelf).w
+                jmp     (jt_ObjKillSelf).w      ; remove
 .4AC6A:
-                move.b  $3C(a0),d2
-                cmp.b   $27(a0),d2
+                move.b  $3C(a0),d2              ; hits needed
+                cmp.b   $27(a0),d2              ; reached (low byte of the damage)?
                 bhi.b   .4ACB0
-                movea.l a0,a3
+                movea.l a0,a3                   ; yes: an explosion over it
                 movem.w $A(a0),d0-d1
                 moveq   #-1,d2
                 lea.l   (Def_CannonPod).l,a2
                 jsr     (jt_ObjCreate).w
-                move.b  #$14,$4(a0)
-                move.b  #$1,$5(a0)
+                move.b  #$14,$4(a0)             ; drawn on top
+                move.b  #$1,$5(a0)              ; exploding at once
                 clr.l   $6(a0)
                 jsr     (jt_ObjInsert).w
                 movea.l a3,a0
-                clr.b   $37(a0)
-                move.b  #$6E,$36(a0)
-                move.w  #$FFFF,$A(a0)
+                clr.b   $37(a0)                 ; and it hides again (not destroyed: no score)
+                move.b  #$6E,$36(a0)            ; for 220 frames
+                move.w  #$FFFF,$A(a0)           ; out of sight
                 rts
 .4ACB0:
-                movem.w (ShipPos).w,d2-d3
+                movem.w (ShipPos).w,d2-d3       ; turn towards the ship
                 jsr     (jt_DirectionTo).w
                 move.w  d0,$1E(a0)
-                movea.l $2A(a0),a1
+                movea.l $2A(a0),a1              ; the frame's mount direction 0-7
                 move.b  (a1,d0.w),d0
                 and.w   #$7,d0
-                lea.l   (CannonPodSteps).l,a1
+                lea.l   (CannonPodSteps).l,a1   ; slide along the mount that way
                 move.w  d0,d7
                 lsl.w   #$2,d0
                 movem.w (a1,d0.w),d0-d1
                 add.w   d0,$A(a0)
                 add.w   d1,$C(a0)
-                subq.b  #$1,$36(a0)
+                subq.b  #$1,$36(a0)             ; time to fire?
                 bne.b   .4AD56
                 movea.l a0,a4
                 moveq   #-1,d2
-                movem.w $A(a0),d0-d1
+                movem.w $A(a0),d0-d1            ; on the screen?
                 cmp.w   #$170,d0
                 bhi.b   .4AD48
                 cmp.w   #$10,d1
                 bcs.b   .4AD48
                 cmp.w   #$DF,d1
                 bhi.b   .4AD48
-                lea.l   (Def_Fireball).l,a2
+                lea.l   (Def_Fireball).l,a2     ; a Fireball
                 jsr     (jt_ObjCreate).w
-                move.b  #$1,$4(a0)
+                move.b  #$1,$4(a0)              ; priority 1
                 move.w  #$3,$1E(a0)
-                move.b  d7,$3C(a0)
-                lea.l   (FireballLaunches).l,a3
+                move.b  d7,$3C(a0)              ; its direction 0-7
+                lea.l   (FireballLaunches).l,a3 ; launch path and animation for the direction
                 lsl.w   #$3,d7
                 move.l  $4(a3,d7.w),$2A(a0)
                 move.l  (a3,d7.w),$32(a0)
-                move.l  $A(a4),$36(a0)
+                move.l  $A(a4),$36(a0)          ; launched from the pod's position
                 clr.w   $A(a0)
-                move.b  #$4,$3A(a0)
+                move.b  #$4,$3A(a0)             ; 4 launch steps
                 jsr     (jt_ObjInsert).w
                 movea.l a4,a0
 .4AD48:
-                moveq   #100,d0
+                moveq   #100,d0                 ; next shot in 150-249 frames
                 jsr     (jt_Random).w
                 add.w   #$96,d0
                 move.b  d0,$36(a0)
 .4AD56:
                 rts
 .4AD58:
-                btst.b  #$0,(FrameCountLo).l
+                btst.b  #$0,(FrameCountLo).l    ; hidden: count every other frame
                 bne.b   .4AD7C
                 subq.b  #$1,$36(a0)
                 bne.b   .4AD7C
-                st.b    $37(a0)
+                st.b    $37(a0)                 ; then blink for 40 frames
                 move.b  #$28,$36(a0)
                 clr.b   $3D(a0)
-                move.w  #$FFFF,$24(a0)
+                move.w  #$FFFF,$24(a0)          ; invulnerable meanwhile
 .4AD7C:
-                move.w  #$FFFF,$A(a0)
+                move.w  #$FFFF,$A(a0)           ; out of sight
                 rts
 .4AD84:
-                subq.b  #$1,$36(a0)
+                subq.b  #$1,$36(a0)             ; blinking:
                 bne.b   .4ADA2
-                move.b  #$1,$37(a0)
-                move.b  #$19,$36(a0)
-                move.w  #$FA0,$24(a0)
-                clr.w   $26(a0)
+                move.b  #$1,$37(a0)             ; then out
+                move.b  #$19,$36(a0)            ; first shot after 25 frames
+                move.w  #$FA0,$24(a0)           ; 4000 hit points: only the hit count matters
+                clr.w   $26(a0)                 ; hits from now
                 bra.b   .4ADB2
 .4ADA2:
-                eori.b  #$FF,$3D(a0)
+                eori.b  #$FF,$3D(a0)            ; shown every other frame
                 bne.b   .4ADB2
-                move.w  #$FFFF,$A(a0)
+                move.w  #$FFFF,$A(a0)           ; hidden this frame
                 rts
 .4ADB2:
-                movem.w $32(a0),d0-d1
+                movem.w $32(a0),d0-d1           ; shown: at its real position
                 movem.w d0-d1,$A(a0)
                 bra.w   .4ACB0
 Upd_Fireball:
-                tst.b   $3A(a0)
+                tst.b   $3A(a0)                 ; launching?
                 beq.b   .4ADEC
                 subq.b  #$1,$3A(a0)
-                movem.w $36(a0),d0-d1
-                movea.l $32(a0),a1
+                movem.w $36(a0),d0-d1           ; pod position
+                movea.l $32(a0),a1              ; plus the next launch offset
                 add.w   (a1)+,d0
                 add.w   (a1)+,d1
                 movem.w d0-d1,$A(a0)
                 move.l  a1,$32(a0)
-                tst.b   $3A(a0)
+                tst.b   $3A(a0)                 ; launch done?
                 beq.b   .4ADEC
                 rts
 .4ADEC:
                 moveq   #0,d0
-                move.b  $3C(a0),d0
+                move.b  $3C(a0),d0              ; direction
                 lsl.w   #$2,d0
-                lea.l   (FireballSteps).l,a1
+                lea.l   (FireballSteps).l,a1    ; straight on: dx, dy for it
                 movem.w (a1,d0.w),d0-d1
                 add.w   d0,$A(a0)
                 add.w   d1,$C(a0)
-                cmpi.w  #$170,$A(a0)
+                cmpi.w  #$170,$A(a0)            ; off the screen:
                 bhi.b   .4AE20
                 cmpi.w  #$10,$C(a0)
                 bcs.b   .4AE20
                 cmpi.w  #$E0,$C(a0)
                 bcs.b   .4AE24
 .4AE20:
-                jmp     (jt_ObjKillSelf).w
+                jmp     (jt_ObjKillSelf).w      ; remove
 .4AE24:
                 rts
 Spawn_MainEngine:
@@ -1184,9 +1184,13 @@ GunTowerAnimFlipped:
 GunTowerMuzzles:
                 dc.w    $FFFA,$0007,$0000,$0000,$000A,$FFF9,$0010,$FFFE
                 dc.w    $FFF7,$0003,$0003,$000B,$000A,$000F,$0010,$000B
-; CannonPod: a cannon that hides in the hull and comes out (blinking) to
-; fire Fireballs along one of 8 directions, sliding on its mount
-; (CannonPodSteps); entry $09 = hits to destroy it, $0A = animation.
+; CannonPod: a cannon that hides in the hull and comes out (blinking for
+; 40 frames) to fire Fireballs along one of 8 directions every 150-249
+; frames, turning towards the ship and sliding on its mount
+; (CannonPodSteps); entry $09 = hits, $0A = animation.  Those hits only
+; knock it out: an explosion, and it hides for 220 frames, then comes
+; out again - it is never destroyed and gives no score (its hit points,
+; 4000, are not reached).
 ; (32x28, 6 frames, gfx $686D0, score 200, update Upd_CannonPod, spawn Spawn_CannonPod)
 Def_CannonPod:
                 dc.w    $1C03,$002E,$0380,$0000,$0000,$0000,$0006,$86D0

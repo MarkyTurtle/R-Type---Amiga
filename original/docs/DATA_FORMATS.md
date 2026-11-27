@@ -166,7 +166,7 @@ Every wave entry is `trigger.w, x.w, y.w`, 8 bytes of parameters (`$06`–`$0D`)
 | Gouger (2) | `$06.w` corner 0–3 (which wall it clings to, and its frames) |
 | Wick (2) | `$06.w` number − 1 |
 | Gun tower (3) | `$06.w` non-zero = upside down, `$08.w` hit points |
-| Cannon pod (3) | `$09.b` hits to destroy it, `$0A.l` its animation |
+| Cannon pod (3) | `$09.b` hits that knock it out (it hides and comes back; it is never destroyed), `$0A.l` its animation |
 | Cytron (4) | `$06.w` dx, `$08.w` dy (both also pick its frame), or `$0A.l` a path like the Bug's |
 | Geld (4) | `$06.w` starting direction 0–3 (up, right, down, left), `$08.w` scroll x after which it stops turning |
 | Slither (5) | `$06.w` body segments, `$08.w` copied to every segment (`$34`) |
