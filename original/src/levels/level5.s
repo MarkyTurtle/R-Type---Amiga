@@ -507,26 +507,26 @@ Spawn_Pursuer:
                 move.w  $6(a1),$1E(a0)
                 jmp     (jt_ObjInsert).w
 Upd_Pursuer:
-                subq.w  #$1,$34(a0)
+                subq.w  #$1,$34(a0)             ; steer every 5 frames
                 bpl.b   .4ABD2
                 move.w  #$4,$34(a0)
-                tst.w   $36(a0)
-                beq.b   .4ABD2
+                tst.w   $36(a0)                 ; turns left:
+                beq.b   .4ABD2                  ; none: fly straight on
                 subq.w  #$1,$36(a0)
-                movem.w $A(a0),d0-d1
+                movem.w $A(a0),d0-d1            ; direction to the ship
                 movem.w (ShipPos).w,d2-d3
                 jsr     (jt_DirectionTo).w
                 move.w  $1E(a0),d1
-                jsr     (jt_TurnTowards).w
+                jsr     (jt_TurnTowards).w      ; turn one step towards it
                 move.w  d1,$1E(a0)
 .4ABD2:
-                move.w  $1E(a0),d0
+                move.w  $1E(a0),d0              ; direction 0-15
                 lsl.w   #$2,d0
                 movem.w $A(a0),d1-d2
-                lea.l   (PursuerSteps).l,a1
+                lea.l   (PursuerSteps).l,a1     ; x, y step for it
                 add.w   (a1,d0.w),d1
                 add.w   $2(a1,d0.w),d2
-                cmp.w   #$10,d1
+                cmp.w   #$10,d1                 ; off the screen:
                 bcs.b   .4AC04
                 cmp.w   #$170,d1
                 bhi.b   .4AC04
@@ -535,14 +535,15 @@ Upd_Pursuer:
                 cmp.w   #$E0,d2
                 bcs.b   .4AC08
 .4AC04:
-                jmp     (jt_ObjKillSelf).w
+                jmp     (jt_ObjKillSelf).w      ; remove
 .4AC08:
                 movem.w d1-d2,$A(a0)
                 rts
 ; Cheetah (48x41) and its Mid-phase form (32x20, groups of entry $06+1 at
 ; random heights, 24 frames apart): they drift left and fire beams
-; (CheetahBeam, 7 pixels a frame) - the Cheetah every 25 frames at a
-; random height, the mid-phase every 50 from its middle.
+; (CheetahBeam, 7 pixels a frame) - the Cheetah (2 px a frame) every 26
+; frames, 8-39 pixels below its top; the mid-phase (3 px a frame) every
+; 51 from its middle, the first after 0-69 frames.
 Spawn_Cheetah:
                 movem.w $2(a1),d0-d1
                 moveq   #20,d2
@@ -554,22 +555,22 @@ Spawn_Cheetah:
                 move.b  #$2,$21(a0)
                 jmp     (jt_ObjInsert).w
 Spawn_MidCheetah:
-                move.w  $6(a1),d7
-                moveq   #0,d6
-                moveq   #0,d5
+                move.w  $6(a1),d7               ; entry $06: number - 1
+                moveq   #0,d6                   ; d6 = start delay, 24 frames apart
+                moveq   #0,d5                   ; d5 = first frame, 0-7 in turn
 .4AC3E:
-                move.w  $8(a1),d0
+                move.w  $8(a1),d0               ; y = entry $0A + random(entry $08)
                 jsr     (jt_Random).w
                 add.w   $A(a1),d0
                 move.w  d0,d1
-                move.w  #$170,d0
+                move.w  #$170,d0                ; at the right edge
                 moveq   #1,d2
                 jsr     (jt_ObjCreate).w
-                move.w  d6,$34(a0)
-                moveq   #70,d0
+                move.w  d6,$34(a0)              ; start delay
+                moveq   #70,d0                  ; first beam after 0-69 frames
                 jsr     (jt_Random).w
                 move.w  d0,$32(a0)
-                move.b  #$A,$4(a0)
+                move.b  #$A,$4(a0)              ; priority 10
                 move.w  d5,$1E(a0)
                 jsr     (jt_ObjInsert).w
                 add.w   #$18,d6
@@ -581,45 +582,45 @@ Spawn_MidCheetah:
                 dbra    d7,.4AC3E
                 rts
 Upd_Cheetah:
-                moveq   #2,d1
-                moveq   #32,d7
-                moveq   #25,d6
+                moveq   #2,d1                   ; 2 pixels a frame,
+                moveq   #32,d7                  ; beam 8-39 pixels below its top,
+                moveq   #25,d6                  ; every 26 frames
                 bra.b   Cheetah_MoveFire
 Upd_MidCheetah:
-                tst.w   $34(a0)
+                tst.w   $34(a0)                 ; waiting to start?
                 beq.b   .4AC9A
                 subq.w  #$1,$34(a0)
                 rts
 .4AC9A:
-                moveq   #3,d1
-                moveq   #-10,d7
-                moveq   #50,d6
+                moveq   #3,d1                   ; 3 pixels a frame,
+                moveq   #-10,d7                 ; beam 10 pixels below its top,
+                moveq   #50,d6                  ; every 51 frames
 Cheetah_MoveFire:
-                sub.w   d1,$A(a0)
-                bpl.b   .4ACAA
+                sub.w   d1,$A(a0)               ; fly left d1 pixels
+                bpl.b   .4ACAA                  ; off the left edge: remove
                 jmp     (jt_ObjKillSelf).w
 .4ACAA:
-                subq.w  #$1,$32(a0)
+                subq.w  #$1,$32(a0)             ; beam due?
                 bpl.b   .4ACEC
-                move.w  d6,$32(a0)
-                move.w  d7,d0
+                move.w  d6,$32(a0)              ; reload with d6
+                move.w  d7,d0                   ; d7 >= 0: random 8..d7+7 below,
                 bmi.b   .4ACC4
                 jsr     (jt_Random).w
                 addq.w  #$8,d0
                 add.w   $C(a0),d0
                 bra.b   .4ACCC
 .4ACC4:
-                neg.w   d7
+                neg.w   d7                      ; d7 < 0: -d7 below
                 add.w   $C(a0),d7
                 move.w  d7,d0
 .4ACCC:
                 move.w  d0,d1
-                move.w  $A(a0),d0
-                moveq   #-1,d2
+                move.w  $A(a0),d0               ; from its front
+                moveq   #-1,d2                  ; indestructible
                 move.l  a0,-(a7)
                 lea.l   (Def_CheetahBeam).l,a2
                 jsr     (jt_ObjCreate).w
-                bset.b  #$2,$23(a0)
+                bset.b  #$2,$23(a0)             ; not hit by weapons
                 jsr     (jt_ObjInsert).w
                 movea.l (a7)+,a0
 .4ACEC:
