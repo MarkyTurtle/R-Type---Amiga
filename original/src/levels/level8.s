@@ -294,160 +294,160 @@ Upd_Mikun:
 ; (EscortList: y, frame, speed, delay), and finally everything fades out
 ; and stops (bit 3 - CheckEndOfGame shows the ending text).
 EndingSequence:
-                subq.b  #$1,(StateTimer).l
+                subq.b  #$1,(StateTimer).l      ; 41 frames of explosions
                 bmi.b   .4A6E2
-                cmpi.b  #$14,(StateTimer).l
+                cmpi.b  #$14,(StateTimer).l     ; halfway:
                 bne.b   .4A6A8
-                lea.l   (CoreWreckCells).l,a0
+                lea.l   (CoreWreckCells).l,a0   ; the core's wreck in the map
                 bsr.w   PatchMap
 .4A6A8:
-                move.w  #$AA,d0
+                move.w  #$AA,d0                 ; y = 30 + random(170)
                 jsr     (jt_Random).w
                 add.w   #$1E,d0
                 move.w  d0,d1
-                move.w  #$82,d0
+                move.w  #$82,d0                 ; x = 200 + random(130)
                 jsr     (jt_Random).w
                 add.w   #$C8,d0
                 moveq   #-1,d2
-                lea.l   (Def_BydoCore).l,a2
+                lea.l   (Def_BydoCore).l,a2     ; as a plain explosion
                 jsr     (jt_ObjCreate).w
-                move.b  #$2,$21(a0)
-                clr.l   $6(a0)
+                move.b  #$2,$21(a0)             ; type 2
+                clr.l   $6(a0)                  ; exploding at once
                 move.b  #$1,$5(a0)
                 jmp     (jt_ObjInsert).w
 .4A6E2:
-                st.b    (ScrollActive).w
-                move.b  #$F,(StateTimer).l
+                st.b    (ScrollActive).w        ; then the scroll runs on
+                move.b  #$F,(StateTimer).l      ; 15 fade steps
                 move.l  #.4A6FE,(BossState).l
                 clr.b   (StepTimer).l
 .4A6FE:
-                cmpi.w  #$69F,(ScrollX).w
+                cmpi.w  #$69F,(ScrollX).w       ; at scroll x $69F:
                 bcs.b   .4A740
-                subq.b  #$1,(StepTimer).l
+                subq.b  #$1,(StepTimer).l       ; every 3 frames
                 bpl.b   .4A740
                 move.b  #$2,(StepTimer).l
-                bsr.w   .4A87A
+                bsr.w   .4A87A                  ; fade the colours down a step
                 subq.b  #$1,(StateTimer).l
-                bne.b   .4A740
+                bne.b   .4A740                  ; faded out:
                 move.l  #.4A742,(BossState).l
-                move.b  #$F,(StateTimer).l
-                bset.b  #$1,(EndSequenceFlags).w
-                move.w  #$7C1,(ScrollX).w
+                move.b  #$F,(StateTimer).l      ; 15 steps to fade in
+                bset.b  #$1,(EndSequenceFlags).w ; bit 1: the ending music
+                move.w  #$7C1,(ScrollX).w       ; jump the scroll to the ending scene
 .4A740:
                 rts
 .4A742:
-                cmpi.w  #$7C6,(ScrollX).w
+                cmpi.w  #$7C6,(ScrollX).w       ; at $7C6:
                 bcs.b   .4A740
-                subq.b  #$1,(StepTimer).l
+                subq.b  #$1,(StepTimer).l       ; every 4 frames
                 bpl.b   .4A740
                 move.b  #$3,(StepTimer).l
-                lea.l   (EndPalette).l,a0
+                lea.l   (EndPalette).l,a0       ; fade a step towards the ending palette
                 bsr.w   .4A846
-                subq.b  #$1,(StateTimer).l
+                subq.b  #$1,(StateTimer).l      ; faded in:
                 bne.b   .4A740
-                move.l  #.4A790,(BossState).l
+                move.l  #.4A790,(BossState).l   ; then the escort
                 clr.b   (CoreOpening).l
                 move.b  #$1,(StateTimer).l
-                move.l  #EscortList,(CoreAnimPtr).l
+                move.l  #EscortList,(CoreAnimPtr).l ; the R9 escorts: y, frame, speed, delay (0 = same frame)
                 rts
 .4A790:
-                tst.b   (CoreOpening).l
+                tst.b   (CoreOpening).l         ; escort done?
                 bne.b   .4A7F2
-                subq.b  #$1,(StateTimer).l
+                subq.b  #$1,(StateTimer).l      ; next group due?
                 bne.b   .4A7DA
                 movea.l (CoreAnimPtr).l,a4
 .4A7A6:
-                move.w  (a4)+,d1
+                move.w  (a4)+,d1                ; y (-1 ends the list)
                 bmi.b   .4A7DC
-                move.w  #$10,d0
-                moveq   #-1,d2
+                move.w  #$10,d0                 ; at the left edge
+                moveq   #-1,d2                  ; indestructible
                 lea.l   (Def_R9Escort).l,a2
                 jsr     (jt_ObjCreate).w
-                move.w  (a4)+,$1E(a0)
-                move.w  (a4)+,$32(a0)
+                move.w  (a4)+,$1E(a0)           ; frame
+                move.w  (a4)+,$32(a0)           ; x speed
                 clr.b   $22(a0)
                 jsr     (jt_ObjInsert).w
-                move.w  (a4)+,d0
-                beq.b   .4A7A6
+                move.w  (a4)+,d0                ; frames to the next one
+                beq.b   .4A7A6                  ; 0: create the next now
                 move.l  a4,(CoreAnimPtr).l
                 move.b  d0,(StateTimer).l
 .4A7DA:
                 rts
 .4A7DC:
-                st.b    (CoreOpening).l
-                bset.b  #$2,(EndSequenceFlags).w
-                move.b  #$90,(StateTimer).l
+                st.b    (CoreOpening).l         ; all out:
+                bset.b  #$2,(EndSequenceFlags).w ; bit 2: the ship flies off with them
+                move.b  #$90,(StateTimer).l     ; after 144 frames
                 rts
 .4A7F2:
                 subq.b  #$1,(StateTimer).l
                 bne.b   .4A7DA
-                move.b  #$F,(StateTimer).l
+                move.b  #$F,(StateTimer).l      ; 15 fade steps
                 clr.b   (StepTimer).l
                 move.l  #.4A814,(BossState).l
                 rts
 .4A814:
-                subq.b  #$1,(StepTimer).l
+                subq.b  #$1,(StepTimer).l       ; every 3 frames
                 bpl.b   .4A7DA
                 move.b  #$2,(StepTimer).l
-                bsr.w   .4A87A
+                bsr.w   .4A87A                  ; fade down
                 subq.b  #$1,(StateTimer).l
-                bne.b   .4A7DA
-                clr.b   (ScrollActive).w
-                move.l  #.4A7DA,(BossState).l
-                bset.b  #$3,(EndSequenceFlags).w
+                bne.b   .4A7DA                  ; faded out:
+                clr.b   (ScrollActive).w        ; stop
+                move.l  #.4A7DA,(BossState).l   ; (nothing more to do)
+                bset.b  #$3,(EndSequenceFlags).w ; bit 3: the game is finished
                 rts
 .4A846:
-                moveq   #14,d0
-                movea.l (PalettePtr).w,a1
+                moveq   #14,d0                  ; 15 colours
+                movea.l (PalettePtr).w,a1       ; copper colour values
                 addq.l  #$2,a1
 .4A84E:
-                move.w  (a1),d2
-                move.w  (a0)+,d3
-                moveq   #1,d4
-                moveq   #2,d5
+                move.w  (a1),d2                 ; current
+                move.w  (a0)+,d3                ; target
+                moveq   #1,d4                   ; blue first
+                moveq   #2,d5                   ; 3 components
 .4A856:
                 move.w  d2,d6
                 move.w  d3,d7
                 and.w   #$F,d6
                 and.w   #$F,d7
-                cmp.b   d7,d6
+                cmp.b   d7,d6                   ; below the target:
                 bcc.b   .4A868
-                add.w   d4,(a1)
+                add.w   d4,(a1)                 ; one step up
 .4A868:
-                lsl.w   #$4,d4
+                lsl.w   #$4,d4                  ; next component
                 lsr.w   #$4,d2
                 lsr.w   #$4,d3
                 dbra    d5,.4A856
-                addq.l  #$4,a1
+                addq.l  #$4,a1                  ; next copper colour
                 dbra    d0,.4A84E
                 rts
 .4A87A:
-                movea.l (PalettePtr).w,a0
+                movea.l (PalettePtr).w,a0       ; fade down: every component above 0 loses one
                 addq.l  #$2,a0
                 moveq   #14,d5
 .4A882:
-                move.w  (a0),d4
-                clr.w   d2
+                move.w  (a0),d4                 ; colour
+                clr.w   d2                      ; what to subtract
                 moveq   #1,d7
                 moveq   #2,d3
 .4A88A:
                 move.w  d4,d0
                 and.w   #$F,d0
-                beq.w   .4A896
-                or.w    d7,d2
+                beq.w   .4A896                  ; component 0: leave it
+                or.w    d7,d2                   ; else take one off it
 .4A896:
                 lsr.w   #$4,d4
                 lsl.w   #$4,d7
                 dbra    d3,.4A88A
-                sub.w   d2,(a0)
+                sub.w   d2,(a0)                 ; subtract
                 addq.l  #$4,a0
                 dbra    d5,.4A882
                 rts
 ; R9Escort: the ending's R-9 fighters, flying right at their own speed.
 Upd_R9Escort:
-                move.w  $32(a0),d0
+                move.w  $32(a0),d0              ; fly right at its speed
                 add.w   d0,$A(a0)
-                cmpi.w  #$168,$A(a0)
+                cmpi.w  #$168,$A(a0)            ; off the right edge: remove
                 bcs.b   .4A8BC
                 jmp     (jt_ObjKillSelf).w
 .4A8BC:
