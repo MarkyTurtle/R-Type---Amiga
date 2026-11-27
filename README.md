@@ -17,6 +17,7 @@ Documentation is in [`original/docs/`](original/docs/README.md):
 - [DATA_FORMATS.md](original/docs/DATA_FORMATS.md) – levels, checkpoints, waves, scrolling, objects
 - [GRAPHICS.md](original/docs/GRAPHICS.md) – screen layout, tiles, map, BOBs, sprites
 - [MUSIC.md](original/docs/MUSIC.md) – TFMX title music and the in-game sequencer
+- [OBJECTS.md](original/docs/OBJECTS.md) – every enemy and object, with pictures
 
 The same findings are added as comments in the source files. What's left is listed in [TODO.md](original/docs/TODO.md).
 
@@ -33,17 +34,14 @@ Stage 1's full map and the R-9's tilt frames, rendered straight from the disk da
 - [x] IPF decoded, all files extracted with checksums verified
 - [x] Bootblock – [`original/src/bootblock.s`](original/src/bootblock.s)
 - [x] Stage-2 loader / credits – [`original/src/stage2.s`](original/src/stage2.s)
-- [x] Game program – [`original/src/game.s`](original/src/game.s): first pass, byte-identical, code and data separated, main systems named
-- [ ] Game program: line-by-line comments
-- [x] Level code – [`original/src/levels/`](original/src/levels/) (8 levels) and the shared title file [`original/src/shared.s`](original/src/shared.s): first pass, byte-identical
-- [ ] Level code: name enemy routines and object definitions
-- [x] Documented: disk, code structure, data, graphics and music formats (first pass)
-- [x] Graphics extracted to PNG: all level maps, tile sets, enemy frames and the player sprites ([`original/gfx/`](original/gfx/))
-- [x] Sound effects decoded and extracted to WAV ([`original/sfx/`](original/sfx/)); `$6000` block mapped
-- [x] Object definitions labelled in all sources (`Def_`/`Upd_`/`Spawn_`)
-- [x] In-game music tables located for all 9 players, samples extracted ([`original/music/`](original/music/)); object gallery ([OBJECTS.md](original/docs/OBJECTS.md))
-- [x] Disk rebuild: an extended ADF from the sources (not yet boot-tested)
-- [ ] Still open: see [TODO.md](original/docs/TODO.md) (object names, line-by-line comments, song tables, disk rebuild…)
+- [x] Game program – [`original/src/game.s`](original/src/game.s): byte-identical, every label named, every routine commented
+- [x] Level code – [`original/src/levels/`](original/src/levels/) (8 levels): every enemy and boss named after the arcade's and commented line by line
+- [x] Shared title file and jingle player – [`original/src/shared.s`](original/src/shared.s); the TFMX title-music replay – [`original/src/tfmx.s`](original/src/tfmx.s)
+- [x] Documented: disk, code structure, data, graphics and music formats; object gallery ([OBJECTS.md](original/docs/OBJECTS.md))
+- [x] Graphics extracted to PNG ([`original/gfx/`](original/gfx/)), sound effects and instrument samples to WAV ([`original/sfx/`](original/sfx/), [`original/music/`](original/music/))
+- [x] All the music rendered by running the game's own player code in a 68000 emulator ([`original/music/songs/`](original/music/songs/README.md))
+- [x] Disk rebuild: an extended ADF built from the sources, booted in WinUAE and level 1 played
+- [ ] Still open: high-score saving on the rebuilt disk, a full play-through, and the enhanced version (cheat mode, AmigaDOS disk, faster display) – see [TODO.md](original/docs/TODO.md)
 
 ## Game data
 

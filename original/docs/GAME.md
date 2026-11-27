@@ -1,6 +1,6 @@
 # R-Type (Amiga) – how the game is organised
 
-Findings from the first pass over `src/game.s`. Addresses are absolute.
+How the engine (`src/game.s`) and the level code fit together. Addresses are absolute. The sources themselves carry the detail: every routine has a header comment and the level code has line comments.
 
 ## The program files
 
@@ -105,10 +105,10 @@ A state machine in `ForceState`, run from the copper interrupt (details in the c
 1. **Enter:** flies in from the left.
 2. **Free:** parks at the screen edge away from the ship and drifts towards the ship's y.
 3. **Return:** fire 2 (button 2 or Space, `ReadFire2`) calls it back.
-4. **Docking:** touching the ship docks it at the front or the back (`ForceSide`). Docking at the back turns level 1 into level 2, which has its own frames.
+4. **Docking:** touching the ship docks it at the front or the back (`ForceSide`). A powered-up Force (level 1) docked at the back becomes level 2, the rear-docked form with its own frames, and goes back to 1 when launched or reset.
 5. **Launched:** fire 2 while docked launches it at 8 pixels a frame until it nears the edge, then it's free again.
 
-`ForceLevel` (0–3) is its power. The Force is four hardware sprites (SPR0–3) whose copper pointers are aimed straight at the frames in the `$6000` block (`UpdateForce`, table `ForceAnimTable`).
+`ForceLevel` is its power: 0 basic, 1 after a crystal, 2 the same docked at the back, 3 after a second crystal. The Force is four hardware sprites (SPR0–3) whose copper pointers are aimed straight at the frames in the `$6000` block (`UpdateForce`, table `ForceAnimTable`).
 
 ## Weapons and damage
 
@@ -136,7 +136,7 @@ A state machine in `ForceState`, run from the copper interrupt (details in the c
 - the ship and the Force (touching the ship kills it, the Force damages the object)
 - homing missiles, the Bits, the lasers, the shots
 
-`BoxTest` is a simple distance test with separate left/right and up/down extents. `ObjDamage` adds the damage, and when it reaches the definition's hit points the object explodes and its score is added. Otherwise it flashes white for 3 frames (hit sound). Objects carrying a power-up release it when hit. Flag bit 2 makes an object immune to weapons, and hit points < 0 make it indestructible.
+`BoxTest` is a simple distance test with separate left/right and up/down extents. `ObjDamage` adds the damage, and when it reaches the object's hit points (`$24`, usually the definition's; many bosses are made indestructible and count the damage themselves) the object explodes and the definition's score is added. Otherwise it flashes white for 3 frames (hit sound). Objects carrying a power-up release it when hit. Flag bit 2 makes an object immune to weapons, and hit points < 0 make it indestructible.
 
 **Power-ups** (`HitByForceOrShip`): collecting one scores 400. Its frame number decides the effect: 0–2 blue/red/yellow crystal (sets `LaserType` and powers the Force up), 3 speed-up, 4 missiles, 5 a Bit.
 
@@ -203,7 +203,7 @@ Enemies are named after the arcade's, matched by points, graphics and behaviour 
 
 | Stage | Enemies | Boss |
 |---|---|---|
-| 1 | Pata-Pata, Bug, P-Staff, Scant, Bink, Cancer, Shell (12 turrets round a control unit), Tabrok; Blasters (gun batteries built into the map, the tile animations) | Dobkeratops: tail of 16 segments, core takes 30 hits; if it takes too long the scroll restarts and the boss advances |
+| 1 | Pata-Pata, Bug, P-Staff, Scant, Bink, Cancer, Shell (12 turrets round a control unit), Tabrok; Blasters (gun batteries built into the map, the tile animations) | Dobkeratops: tail of 16 segments, core takes 30 hits (6200 points). The scroll stops at the boss for 1250 frames (cut to 50 after 20 hits), then restarts and the boss advances; reaching the end of the map also completes the level |
 | 2 | Gouger, Wick, the Worm (two heads, 7 eyes at 200 each), two Broods that release Zoids | Gomander: the eye opens and closes in the map, faster each time; core takes 30 hits (9000 points) |
 | 3 | The battleship itself: gun towers, cannon pods, the main engine (three-way shots, breaks away), the laser tower, shooting hull parts, the rear tower | The Main Core in the engine room (10 hits); a timer ends the level when the ship has gone by |
 | 4 | Level 1's Pata-Pata, Bug, P-Staff, Bink, Cancer; Cytron (builds cell walls), Geld (eats them) | The Compiler: three sections on their own paths, each with a core (30 hits, 5000 points) and a gun |
@@ -220,7 +220,4 @@ Every stage also has the POW Armor, the engine's default wave object, which carr
 
 ## Still to do
 
-- Comment `src/game.s` routine by routine; name the remaining `L_`/`D_` labels.
-- Give the level objects their R-Type names (the `Def_`/`Upd_`/`Spawn_` labels are structural) and comment the enemy and boss behaviours.
-- The small frames at `$08480`–`$0873F`, the beam/laser/bullet/missile frame sizes, level 3's unidentified 30 KB.
-- The in-game music data per level, the level 8 ending music, and disassembling the TFMX replay.
+Everything is named and commented; what's left is tracked in [TODO.md](TODO.md).

@@ -1,11 +1,11 @@
 # R-Type (Amiga) – what's left to do
 
-State on 26 Nov 2026. All 13 sources reassemble byte-identical (`tools/verify.py`). Each item says where to start. Ticked items are done and kept for reference.
+State on 27 Nov 2026. All 13 sources reassemble byte-identical (`tools/verify.py`). Each item says where to start. Ticked items are done and kept for reference.
 
 ## 1. The game program (`src/game.s`)
 
 - [x] **Comments**: every routine in `game.s` has a header or block comment; line comments on the core loop, game states, interrupts, scrolling, objects, collisions, the ship, weapons, missiles and the anti-air laser. (More line comments can always be added inside the longer routines.)
-- [x] **Name the remaining labels**: all `L_`/`D_` labels in `game.s` are named (the levels still have theirs).
+- [x] **Name the remaining labels**: all `L_`/`D_` labels in `game.s` are named (and in every other source, see section 2).
 - [x] **Variables in `DATA`**: all named (the missile arrays, Force state bytes, title variables and death/level counters included).
 - [x] **First-pass artefacts**: the 16 `dc.l` values the generator had turned into code labels are numbers again (mask offsets, frame sizes, ground-laser moves, the copper list, the high-score table). The copper list is one instruction per line, the high-score table one entry per line.
 - [x] **Frame pacing**: the game is locked to 25 Hz (`Flip50Hz` clear); the ship and Bits move at 50 Hz from the VBL. See `GAME.md`.
@@ -25,7 +25,7 @@ State on 26 Nov 2026. All 13 sources reassemble byte-identical (`tools/verify.py
 - [x] **Level start / per-frame routines** (`LevelInit`, `LevelFrame`): commented for every level (the boss sequences, the battleship, the ending).
 - [x] **Wave lists**: one entry per line with the definition names (`tools/format_waves.py`); the parameters of every object in DATA_FORMATS.md; the parameter lists in the level files labelled and laid out (Pata-Pata groups, Bug and Cytron paths, Cancer positions).
 - [x] **Tile animation routines** (`LV_TileAnims`, level 1) and **map patches**: level 1's are the Blasters, gun batteries built into the map.
-- [x] **Level 3** (the battleship): the scroll script moves the 26-row map in x and y; parts are map cells patched in and out (`PatchMap`) plus invisible targets that follow the scroll. Still to check: the exact stage list of the rear tower.
+- [x] **Level 3** (the battleship): the scroll script moves the 26-row map in x and y; parts are map cells patched in and out (`PatchMap`) plus invisible targets that follow the scroll. The rear tower's stages fall due at 0, 196, 220, 280, 340 and 440 damage once it has taken 80.
 - [x] **Unnamed labels**: none left in the level files or `game.s` (`tools/localise_labels.py` turns branch labels local, `tools/format_waves.py` lays out the wave lists). `shared.s` and `stage2.s` are fully named too.
 - [x] **Code hidden as data**: level 4's Geld routines, reached only through a pointer table, are code again.
 
@@ -57,7 +57,7 @@ State on 26 Nov 2026. All 13 sources reassemble byte-identical (`tools/verify.py
 - [x] Bootblock and stage 2: fully annotated.
 - [ ] **High-score saving**: the rebuilt ADF has a valid track 68; test that scores save and reload.
 - [x] **Rebuild a disk**: `tools/build_disk.py` writes an extended ADF from `files/` or from the sources (`--from-source`), self-verified by decoding every track.
-- [ ] **Boot the rebuilt ADF in WinUAE** (A500 512K and 1 MB) and play through; test high-score saving on it.
+- [ ] **Boot the rebuilt ADF in WinUAE** (A500 512K and 1 MB) and play through; test high-score saving on it.  Booted and level 1 played (27 Nov 2026); the rest of the levels and the saving still to test.
 
 ## 6. Tooling
 
@@ -111,6 +111,19 @@ Replace the custom-track loader with one that reads a standard AmigaDOS (11-sect
   - Keep the high-score table as a one-block file in a fixed place, so the save never touches the file system's bitmap or directory.
   - Keep the checksum check so a bad or missing table falls back to the default.
 - [ ] **Build**: extend `build_disk.py` (or add an `enhanced` mode) to write a plain ADF and verify it, and test it in WinUAE on a 512K A500 and with more memory.
+
+### Cheat mode (first)
+
+The original already has a hidden trainer: entering **`sumita.`** as a high-score name sets `CheatMode` (see `St_HighScore`). Lives are then never lost (each death adds 1 point instead), no points are scored, high scores aren't saved, and the title's "freeplay" line reads "trainer". The ship still dies on contact.
+
+- [ ] **Make it reachable**: a title-screen key or joystick sequence (or a start-up option) instead of having to reach the high-score table first.
+- [ ] **Options**, each a flag the code already has a natural place for:
+  - Infinite lives: the existing `CheatMode` test in `ShipRespawn`.
+  - Invincibility: skip the ship's death in the collision code (`ShipHitsMap`, the enemy and bullet checks), so the ship flies through.
+  - Keep the score: drop the `CheatMode` test in `AddScore` (and don't save those scores).
+  - Level select: start at any of the 8 levels (`Level`, `LoadLevel`), and maybe at any checkpoint.
+  - Full weapons: start with the Force, both Bits and a chosen laser.
+- [ ] **Keys**: the keyboard interrupt (`Level2Int`) only reads Space (fire 2) and P (pause); cheat toggles can be added there.  The ship itself is steered by the joystick in port 2 (`JOY1DAT`), so keyboard play in an emulator goes through its joystick mapping.
 
 ### Display and drawing speed-ups (as in GnG and NZS)
 

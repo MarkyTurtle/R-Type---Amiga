@@ -326,7 +326,7 @@ Spawn_Slither:
                 clr.b   $22(a0)                 ; frame from the path
                 move.b  #$14,$4(a0)             ; priority 20
                 jsr     (jt_ObjInsert).w
-                move.w  $6(a1),d7               ; entry $06: body segments - 1
+                move.w  $6(a1),d7               ; entry $06: body segments (the loop enters at its dbra)
                 moveq   #0,d6                   ; d6 = segment number
                 moveq   #0,d5                   ; d5 = start delay, 4 frames apart
                 lea.l   (Def_SlitherBody).l,a2

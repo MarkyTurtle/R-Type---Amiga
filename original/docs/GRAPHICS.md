@@ -55,7 +55,7 @@ The labels ("1P-", "BEAM", "HI-") and the meter's frame are part of the planes. 
 |---|---|
 | 0–11 | tile number |
 | 12 | destructible: shots, the Force, the Bits, the shot streams and the anti-air laser clear the cell to 0; the wave beam clears it and carries on. Some level objects (level 4) clear such cells too. |
-| 13 | hit: set by shots, the wave beam, the lasers, the Force and the Bits when they touch the cell. The tile routine reads it: level 1's animated blocks clear themselves and their neighbour when hit. |
+| 13 | hit: set by shots, the wave beam, the lasers, the Force and the Bits when they touch the cell. The tile routine reads it: level 1's Blasters clear themselves and their neighbour when hit. |
 | 14 | animated tile: bits 0–3 select a routine in `LV_TileAnims` (called while drawing). A solid animated cell stops the reflect laser without a bounce, and the wave beam passes through it. |
 | 15 | solid: `GetMapCell` tests it (bit 7 of the high byte). The ship, the Force, the POW Armor, shots, lasers and the Bits collide with solid cells. |
 
@@ -96,7 +96,7 @@ BPLCON2 = `$24` puts the sprites in front of the playfield.
 | Bits `$6500`–`$69CF` | 11 (spin) | 12 | `$70` (one pair) |
 | Force level 0 `$6A40`–`$703F` | 6 | 14 | `$100` |
 | Force level 1 `$7040`–`$775F` | 6 | 17 | `$130` |
-| Force level 2 `$7760`–`$7E7F` | 6 | 17 | `$130` |
+| Force level 2 (level 1 docked at the back) `$7760`–`$7E7F` | 6 | 17 | `$130` |
 | Force level 3 `$7E80`–`$847F` | 4 | 22 | `$180` |
 
 The Force table is at `$516C` (16 bytes per level: first frame, last frame, frame size, speed, height). Rendered: `gfx/sprites_ship.png`, `sprites_bits.png`, `sprites_force0-3.png`.
@@ -144,7 +144,7 @@ Each decrunched level B file (`$4D300` on) holds, in this order: the tiles, the 
 | 7 | `$4D300`–`$56FFF` (314) | `$57300` 154×13 | `$582A4` | `$5BCD6`–`$7108E` |
 | 8 | `$4D300`–`$5AAFF` (432) | `$5AF00` 187×13 | `$5C1FE` | `$61738`–`$682B7` |
 
-Level 1's tiles end exactly where its map starts, and level 4's where its stored map starts, which confirms the 128-byte tile size. Level 3's tile set continues past what its map uses: `$5AF80`–`$626FF` is 239 more tiles (numbers 441–679: engine flames, explosions and battleship parts) that the stored map never places. They're presumably written into the map or drawn by the level code as the battleship animates and breaks up; how isn't confirmed yet. The BOB ranges start at the lowest definition graphics found, so the gap between music player and BOBs holds the music data plus anything not yet mapped.
+Level 1's tiles end exactly where its map starts, and level 4's where its stored map starts, which confirms the 128-byte tile size. Level 3's tile set continues past what its map uses: `$5AF80`–`$626FF` is 239 more tiles (numbers 441–679: engine flames, explosions and battleship parts) that the stored map never places. The level code writes them into the map with `PatchMap` blocks as the battleship animates and breaks up: hull parts appearing and their wrecks, the engine room's core, the main engine's flame and the rear tower. The BOB ranges start at the lowest definition graphics found; the full layout of every level B file, including the music data and the movement tables, is in [levelb_layout.txt](levelb_layout.txt) (see DATA_FORMATS.md, *Level B layout*).
 
 ## Rendered images (`gfx/`)
 
@@ -155,11 +155,13 @@ Level 1's tiles end exactly where its map starts, and level 4's where its stored
 | `levelN_map.png` | the whole level map as the game draws it (level palette) |
 | `levelN_tiles.png` | the tile set, 16 per row, in tile-number order |
 | `levelN_bobs.png` | one row per object definition found in the level, all its frames (mask applied) |
+| `levelN_flags.png` | the map with its cell flags: red solid, yellow destructible, cyan animated |
+| `objects/levelN_xxxxx.png` | one picture per definition, used by [OBJECTS.md](OBJECTS.md) (`tools/object_gallery.py`) |
 | `sprites_ship.png`, `sprites_bits.png`, `sprites_force0-3.png` | the hardware sprites, 3× size |
 | `engine_bobs.png` | the engine's own BOBs: explosions, ring burst, speed-up flash, POW Armor, power-ups (2× size) |
 | `engine_weapons.png` | ship shots, shot streams, anti-air, reflect and ground lasers, enemy bullets, homing missiles, wave cannon sizes (2× size) |
 
-The BOB sheets come from searching level A's DATA for object definitions by their signature (mask offset = half the frame size, modulo = 52 − 2 × width, valid pointers). Frame counts are capped at the next known graphics block. Level definitions can also point at engine graphics in the `$6000` block, for example level 7's `$4BE14` uses the large explosion.
+The BOB sheets come from searching level A's DATA for object definitions by their signature (mask offset = half the frame size, modulo = 52 − 2 × width, valid pointers). Frame counts are capped at the next known graphics block. Level definitions can also point at engine graphics in the `$6000` block, for example level 7's `Def_Collapse` (`$4BE14`) uses the large explosion.
 
 ## Title picture (boot)
 

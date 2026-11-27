@@ -37,9 +37,9 @@
 ; MdatPath ("df1:smpl.rtypetitle.pck") are left from development, when the
 ; replay loaded the music from a second floppy.
 ;
-; Traced from the jump table and the command tables; byte-identical.  The
-; entry points and command handlers are named; the internal routines still
-; have address labels.
+; Traced from the jump table and the command tables; byte-identical.  All
+; labels are named: the entry points, the command handlers (TrackCmds,
+; PatternCmds, MacroCmds) and the internal routines.
 ;==============================================================================
                 org     $52300
                 dc.l    $000003F3,$00000000,$00000001,$00000000

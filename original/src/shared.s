@@ -7,7 +7,9 @@
 ; Loaded at start-up by LoadShared and overwritten by every level load.
 ; JinglePlayer ($4A300) is a small position-independent sample sequencer
 ; the engine calls from the VBL (UpdateJingle) while JinglePlaying is set:
-;   d0 = command (0 = play, $FF = start, 1/2 = fade), d1/d3/d4 = options
+;   d0 = command ($FF = start, 2 = play on - the engine's every-frame
+;   call, 1 = start a fade and play on, 0 = only the d3/d4 commands),
+;   d1/d3/d4 = options
 ;   out: d0 = 0 when finished.
 ; It uses all four channels: notes from NoteTable, sample info from
 ; SampleTable, Amiga periods from PeriodTable, 8-bit samples from Samples.
@@ -25,7 +27,7 @@ JinglePlayer:
                 movem.l a0-a3,-(a7)
                 lea.l   JingleState(pc),a0      ; song row pointer, pattern row pointer
                 movem.l (a0)+,a1-a2
-                tst.b   d0                      ; 0: play the next step
+                tst.b   d0                      ; 0: only the d4 / d3 commands (nothing plays if both are 0)
                 beq.w   .4A346
                 cmpi.b  #$FF,d0                 ; $FF: start the song on four channels, looping
                 bne.b   .4A336
@@ -39,9 +41,9 @@ JinglePlayer:
                 move.w  #$0,(a0)
                 bra.w   Jingle_Start4Ch
 .4A336:
-                cmpi.b  #$1,d0                  ; 1: start a fade
+                cmpi.b  #$1,d0                  ; 1: start a fade, then play
                 beq.w   .4A3F2
-                cmpi.b  #$2,d0                  ; 2: carry on fading
+                cmpi.b  #$2,d0                  ; 2: play the next step (fading if a fade was started)
                 beq.w   .4A3FA
 .4A346:
                 tst.w   d4                      ; d4 = n << 8 | $FF: start, played once

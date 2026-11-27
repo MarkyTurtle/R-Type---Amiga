@@ -9,9 +9,10 @@
 ; and sound data only; per-level code and data are loaded to $4A2E4 (level A)
 ; and $4D300 (level B, crunched).  See docs/GAME.md.
 ;
-; Status: first pass.  Every routine is separated from data and the main
-; systems are named; most routines are not yet commented line by line.
-; Remaining L_xxxxx / D_xxxxx labels are unnamed targets (L = code, D = data).
+; Status: every routine is separated from data, every label is named and
+; every routine has a header comment; the core loop, interrupts, scrolling,
+; objects, collisions, the ship and the weapons have line comments.  Local
+; .xxxxx labels keep the address they were found at.
 ;==============================================================================
 
 ; --- Custom chips / CIAs -------------------------------------------------------

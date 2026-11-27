@@ -1933,9 +1933,12 @@ ShellBroken:
                 dc.b    $00
 ShellGone:
                 dc.b    $00
-; Shell: a ring of 12 turrets circling a moving centre (path at $792D1). One
-;   of them (number 3) is the control unit: when it is open (frame 5+) and
-;   has taken 6 hits, every turret explodes for 200 points each
+; Shell: a ring of 12 turrets circling a centre that drifts left (path at
+;   $792D1); they fire every 25-200 frames while the ship is within 70
+;   pixels of the centre.  One of them (number 3) is the control unit:
+;   when it is open (frame 5+) and has taken 6 hits, the turrets blow up
+;   one after another (200 points each) and fly on as wrecks (frame 9)
+;   until the ring leaves the screen
 ; (32x27, 8 frames, gfx $6EE58, 1 hit point, score 200, update Upd_Shell, spawn Spawn_Shell)
 Def_Shell:
                 dc.b    $1B,$03,$00,$2E,$03,$60,$00,$23,$00,$01,$00,$00,$00,$06,$EE

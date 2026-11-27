@@ -64,7 +64,7 @@ On this image the track holds just 209 data bytes after the sync, so the checksu
 
 ## Level table ($41B4, 10 bytes per level)
 
-| Level | file A → `$4A2E4` | file B (crunched) → `$4CB00` | decrunched → `$4D300` | word → `$F4` |
+| Level | file A → `$4A2E4` | file B (crunched) → `$4CB00` | decrunched → `$4D300` | map row bytes → `MapWidth` (`$F4`) |
 |---|---|---|---|---|
 | 1 | 69–70 | 71–83 | `$2C35B` | `$218` |
 | 2 | 84 | 85–97 | `$2527A` | `$168` |
@@ -75,7 +75,7 @@ On this image the track holds just 209 data bytes after the sync, so the checksu
 | 7 | 137–138 | 139–148 | `$23D8F` | `$134` |
 | 8 | 149 | 150–158 | `$1AFB8` | `$176` |
 
-File B is loaded over the end of file A, so only `$281C` bytes of A survive. The meaning of the word stored to `$F4` is still to be found.
+File B is loaded over the end of file A, so only `$281C` bytes of A survive. The last word is the map's row length in bytes, 2 per cell (`$218` = 268 cells for level 1); it goes to `MapWidth`, the low word of `MapRowBytes`.
 
 ## Decruncher ($3EFC)
 

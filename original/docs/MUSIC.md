@@ -20,6 +20,8 @@ The player still contains `dos.library` and the paths `df1:mdat.rtypetitle.pck` 
 | `$5232C` (+`$C`) | start song d0 |
 | `$52334` (+`$14`) | init: d0 = mdat, d1 = smpl |
 
+In `src/tfmx.s` these are `TfmxPlay`, `TfmxStartSong` and `TfmxInit` (the jump table runs from `TfmxBase`, a command entry, to `TfmxEntry8`: stop, note, interrupt on/off and channel off). Inside, `TfmxPlayBody` runs one tick: the track step (`TfmxTrackStep`), the patterns (`TfmxPatternChannel`, commands in `PatternCmds`) and the macros (`TfmxMacros` / `TfmxMacroChannel`, commands in `MacroCmds`), then vibrato, portamento and the volume envelope.
+
 The `mdat` uses the classic layout (the offset fields at `$1D0` are 0): text at `$10`, song start/end/tempo tables at `$100`/`$140`/`$180`, pattern pointers at `$400`, macro pointers at `$600`, track steps at `$800`. Song 0 runs track steps 0–79 at tempo 4. TFMX sequences instrument **macros** (programs for volume, pitch and sample changes) from **patterns** of commands, rather than a fixed grid of notes.
 
 With extra memory the game keeps a copy of the music there (stage 2 copies `$52300`–`$71A3B`, which ends exactly at the end of the mdat).
@@ -69,7 +71,7 @@ All registers are set by the caller on every call; the players keep their state 
 |---|---|---|---|
 | `UpdateMusic`, a tune (`MusicRequest` = n) | d3 = `$FFFF`, d1 = n − 1 (0 = the level's tune, 1 = the boss tune) | d1 = d3 = 2 | the player returns d0 = 0 (the tunes loop, so they run until replaced) |
 | `UpdateMusic`, a jingle (`JingleState` = n) | d4 = (n − 1) << 8 \| `$FF` | d4 = 1 | the player returns d4 negative |
-| `UpdateJingle` (shared player, level 8's ending player) | d0 = `$FF` (`JingleCmd`) | d0 = 2 | d0 = 0 |
+| `UpdateJingle` (shared player, level 8's ending player) | d0 = `$FF` (`JingleCmd`) | d0 = 2 (play on; d0 = 1 starts a fade) | d0 = 0 |
 
 d0 = 1 or 2 with d4 = 0 fades the music out: each call raises `FadeLevel` by 2 (up to 62), which is subtracted from every volume. Tunes use channels 0–1 only, with 4-byte song rows, so the sound effects can have channels 2–3; jingles take all four channels and the effects are muted (`PlaySound` ignores requests while a jingle plays).
 

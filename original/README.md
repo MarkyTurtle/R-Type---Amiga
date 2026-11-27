@@ -7,13 +7,13 @@ Reverse-engineering of the Amiga R-Type (Electric Dreams 1989; Amiga version by 
 ## Status
 
 - [x] IPF decoded; all files extracted with checksums verified (`files/`, `files/manifest.json`)
-- [x] Bootblock disassembled and annotated – `src/bootblock.s`, byte-identical
-- [x] Stage-2 loader / credits sequence disassembled and annotated – `src/stage2.s`, byte-identical
-- [x] Disk formats, game loader, track cache, decruncher and level table documented – `docs/DISK_FORMAT.md`
-- [x] Game program (`game_low_000a4.bin`) – `src/game.s`, first pass, byte-identical; see `docs/GAME.md`
-- [ ] Line-by-line comments for `src/game.s`
-- [x] Level code (`levelN_a`) – `src/levels/level1-8.s`, the shared title file – `src/shared.s`, and the TFMX replay – `src/tfmx.s`: byte-identical
-- [ ] Name the level routines; data formats (`$6000` block, level B, waves, map)
+- [x] Bootblock and stage-2 loader / credits – `src/bootblock.s`, `src/stage2.s`, byte-identical and annotated
+- [x] Disk formats, game loader, track cache, decruncher and level table – `docs/DISK_FORMAT.md`
+- [x] Game program (`game_low_000a4.bin`) – `src/game.s`: byte-identical, all labels named, every routine commented; see `docs/GAME.md`
+- [x] Level code (`levelN_a`) – `src/levels/level1-8.s`: all labels named, enemies and bosses named and commented line by line
+- [x] Shared title file and jingle player – `src/shared.s`; TFMX replay – `src/tfmx.s`: byte-identical, all named
+- [x] Data, graphics and music formats – `docs/`; extended ADF rebuilt from the sources (`tools/build_disk.py`), boots in WinUAE
+- [ ] What's left: `docs/TODO.md`
 
 ## Layout
 
@@ -32,9 +32,13 @@ docs/GAME.md           how the game is organised: interfaces, frame, objects
 docs/DATA_FORMATS.md   level interface, checkpoints, waves, scroll script, objects
 docs/GRAPHICS.md       playfield, HUD, tiles, map, BOBs, sprites, $6000 block
 docs/MUSIC.md          TFMX title music, in-game sequencer format, effects
+docs/OBJECTS.md        gallery of every object definition (generated)
+docs/levelb_layout.txt the contents of every level B file (generated)
+docs/TODO.md           what's left, and the enhanced-version plan
 gfx/                   rendered maps, tile sets, enemy frames and sprites (PNG)
 sfx/                   the 14 sound effects as WAV
 music/                 the in-game music's instrument samples as WAV (73)
+music/songs/           every tune rendered to MP3 with the game's own players
 tools/
   ipf2mfm.py           IPF -> raw MFM bitstreams per track
   mfmlib.py            MFM helpers + AmigaDOS sector decoder
@@ -52,6 +56,11 @@ tools/
   object_gallery.py    build docs/OBJECTS.md and gfx/objects/
   xref.py              which routines read/write each label (for naming)
   build_disk.py        write an extended ADF from files/ or the sources
+  rtype_tracks.py      the custom $9521 track decoder
+  extract_dos.py       rebuild the AmigaDOS cylinders 0-4 as an ADF fragment
+  line_comments.py     add line comments by label anchor; copy them to identical routines
+  localise_labels.py   turn generated L_ labels into local ones (keeps it identical)
+  format_waves.py      lay the wave lists out one entry per line
   dis68k.py            quick capstone listing of any region
   bootstrap_source.py  one-off first-pass source generator (not part of the build)
   trace68k.py          recursive-descent code/data separation

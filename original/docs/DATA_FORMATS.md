@@ -57,7 +57,7 @@ TEXT starts right after it (`$C0` / `$4A300`), and DATA follows TEXT.
 | `$00.w` | trigger: scroll x (level 3 uses a frame counter instead) |
 | `$02.w`, `$04.w` | x, y |
 | `$06`–`$0D` | parameters for the spawn routine (count, spacing, type… per level) |
-| `$0E.l` | object definition (negative → engine default `$051FC`) |
+| `$0E.l` | object definition (negative → the engine default, `DefPowArmor` at `$051FC`) |
 
 The definition's **spawn routine** (`+$20`) is called with a1 = the wave entry and a2 = the definition. It creates the objects (usually through `jt_ObjCreate`).
 
@@ -77,11 +77,11 @@ Speeds index the table at `$48E9`:
 
 ## Map patches (`LV_MapPatches`)
 
-`x.w, y.w, tile.w` … until x < 0. They are written into the map at level start (level 1 only).
+`x.w, y.w, cell.w` … until x < 0. They are written into the map at level start (level 1 only: its Blasters). Levels 3, 7 and 8 change their maps from their own code instead (`PatchMap`: a map address, width − 1, height − 1, then the cells row by row; level 7's takes the address and the cells in separate registers).
 
 ## Map cells and tiles
 
-See `GRAPHICS.md`: one word per cell (tile number, animated flag, solid flag), 16 × 16 four-plane interleaved tiles of 128 bytes. Each map is 13 rows (level 3: 26), row-major, `MapRowBytes` bytes per row. Level 4 keeps its map at `$50F00` and its `LevelInit` copies it to `$6EA6A` at every (re)start, because the level code changes the map while it plays.
+See `GRAPHICS.md`: one word per cell (tile number in bits 0–11, then the destructible, hit, animated and solid flags in bits 12–15), 16 × 16 four-plane interleaved tiles of 128 bytes. Each map is 13 rows (level 3: 26), row-major, `MapRowBytes` bytes per row. Level 4 keeps its map at `$50F00` and its `LevelInit` copies it to `$6EA6A` at every (re)start, because the level code changes the map while it plays.
 
 ## Objects
 
@@ -132,7 +132,7 @@ See `GRAPHICS.md`: one word per cell (tile number, animated flag, solid flag), 1
 Every definition found is labelled in the sources:
 - **Labels:** `Def_xxxxx` in the level files; `DefExplosion1`, `DefPowArmor`, `DefPowerUp`… in `game.s`.
 - **Summary comment:** size, frame count, graphics address, hit points, fire rate and score.
-- **Routines:** each update routine is labelled `Upd_xxxxx` and each spawn routine `Spawn_xxxxx`. Several definitions often share one update routine with different graphics: level 2's three 32-pixel enemies all use `Upd_4AA08`.
+- **Routines:** each update routine is labelled `Upd_xxxxx` and each spawn routine `Spawn_xxxxx`. Several definitions often share one update routine with different graphics: level 4's three Compiler sections all use `Upd_CompilerSection`, and the Worm's segments share `Upd_Worm`.
 
 They were found by signature (mask offset = half the frame size, modulo = 52 − 2 × width, valid pointers), and their frames are in `gfx/levelN_bobs.png` in the same order.
 
@@ -169,13 +169,13 @@ Every wave entry is `trigger.w, x.w, y.w`, 8 bytes of parameters (`$06`–`$0D`)
 | Cannon pod (3) | `$09.b` hits that knock it out (it hides and comes back; it is never destroyed), `$0A.l` its animation |
 | Cytron (4) | `$06.w` dx, `$08.w` dy (both also pick its frame), or `$0A.l` a path like the Bug's |
 | Geld (4) | `$06.w` starting direction 0–3 (up, right, down, left), `$08.w` scroll x after which it stops turning |
-| Slither (5) | `$06.w` body segments, `$08.w` copied to every segment (`$34`) |
+| Slither (5) | `$06.w` body segments, `$08.w` start position in its path (`$34` of every segment) |
 | Pursuer (5) | `$06.w` starting direction (0–15) |
 | Mid-phase Cheetah (5) | `$06.w` number − 1, `$08.w` random y range, `$0A.w` lowest y |
 | Dop (6) | from `$06`: its route, bytes - first the start direction, then a direction change at each junction |
 | Capsule (6) | `$06.w` start mode 0–3 (it shuttles up/down or left/right), `$08.w` frames per leg − 1 |
 | Collapse (7) | `$02.l` (x, y), `$06.w` offset of its map cells, `$08.w` which rubble block, `$0A.w` non-zero = taller |
 | Crawler (7) | `$06.w` y step towards the floor or ceiling |
-| Win (8) | `$06.w` starting direction |
+| Win (8) | `$06.w` starting direction (0–15) |
 
 In the sources the parameter lists that live in the level files are labelled `<Object>Data<n>` and laid out one entry per line.

@@ -388,7 +388,7 @@ EngineRoom:
                 subq.w  #$1,(CoreSteps).l       ; Z set when the last is done
                 rts
 ; Upd_BattleshipCore: the Main Core, the battleship's weak point.  Moves
-; with the map, flashes when hit; 10 hits destroy it (BossDead,
+; with the map, flashes when hit; 10 hits destroy it (no score; BossDead,
 ; LevelComplete), then BossPhase keeps setting off explosions round it.
 Upd_BattleshipCore:
                 movem.w $A(a0),d0-d1
