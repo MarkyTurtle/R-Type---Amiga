@@ -492,89 +492,89 @@ Upd_PStaffMissile:
 .4AAEA:
                 rts
 TileAnim_BlasterFloor:
-                lea.l   (BlasterFloorAims).l,a4
+                lea.l   (BlasterFloorAims).l,a4 ; aims for a Blaster on the floor
                 bra.b   Blaster
 TileAnim_BlasterCeiling:
-                lea.l   (BlasterCeilingAims).l,a4
+                lea.l   (BlasterCeilingAims).l,a4 ; aims for one on the ceiling
 Blaster:
-                moveq   #19,d7
+                moveq   #19,d7                  ; screen column of this cell
                 sub.w   d2,d7
-                move.w  (ShipPos).w,d6
+                move.w  (ShipPos).w,d6          ; ship's column
                 sub.w   #$30,d6
                 lsr.w   #$4,d6
-                sub.w   d6,d7
-                moveq   #0,d6
+                sub.w   d6,d7                   ; columns from the ship
+                moveq   #0,d6                   ; aim 0 (8 bytes an aim)
                 tst.w   d7
-                bmi.b   .4AB18
-                subq.w  #$3,d7
+                bmi.b   .4AB18                  ; ship to the right?
+                subq.w  #$3,d7                  ; ship 3 or more columns left: aim 0
                 bpl.b   .4AB20
-                addq.w  #$8,d6
+                addq.w  #$8,d6                  ; nearer: aim 1 (straight)
                 bra.b   .4AB20
 .4AB18:
-                addq.w  #$8,d6
-                addq.w  #$3,d7
+                addq.w  #$8,d6                  ; ship to the right: aim 1,
+                addq.w  #$3,d7                  ; 3 or more columns: aim 2
                 bpl.b   .4AB20
                 addq.w  #$8,d6
 .4AB20:
-                move.w  d1,d7
+                move.w  d1,d7                   ; (d7 is not used)
                 lsr.w   #$8,d7
                 and.w   #$F,d7
-                btst    #$D,d1
+                btst    #$D,d1                  ; hit (bit 13)?
                 bne.b   .4AB52
-                btst.b  #$5,(a0)
+                btst.b  #$5,(a0)                ; or its right half hit?
                 bne.b   .4AB52
-                movem.l d4-d6,-(a7)
-                move.w  $4(a4,d6.w),d4
-                move.w  $6(a4,d6.w),d5
+                movem.l d4-d6,-(a7)             ; bullet x offset for the aim
+                move.w  $4(a4,d6.w),d4          ; bullet y offset
+                move.w  $6(a4,d6.w),d5          ; count down, fire when due
                 bsr.w   .4AB96
-                movem.l (a7)+,d4-d6
-                move.w  (a4,d6.w),d1
+                movem.l (a7)+,d4-d6             ; draw the left tile for the aim
+                move.w  (a4,d6.w),d1            ; and set the right cell's tile (solid)
                 move.w  $2(a4,d6.w),(a0)
                 rts
 .4AB52:
-                clr.w   -$2(a0)
+                clr.w   -$2(a0)                 ; destroyed: clear both cells
                 clr.w   (a0)
-                moveq   #0,d1
+                moveq   #0,d1                   ; draw tile 0
                 movem.l d0-d2/a0-a2,-(a7)
-                moveq   #19,d0
-                sub.w   d2,d0
+                moveq   #19,d0                  ; explosion at the cell:
+                sub.w   d2,d0                   ; x = column * 16 + 40
                 lsl.w   #$4,d0
                 add.w   #$28,d0
                 moveq   #12,d1
-                sub.w   d3,d1
+                sub.w   d3,d1                   ; y = row * 16 + 28
                 lsl.w   #$4,d1
                 add.w   #$1C,d1
                 moveq   #0,d2
-                jsr     (jt_ObjAlloc).w
-                move.b  #$1,$5(a0)
-                clr.l   $6(a0)
+                jsr     (jt_ObjAlloc).w         ; explosion object
+                move.b  #$1,$5(a0)              ; explode now
+                clr.l   $6(a0)                  ; no update routine
                 jsr     (jt_ObjInsert).w
-                move.l  #$100,d0
+                move.l  #$100,d0                ; 100 points
                 jsr     (jt_AddScore).w
                 movem.l (a7)+,d0-d2/a0-a2
                 rts
 .4AB96:
-                move.w  d1,d6
+                move.w  d1,d6                   ; cell bits 8-11: frame count
                 and.w   #$F00,d6
-                bne.b   .4ABB4
-                move.w  d1,d6
+                bne.b   .4ABB4                  ; counting: take one
+                move.w  d1,d6                   ; bits 4-7: steps left
                 and.w   #$F0,d6
-                beq.b   .4ABBC
-                ori.w   #$F00,-$2(a0)
-                subi.w  #$10,-$2(a0)
+                beq.b   .4ABBC                  ; none: fire
+                ori.w   #$F00,-$2(a0)           ; next step: 15 more frames
+                subi.w  #$10,-$2(a0)            ; one step fewer
                 rts
 .4ABB4:
-                subi.w  #$100,-$2(a0)
+                subi.w  #$100,-$2(a0)           ; one frame fewer
                 rts
 .4ABBC:
-                move.w  d1,d6
+                move.w  d1,d6                   ; reload with $AA: 170 frames to the next shot
                 and.w   #$F00F,d6
                 or.w    #$AA0,d6
                 move.w  d6,-$2(a0)
-                moveq   #21,d6
+                moveq   #21,d6                  ; bullet x = (column + 2) * 16 + aim offset
                 sub.w   d2,d6
                 lsl.w   #$4,d6
-                moveq   #13,d7
+                moveq   #13,d7                  ; bullet y = (row + 1) * 16 + aim offset
                 sub.w   d3,d7
                 lsl.w   #$4,d7
                 add.w   d4,d6
@@ -582,7 +582,7 @@ Blaster:
                 movem.l d0-d3/a1-a2,-(a7)
                 move.w  d6,d0
                 move.w  d7,d1
-                addq.w  #$8,d0
+                addq.w  #$8,d0                  ; fire at the ship
                 addq.w  #$8,d1
                 jsr     (jt_FireEnemyBullet).w
                 movem.l (a7)+,d0-d3/a1-a2
@@ -1835,7 +1835,9 @@ BlasterFloorAims:
 ; MapPatches: DrawMap calls the routine for each one on screen.  It picks
 ; the pair of tiles that points towards the ship (3 aims, BlasterCeiling/
 ; FloorAims: left tile, right tile, bullet x, y offset), counts the
-; cell's bits 4-11 down to fire an enemy bullet, and when the cell's hit
+; cell's bits 4-11 down to fire an enemy bullet (every 170 frames while
+; on screen: bits 8-11 count frames, bits 4-7 steps of 16; the map
+; patches start them at different counts), and when the cell's hit
 ; bit (13) is set the Blaster is destroyed: both cells cleared, an
 ; explosion, 100 points.
 TileAnims:
