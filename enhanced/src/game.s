@@ -975,7 +975,7 @@ DrawLives:
 ;==============================================================================
 ; Object system
 ;
-; 40 objects of $3E bytes at $4935A, kept on a free list (FreeObjects) and an
+; 41 objects of $3E bytes at $4935A ($4935A-$49D47; see InitObjects), kept on a free list (FreeObjects) and an
 ; active list sorted by priority (ActiveObjects).  Known fields:
 ;   $00.l next          $04.b priority      $05.b state (0 alive, 1 start
 ;   $06.l update routine (0 = none)          explosion, $FF exploding)
@@ -1000,7 +1000,9 @@ InitObjects:
                 adda.l  #$3E,a0
                 move.l  a0,-$3E(a0)
                 dbra    d0,.00c08
-                clr.l   (a0)
+                clr.l   (a0)                        ; (a0 = $49D0A: the 40th object's next
+                                                    ;  points here, so this is a 41st free
+                                                    ;  object, $49D0A-$49D47)
                 moveq   #13,d0
                 lea.l   (ShotX).l,a0
 .00c20:
@@ -5031,10 +5033,11 @@ UpdateJingle:
 
 ; LoadShared: tracks 63-67 -> $4A300
 LoadShared:
-                move.l  #$4A300,d2
-                moveq   #FID_SHARED,d0
-                moveq   #0,d1
-                bra.w   LoadTracksCached
+                jmp     (MJ_LOADTITLE).l            ; (enhanced: the title file, and
+                nop                                 ;  the title menu with it)
+                nop
+                nop
+                nop
 AbortTitle:
                 clr.b   (TitleMusicOn).l
                 move.w  #$F,$96(a6)

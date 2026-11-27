@@ -72,7 +72,8 @@ The `original/` sources stay byte-identical; changes go in a separate `enhanced/
 
 **Order (decided 27 Nov 2026):**
 1. **The AmigaDOS disk** (below): the 4489 byte loader, ZX0-packed files on an OFS disk, the patched load calls, high-score saving.
-2. [x] **A title menu** in the style of the GnG and NZS enhanced versions: `START GAME`, `OPTIONS` (the cheats, a sound test, `EXIT`; the input option comes with the CD32 pad). Branch `enhanced/menu`, `enhanced/src/menu.s`: a file of its own that stage 2 loads once above itself (`MENU_ORG`), as the engine has no room left; see `enhanced/README.md`.
+2. [x] **A title menu** in the style of the GnG and NZS enhanced versions: `START GAME`, `OPTIONS` (the cheats, a sound test, `EXIT`; the input option comes with the CD32 pad). Branch `enhanced/menu`, `enhanced/src/menu.s` (the title menu, loaded with the title file to the top of memory) and `resident.s` (the cheats' hooks, loaded once to `$49D48`), as the engine has no room left; see `enhanced/README.md`.
+5. **Level data:** disassemble the level B files (labelled `incbin` blocks plus the music player) and turn level A's addresses into B into labels; then, in `enhanced/`, assemble A and B together as one file per level with B straight after A, and trim what the levels don't use.
 3. [x] **The cheats**, on the options page: infinite lives, invincibility, start stage (1-8), full weapons (the Force at full strength, both Bits, the missiles, a chosen laser), the stage-skip key. A game with cheats gets no high-score place.
 4. **CD32 pad support** as the enhanced controller option. The original already reads button 2 (or Space) for the Force, as the arcade does, so the option adds the pad's extra buttons (read through the CD32 pad's serial protocol on port 2) for a third function, such as charging the beam or autofire.
 

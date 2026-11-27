@@ -1,5 +1,6 @@
-"""The title menu and the cheats (src/menu.s), run in the emulator of tools/screen.py: the
-engine, the graphics and the title file in memory, the menu at MENU_ORG, the title sequence
+"""The title menu and the cheats (src/menu.s, src/resident.s), run in the emulator of
+tools/screen.py: the engine, the graphics and the title file in memory, the menu at MENU_ORG
+and the cheats' hooks at RES_ORG, the title sequence
 from its start.  Each case starts from the same saved moment (the title's text typed).
 
   python3 -I enhanced/tools/test_menu.py      (after build.py; --png DIR saves the screens)"""
@@ -20,22 +21,25 @@ def check(ok, what):
 def main():
     png = sys.argv[sys.argv.index('--png') + 1] if '--png' in sys.argv else None
     menu = open(os.path.join(BUILD, 'menu.bin'), 'rb').read()
+    resident = open(os.path.join(BUILD, 'resident.bin'), 'rb').read()
     lay = {}
     for line in open(os.path.join(os.path.dirname(BUILD), 'src', 'files.i')):
         p = line.split()
         if len(p) >= 3 and p[1] == 'equ' and p[2].startswith('$'):
             lay[p[0]] = int(p[2][1:], 16)
-        elif len(p) >= 3 and p[1] == 'equ' and p[2].startswith('MENU_ORG+'):
-            lay[p[0]] = lay['MENU_ORG'] + int(p[2][9:])
-    ORG = lay['MENU_ORG']
-    t = Title(extra=[(ORG, menu)])
+        elif len(p) >= 3 and p[1] == 'equ' and '+' in p[2] and p[2].split('+')[0] in lay:
+            base, off = p[2].split('+')
+            lay[p[0]] = lay[base] + int(off)
+    files = [(lay['MENU_ORG'], menu), (lay['RES_ORG'], resident)]
+    t = Title(extra=files)
     g = t.g
-    m = {}                                           # the menu's symbols
+    m = {}                                           # the menu's and resident.s's symbols
     import re
-    for line in open(os.path.join(BUILD, 'menu.bin.lst'), errors='replace'):
-        r = re.match(r'^([A-Za-z_]\w*)\s+[A-Z]:([0-9A-F]+)', line)
-        if r:
-            m[r.group(1)] = int(r.group(2), 16)
+    for lst in ('menu.bin.lst', 'resident.bin.lst'):
+        for line in open(os.path.join(BUILD, lst), errors='replace'):
+            r = re.match(r'^([A-Za-z_]\w*)\s+A:([0-9A-F]+)', line)
+            if r:
+                m[r.group(1)] = int(r.group(2), 16)
     state = lambda: t.var('TitleState', 4)
     flags = lambda: t.r8(g['CheatFlags'])
 
@@ -45,6 +49,9 @@ def main():
           and t.text(72, 34, 1) == '<' and t.text(110, 33, 9) == ' freeplay',
           'the title: start game (chosen), options, freeplay')
     if png: t.png(os.path.join(png, 'title.png'))
+    code = m['MenuHeld'] - lay['RES_ORG']             # resident.s up to its variables
+    check(bytes(t.u.mem_read(lay['RES_ORG'], code)) == resident[:code],
+          "resident.s intact after the title sequence (nothing else uses RES_ORG)")
     mem = bytes(t.u.mem_read(0, 0x80000)); ctx = t.u.context_save()
     keep = {k: copy.copy(v) for k, v in t.__dict__.items() if k not in ('u', 'g')}
 
@@ -111,7 +118,7 @@ def main():
     check(7 <= flips <= 10, 'down held for 60 frames: a move, then repeats after 20 frames, every 5 (%d)' % (flips + 1))
 
     # fire while the text is typed: the rest at once, and no game
-    t2 = Title(extra=[(ORG, menu)])
+    t2 = Title(extra=files)
     t2.frames(120)
     t2.frames(60, '', True)
     check(not t2.started and t2.text(208, 31, 14) == 'C 1987 by irem' and t2.r8(m['MenuPage']) == 1,

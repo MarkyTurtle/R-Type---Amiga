@@ -86,7 +86,7 @@ The main loop never waits for the vertical blank itself. It builds a frame into 
 
 ## Object system
 
-See the comment block in `src/game.s` ("Object system") for the 62-byte object layout and the object-definition layout. There are 40 objects, a free list plus an active list sorted by priority, and each object has its own update routine pointer at `+6`. The level code creates its enemies through `ObjCreate` with a definition pointer.
+See the comment block in `src/game.s` ("Object system") for the 62-byte object layout and the object-definition layout. There are 41 objects (40 linked, plus the one at `$49D0A` whose next field `InitObjects` clears last), a free list plus an active list sorted by priority, and each object has its own update routine pointer at `+6`. The level code creates its enemies through `ObjCreate` with a definition pointer.
 
 ## The ship
 

@@ -37,7 +37,8 @@ Kickstart 1.3 won't boot.)
 | 5 | `highscores` | – | no | the engine: one block, the table's 100 longs and a checksum |
 | 6–13 | `level1a`–`level8a` | `$4A2E4` | ZX0 | `LoadLevel`: level part A, the `$281C` bytes that survive the level B load |
 | 14–21 | `level1b`–`level8b` | `$4D300` | ZX0 | `LoadLevel`: level part B, unpacked (the original's was ByteKiller-packed) |
-| 22 | `menu` | `$7A7A0` | ZX0 | stage 2: the title menu and the cheats (`src/menu.s`) |
+| 22 | `cheats` | `$49D48` | ZX0 | stage 2, once: the cheats' hooks and settings (`src/resident.s`) |
+| 23 | `menu` | `$7F600` | ZX0 | the engine (`LoadShared`), with the title file each time: the title menu (`src/menu.s`) |
 
 `build.py` prints the sizes and offsets. The files take about 580K, leaving roughly 260K free.
 ZX0 packs the level B files about 35% smaller than the original's ByteKiller.
@@ -127,13 +128,19 @@ still works and still shows `trainer`.
 
 **Where the code is.** The engine is full (its spare disk-code space is down to 20 bytes) and
 nothing in it may move, because the level files call it at fixed addresses. So the menu and the
-cheats are a file of their own, `src/menu.s` (about 2K), which stage 2 loads once to
-`MENU_ORG` (`$7A7A0`), just above itself. Nothing else uses that memory: the level files end
-below `$7965E` and the byte loader's MFM buffer starts at `$7C400` (`MENU_LIMIT`). The menu is
-assembled after the engine, against its symbols (`build/game_syms.i`, written by `build.py`
-from the engine's listing). The engine reaches it through a jump table at `MENU_ORG` (`MJ_*` in
-`files.i`). Each hook in `game.s` replaces instructions of the same size, marked
-`(enhanced: ...)`:
+cheats are files of their own, split so that the top of memory is free during play:
+
+- `src/resident.s` (about 380 bytes) is what a game needs: the cheats' hooks and the settings.
+  Stage 2 loads it once to `RES_ORG` (`$49D48`), the gap between the object table and the level
+  file at `$4A2E4` (`RES_LIMIT`), which nothing else uses.
+- `src/menu.s` (about 1.6K) is the title menu, only needed on the title. The engine's
+  `LoadShared` (now `LoadTitle` in `resident.s`) loads it with the title file every time the
+  title starts, to `MENU_ORG` (`$7F600`), at the top of memory (`MENU_LIMIT`).
+
+Both are assembled after the engine, against its symbols (`build/game_syms.i`, written by
+`build.py` from the listings: the engine's for `resident.s`, both for `menu.s`). The engine
+reaches them through jump tables at `RES_ORG` and `MENU_ORG` (`MJ_*` in `files.i`). Each hook in
+`game.s` replaces instructions of the same size, marked `(enhanced: ...)`:
 
 | Hook | In place of | What it does |
 |---|---|---|
@@ -145,10 +152,34 @@ from the engine's listing). The engine reaches it through a jump table at `MENU_
 | `MJ_SHIPHIT` | the three `st.b ShipHit` (an enemy or bullet, a solid map cell, the ship touching a non-power-up) | invincibility |
 | `MJ_WEAPONS` | the end of `ResetShipWeapons` | full weapons, when called from `SpawnShip` (`SpawnShipArmed`) |
 | `MJ_SCORE` | `St_HighScore`'s `move.l Score,d0` | 0 after a game with cheats, so it gets no place |
+| `MJ_LOADTITLE` | `LoadShared` | the title file, then the title menu |
 
 `CheatFlags` (one bit per cheat, `CHEATB_*` in `files.i`) and the N key's code (`CheatKeys`,
 called from Level2Int in place of its `cmp.b #$19,d0` for P) stay in the engine's spare disk
 space (`src/cheats.s`).
+
+## Memory during play (512K chip)
+
+| Address | Contents |
+|---|---|
+| `$00000–$000A3` | 68000 vectors |
+| `$000A4–$05DE3` | the engine (code, variables, stack, disk code, file table) |
+| `$05DE4–$05FFF` | free (540 bytes) |
+| `$06000–$2D1B9` | the `$6000` graphics block (its last 950 bytes lie under screen A) |
+| `$2D1BA–$48BB9` | screens A and B |
+| `$48BBA–$490A1` | line-offset tables |
+| `$490A2–$49359` | sprite buffers, Bit trail buffers |
+| `$4935A–$49D47` | the object table: 41 objects (see `InitObjects`) |
+| `$49D48–` | `resident.s` (cheats), up to `$4A2E3` |
+| `$4A2E4–` | level part A |
+| `–$4D2FF` | free, 2–5.6K (the original's packed level B went here) |
+| `$4D300–` | level part B (level 4 also copies its map just past it, 4.4K) |
+| up to `$7FFFF` | **free**: one block, 26.4K on stage 1 (`$7965B`) to 99.5K on stage 6 |
+
+On the title the top block holds the title music, the high-score save buffers, the byte
+loader's MFM buffer (`$7C400–$7F3FF`, while loading) and the title menu (`$7F600`). In play all
+of it is free; the MFM buffer is used again when the next stage loads, so anything kept there
+must be rebuilt after `LoadLevel`.
 
 ## The test
 
@@ -171,10 +202,11 @@ decoded back into the disk image with its MFM and checksums checked. It runs:
 It doesn't run stage 2's display or the game itself: that is for WinUAE.
 
 `tools/test_menu.py` runs the title sequence itself (the engine, the graphics and the title file
-in memory, the menu at `MENU_ORG`) with `tools/screen.py`: a small emulated Amiga with the
+in memory, the menu and the cheats at `MENU_ORG` and `RES_ORG`) with `tools/screen.py`: a small emulated Amiga with the
 blitter (the title letters are BOBs), the frame swap done in Python, and the joystick. It
 checks the title's menu, the time-out, presses on the credits, typing cut short by fire, every
-item on the options page, and each cheat's hook. `--png DIR` saves the title and options screens.
+item on the options page, each cheat's hook, and that nothing on the title writes over
+`resident.s`. (That check found the 41st object at `$49D0A`.) `--png DIR` saves the title and options screens.
 
 ## Checked in WinUAE
 

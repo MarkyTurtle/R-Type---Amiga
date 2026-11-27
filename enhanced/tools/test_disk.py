@@ -157,7 +157,8 @@ def expected():
     for n in range(8):
         exp[6 + n] = (0x4A2E4, rd('level%d_a_4a2e4.bin' % (n + 1))[:0x4CB00 - 0x4A2E4])
         exp[14 + n] = (0x4D300, rd('level%d_b_4d300.bin' % (n + 1)))
-    exp[22] = (0x7A7A0, open(os.path.join(BUILD, 'menu.bin'), 'rb').read())     # FID_MENU -> MENU_ORG
+    exp[22] = (0x49D48, open(os.path.join(BUILD, "resident.bin"), 'rb').read())  # FID_RESIDENT -> RES_ORG
+    exp[23] = (0x7F600, open(os.path.join(BUILD, 'menu.bin'), 'rb').read())      # FID_MENU -> MENU_ORG
     return exp
 
 
@@ -165,7 +166,7 @@ def main():
     adf = open(os.path.join(BUILD, 'rtype.adf'), 'rb').read()
     boot = open(os.path.join(BUILD, 'boot.bin'), 'rb').read()
     g, s2 = syms('game_low.bin.lst'), syms('stage2.bin.lst')
-    table = boot[s2['S2FileTable'] - layout()['PIC_PACKED']:][:23 * 12]
+    table = boot[s2['S2FileTable'] - layout()['PIC_PACKED']:][:24 * 12]
     exp = expected()
 
     # 1. the bootblock -------------------------------------------------------------

@@ -85,7 +85,7 @@ See `GRAPHICS.md`: one word per cell (tile number in bits 0–11, then the destr
 
 ## Objects
 
-40 objects of `$3E` bytes at `$4935A`, a free list and an active list sorted by priority. Each object has its own update routine.
+41 objects of `$3E` bytes at `$4935A` (`$4935A–$49D47`: `InitObjects` links 40, then clears the next field of a 41st at `$49D0A`), a free list and an active list sorted by priority. Each object has its own update routine.
 
 | Offset | Contents |
 |---|---|

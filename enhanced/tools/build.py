@@ -165,13 +165,21 @@ def main():
     fid = equates(os.path.join(SRC, 'files.i'))
     # 1. the engine, then stage 2 placed to end at $7A7A0 after the packed picture
     game, gsyms = assemble(os.path.join(SRC, 'game.s'), os.path.join(BUILD, 'game_low.bin'))
-    # the menu, against the engine's symbols (labels and equates, from its listing)
-    with open(os.path.join(BUILD, 'game_syms.i'), 'w') as f:
-        f.write('; the engine\'s symbols for menu.s (written by tools/build.py)\n')
-        for line in open(os.path.join(BUILD, 'game_low.bin.lst'), errors='replace'):
-            m = re.match(r'^([A-Za-z_]\w*)\s+[AE]:([0-9A-F]+)\s*$', line)
-            if m and m.group(1) not in fid:
-                f.write('%-24s equ $%s\n' % (m.group(1), m.group(2)))
+    # resident.s against the engine's symbols, then menu.s against both (labels and
+    # equates from the listings, without what files.i defines)
+    def symfile(lsts):
+        with open(os.path.join(BUILD, 'game_syms.i'), 'w') as f:
+            f.write('; symbols for resident.s and menu.s (written by tools/build.py)\n')
+            seen = set(fid)
+            for lst in lsts:
+                for line in open(os.path.join(BUILD, lst), errors='replace'):
+                    m = re.match(r'^([A-Za-z_]\w*)\s+[AE]:([0-9A-F]+)\s*$', line)
+                    if m and m.group(1) not in seen:
+                        seen.add(m.group(1))
+                        f.write('%-24s equ $%s\n' % (m.group(1), m.group(2)))
+    symfile(['game_low.bin.lst'])
+    resident, _ = assemble(os.path.join(SRC, 'resident.s'), os.path.join(BUILD, 'resident.bin'))
+    symfile(['game_low.bin.lst', 'resident.bin.lst'])
     menu, _ = assemble(os.path.join(SRC, 'menu.s'), os.path.join(BUILD, 'menu.bin'))
     rd = lambda n: open(os.path.join(FILES, n), 'rb').read()
     picture = rd('boot_6efa0.bin')[:0xA3C0]                         # title picture + font
@@ -210,6 +218,7 @@ def main():
         fid['FID_GAMEMAIN']: ('graphics', rd('game_main_06000.bin'), 0x6000, True),
         fid['FID_SHARED']: ('title', rd('shared_4a300.bin'), 0x4A300, True),
         fid['FID_HISCORE']: ('highscores', bytes(hs), None, False),
+        fid['FID_RESIDENT']: ('cheats', resident, fid['RES_ORG'], True),
         fid['FID_MENU']: ('menu', menu, fid['MENU_ORG'], True),
     }
     for n in range(8):
@@ -236,13 +245,15 @@ def main():
                       'game': 0x6000,              # the $6000 block follows
                       'graphics': 0x32000,         # stage 2's MFM buffer
                       'title': 0x52300,
-                      'menu': fid['MENU_LIMIT'],   # the byte loader's MFM buffer
-                      }.get(name, fid['MENU_ORG'] if name.endswith('b') else 0x4D300)
+                      'cheats': fid['RES_LIMIT'],  # the level file
+                      'menu': fid['MENU_LIMIT'],   # the end of chip memory (512K)
+                      }.get(name, 0x7C400 if name.endswith('b') else 0x4D300)  # (b: the MFM buffer)
             if top > limits:
                 sys.exit('%s: the packed data would end at $%X, over $%X' % (name, top, limits))
             raw = top - 512 * ofs.OFSDisk.nblocks(len(p))
-            if raw < dest:                         # its blocks are read below its end
-                sys.exit('%s: its blocks would start at $%X, below $%X' % (name, raw, dest))
+            floor = {'cheats': 0x4935A}.get(name, dest)  # (stage 2 loads it before the
+            if raw < floor:                        #  engine sets its object table up)
+                sys.exit('%s: its blocks would start at $%X, below $%X' % (name, raw, floor))
         report.append((i, name, len(data), len(p), end - len(data) if end else None, dest))
 
     # 4. the disk

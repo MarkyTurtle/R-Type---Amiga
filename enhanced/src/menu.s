@@ -1,12 +1,12 @@
 ;==============================================================================
-; R-Type (enhanced): the title menu and the cheats
+; R-Type (enhanced): the title menu
 ;==============================================================================
-; Loaded once by stage 2 to MENU_ORG (files.i), above stage 2, and kept: no
-; level file reaches it.  Assembled after the engine, against its symbols
-; (build/game_syms.i, written by tools/build.py).  The engine calls in
-; through the jump table below; each hook replaced instructions of the
-; same size, so nothing in the engine moved (see the "(enhanced: ...)"
-; comments in game.s).
+; Only needed on the title: the engine's LoadShared (resident.s, LoadTitle)
+; loads it with the title file to MENU_ORG, at the top of memory, every time
+; the title starts; in play that memory is free.  The cheats' hooks and the
+; settings stay in memory in resident.s.  Assembled after the engine and
+; resident.s, against their symbols (build/game_syms.i, written by
+; tools/build.py).  The engine calls in through the jump table below.
 ;
 ; The title (St_TitleText) now types:
 ;       blast off and strike / the evil bydo empire!
@@ -30,23 +30,18 @@
 ;       stage skip key n    off / on        CHEATB_SKIP (cheats.s)
 ;       sound effect        00-13           fire plays it
 ;       exit
-; A game played with any of them on doesn't go into the high-score table.
+; A game played with any of them on doesn't go into the high-score table
+; (resident.s).
 ;==============================================================================
 
                 include "files.i"
-                include "game_syms.i"           ; (without what files.i defines)
+                include "game_syms.i"           ; the engine and resident.s
 
                 org     MENU_ORG
 
-; the jump table (MJ_* in files.i)
+; the jump table (MJ_FRAME, MJ_TITLETEXT in files.i)
                 jmp     (MenuFrame).l
                 jmp     (MenuTitleText).l
-                jmp     (MenuPrintFire).l
-                jmp     (CheatNewGame).l
-                jmp     (CheatLoseLife).l
-                jmp     (CheatShipHit).l
-                jmp     (CheatWeapons).l
-                jmp     (CheatScore).l
 
 ; input bits (MenuHeld, ReadInput)
 IN_UP           equ     0
@@ -197,7 +192,7 @@ MenuTitleText:
                 lea.l   (TxtTrainer9).l,a4
                 bra.b   .set
 .cheats:
-                bsr.w   AnyCheat
+                jsr     (AnyCheat).l            ; (resident.s)
                 beq.b   .set
                 lea.l   (TxtCheatsOn).l,a4
 .set:
@@ -224,26 +219,6 @@ TitleListMode:
                 SCR     208,31
                 dc.l    TxtIrem
                 dc.l    -1,-1
-
-;==============================================================================
-; MenuPrintFire: from PrintString, before each character, in place of its
-; fire test (which left the title from the middle of the typing).  On the
-; title, fire now types the rest of the text at once.  Returns Z clear.
-;==============================================================================
-MenuPrintFire:
-                tst.b   (MenuInTitle).l
-                beq.b   .r
-                btst.b  #7,(CIAA_PRA).l
-                bne.b   .fast
-                st.b    (MenuFast).l
-                bset.b  #IN_FIRE,(MenuHeld).l   ; (not a press for the menu)
-.fast:
-                tst.b   (MenuFast).l
-                beq.b   .r
-                moveq   #0,d1                   ; no typing delay
-.r:
-                andi.b  #$FB,ccr
-                rts
 
 ;==============================================================================
 ; ReadInput: the joystick in port 2 -> d0 = held, d1 = new presses (IN_*);
@@ -496,87 +471,6 @@ OptValue:
                 lea.l   (TxtOn).l,a0
 .off:           rts
 
-;==============================================================================
-; The cheats, from the engine's hooks
-;==============================================================================
-; AnyCheat: Z clear if any cheat is on (the stage skip and a start stage
-; other than 1 included)
-AnyCheat:
-                move.l  d0,-(a7)
-                move.b  (CheatFlags).l,d0
-                or.b    (StartStage).l,d0
-                or.b    (Weapons).l,d0
-                movem.l (a7)+,d0                ; (keeps the flags)
-                rts
-
-; CheatNewGame: NewGame, in place of move.l #LevelTable,LevelTablePtr
-; (Level is already 0): start at StartStage; note whether this game counts
-CheatNewGame:
-                movem.l d0,-(a7)
-                clr.b   (MenuInTitle).l
-                moveq   #0,d0
-                move.b  (StartStage).l,d0
-                move.b  d0,(Level).l
-                mulu.w  #10,d0
-                add.l   #LevelTable,d0
-                move.l  d0,(LevelTablePtr).l
-                bsr.b   AnyCheat
-                sne.b   (CheatUsed).l
-                movem.l (a7)+,d0
-                rts
-
-; CheatLoseLife: ShipRespawn, in place of subq.w #1,Lives
-CheatLoseLife:
-                btst.b  #CHEATB_LIVES,(CheatFlags).l
-                bne.b   .r
-                subq.w  #1,(Lives).l
-.r:             rts
-
-; CheatShipHit: the ship's three deaths (an enemy or its bullet touching
-; it, a power-up's "anything else", a solid map cell), in place of
-; st.b ShipHit
-CheatShipHit:
-                btst.b  #CHEATB_INVINCIBLE,(CheatFlags).l
-                bne.b   .r
-                st.b    (ShipHit).l
-.r:             rts
-
-; CheatWeapons: the end of ResetShipWeapons (jumped to): its last
-; instruction, and when called from SpawnShip (a new ship: level start or
-; after a death) with full weapons on, the Force at level 3 flying in with
-; the chosen laser, both Bits and the missiles.  (The Force's own start,
-; Force_Idle, would set its level back to 0, so this starts it at
-; Force_Reset with Force_Idle's other settings.)
-CheatWeapons:
-                move.l  #Force_Idle,(ForceState).l
-                tst.b   (Weapons).l
-                beq.b   .r
-                cmpi.l  #SpawnShipArmed,(a7)    ; not after a death or in the ending
-                bne.b   .r
-                move.l  d0,-(a7)
-                move.b  (Weapons).l,d0
-                subq.b  #1,d0
-                move.b  d0,(LaserType).l        ; 0 blue, 1 red, 2 yellow
-                move.l  (a7)+,d0
-                move.l  #$6A40,(ForceFrame).l
-                move.b  #1,(ForceAnimDir).l
-                clr.b   (ForceAnimLevel).l
-                clr.b   (ForceAnimTimer).l
-                move.b  #3,(ForceLevel).l
-                st.b    (ForceActive).l
-                move.b  #3,(BitsFlags).l
-                st.b    (MissilesEnabled).l
-                move.l  #Force_Reset,(ForceState).l
-.r:             rts
-
-; CheatScore: St_HighScore, in place of move.l Score,d0: after a game with
-; cheats, 0 (no place in the table, nothing saved)
-CheatScore:
-                move.l  (Score).l,d0
-                tst.b   (CheatUsed).l
-                beq.b   .r
-                moveq   #0,d0
-.r:             rts
 
 ;==============================================================================
 ; Text (the font has a-z, 0-9 and . , - ! ?; "<" is an arrow)
@@ -612,18 +506,12 @@ TxtSound:       dc.b    "sound effect",0
 TxtExit:        dc.b    "exit",0
 
 ;==============================================================================
-; Settings and state (kept for the whole session)
+; Menu state (reset each time the title loads it)
 ;==============================================================================
 MenuPage:       dc.b    PG_ATTRACT
 MenuItem:       dc.b    0
-MenuHeld:       dc.b    $FF             ; (nothing counts as pressed at first)
 MenuRepeat:     dc.b    0
-MenuFast:       dc.b    0               ; fire while typing: the rest at once
-MenuInTitle:    dc.b    0               ; the title is running (not a game)
-StartStage:     dc.b    0               ; 0-7
-Weapons:        dc.b    0               ; 0 off, 1-3 = LaserType + 1
 SoundNum:       dc.b    0
-CheatUsed:      dc.b    0               ; this game had a cheat on
                 even
 MenuEnd:
                 ifgt    MenuEnd-MENU_LIMIT

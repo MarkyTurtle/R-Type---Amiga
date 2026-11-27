@@ -30,7 +30,7 @@
 ;                       tune (replay at $52324 called from the VBL), then read
 ;                       the game: FID_GAMELOW -> $000A4 (and the file table
 ;                       copied into it), FID_GAMEMAIN -> $06000, and
-;                       FID_MENU -> MENU_ORG (the title menu, menu.s)
+;                       FID_RESIDENT -> RES_ORG (the cheats, resident.s)
 ;      3 FadeOutCredits fade colours 16-31 to black, clear the text window,
 ;                       install the credits text palette
 ;      4 Credits        type out the credits line by line, scrolling the
@@ -249,8 +249,8 @@ St_LoadGame:
                 moveq   #FID_GAMEMAIN,d0        ; the $6000 graphics block
                 move.l  #GAME_MAIN,d2
                 bsr.w   LoadFile
-                moveq   #FID_MENU,d0            ; (enhanced) the title menu and the
-                move.l  #MENU_ORG,d2            ; cheats, above stage 2 (files.i)
+                moveq   #FID_RESIDENT,d0        ; (enhanced) the cheats' hooks and
+                move.l  #RES_ORG,d2             ; settings (resident.s, files.i)
                 bsr.w   LoadFile
                 move.l  #St_FadeOutCredits,StateRoutine
                 move.l  #BlackPalette,FadeTarget
