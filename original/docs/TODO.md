@@ -86,7 +86,7 @@ The `original/` sources stay byte-identical; changes go in a separate `enhanced/
 3. [x] **The cheats**, on the options page: infinite lives, invincibility, start stage (1-8), full weapons (the Force at full strength, both Bits, the missiles, a chosen laser), the stage-skip key. A game with cheats gets no high-score place.
 4. **CD32 pad support** as the enhanced controller option. The original already reads button 2 (or Space) for the Force, as the arcade does, so the option adds the pad's extra buttons (read through the CD32 pad's serial protocol on port 2) for a third function, such as charging the beam or autofire.
 
-6. **Next (after the WinUAE tests of the menu and level branches): the corkscrew scroller and 50 Hz** (section "Display and drawing speed-ups" below). Memory: the two screens now take 2 × 55.3K with 96-pixel side margins and 32-line top and bottom margins for BOB clipping; with clipping in the blitter routine instead, three buffers of 336 × 208 (about 34K each, plus the corkscrew's run-on) fit in the same space. Level 3 (26-row map, vertical scroll) needs its own answer: a vertical wrap with a copper split, or taller buffers.
+6. **Next (after the WinUAE tests of the menu and level branches): the corkscrew scroller and 50 Hz** (section "Display and drawing speed-ups" below). Memory: the two screens now take 2 × 55.3K with 96-pixel side margins and 32-line top and bottom margins for BOB clipping; with clipping in the blitter routine instead, three buffers of 336 × 208 (about 34K each, plus the corkscrew's run-on) fit in the same space. Decided (27 Nov 2026): level 3's vertical scroll wraps the buffers vertically with a **copper split** (no taller buffers, to save memory); **50 Hz by interpolation** as in NZS: the game logic stays at 25 Hz (it would run twice as fast at 50) and in-between frames are drawn.
 
 Each feature on its own branch, tested in WinUAE, then merged (as in GnG).
 
@@ -163,12 +163,11 @@ The enhanced version doesn't need to keep the original memory layout, so the dis
   - Erase BOBs by copying their rectangles back from the pristine buffer. This replaces the full-screen tile redraw.
   - Handle the wrap at the end of the buffer (the corkscrew), and `BPLCON1` fine scroll.
 - [ ] **Vertical scrolling**: `UpdateScroll` also moves `ScrollY`/`FineScrollY` (maps up to 26 rows, 13 visible).
-  - Either make the buffers tall enough for the whole map height and scroll vertically by pointer (check chip memory for three such buffers on 512K), or wrap vertically as well, with a copper split.
+  - Decided: wrap vertically as well, with a copper split (buffers stay screen-height, to save memory).
 - [ ] **Map changes go to the pristine buffer too**: tile animations (`LV_TileAnims`), destructible blocks (map bit 12) and map patches must redraw their tile into the pristine buffer and both display buffers.
   - Treat level 3 (the battleship) and level 4 (map copy) separately.
 - [ ] **50 Hz**: with the background no longer redrawn, try unlocking the 25 Hz frame rate.
-  - As in GnG: run at 50 fps, dropping to 25 in busy scenes.
-  - Or as in NZS: keep the logic at 25 Hz and draw interpolated in-between frames.
+  - Decided: as in NZS, keep the logic at 25 Hz (it is tuned for 25: at 50 everything would run twice as fast) and draw interpolated in-between frames (scroll position and objects halfway), dropping to plain 25 Hz in busy scenes.
   - The ship and the Bits already move at 50 Hz from the VBL.
 - [ ] **BOB blits**:
   - Skip the extra shift word when x is word-aligned.
