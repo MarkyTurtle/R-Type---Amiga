@@ -523,13 +523,13 @@ Blaster:
                 bne.b   .4AB52
                 btst.b  #$5,(a0)                ; or its right half hit?
                 bne.b   .4AB52
-                movem.l d4-d6,-(a7)             ; bullet x offset for the aim
-                move.w  $4(a4,d6.w),d4          ; bullet y offset
-                move.w  $6(a4,d6.w),d5          ; count down, fire when due
-                bsr.w   .4AB96
-                movem.l (a7)+,d4-d6             ; draw the left tile for the aim
-                move.w  (a4,d6.w),d1            ; and set the right cell's tile (solid)
-                move.w  $2(a4,d6.w),(a0)
+                movem.l d4-d6,-(a7)
+                move.w  $4(a4,d6.w),d4          ; bullet x offset for the aim
+                move.w  $6(a4,d6.w),d5          ; bullet y offset
+                bsr.w   .4AB96                  ; count down, fire when due
+                movem.l (a7)+,d4-d6
+                move.w  (a4,d6.w),d1            ; draw the left tile for the aim
+                move.w  $2(a4,d6.w),(a0)        ; and set the right cell's tile (solid)
                 rts
 .4AB52:
                 clr.w   -$2(a0)                 ; destroyed: clear both cells
@@ -582,9 +582,9 @@ Blaster:
                 movem.l d0-d3/a1-a2,-(a7)
                 move.w  d6,d0
                 move.w  d7,d1
-                addq.w  #$8,d0                  ; fire at the ship
+                addq.w  #$8,d0
                 addq.w  #$8,d1
-                jsr     (jt_FireEnemyBullet).w
+                jsr     (jt_FireEnemyBullet).w  ; fire at the ship
                 movem.l (a7)+,d0-d3/a1-a2
                 rts
 Spawn_Scant:
@@ -648,24 +648,24 @@ Upd_Scant:
                 moveq   #2,d0                   ; fire: next beam after 1-2 more moves
                 jsr     (jt_Random).w
                 addq.w  #$1,d0
-                move.b  d0,$38(a0)              ; and recoil 10 pixels to the right
-                move.b  #$1,$39(a0)
+                move.b  d0,$38(a0)
+                move.b  #$1,$39(a0)             ; state 1: recoil
                 clr.w   $34(a0)
-                move.w  #$2,$32(a0)
+                move.w  #$2,$32(a0)             ; 10 pixels to the right
                 move.w  $A(a0),d0
                 add.w   #$A,d0
-                move.w  d0,$36(a0)              ; firing frame
+                move.w  d0,$36(a0)
                 move.w  #$2,$1E(a0)                 ; firing frame
-                move.l  a0,-(a7)                ; the beam: 40 pixels in front, 10 down
-                movem.w $A(a0),d0-d1
+                move.l  a0,-(a7)
+                movem.w $A(a0),d0-d1            ; the beam: 40 pixels in front, 10 down
                 add.w   #$FFD8,d0
-                add.w   #$A,d1                  ; indestructible
-                moveq   #-1,d2                  ; the beam, 40 pixels in front
-                jsr     (jt_ObjAlloc).w             ; the beam, 40 pixels in front
+                add.w   #$A,d1
+                moveq   #-1,d2                  ; indestructible
+                jsr     (jt_ObjAlloc).w
                 move.l  #ScantBeamAnim,$2A(a0)
                 move.l  #Upd_ScantBeam,$6(a0)
-                move.l  #Def_ScantBeam,$12(a0)  ; not hit by weapons
-                bset.b  #$2,$23(a0)
+                move.l  #Def_ScantBeam,$12(a0)
+                bset.b  #$2,$23(a0)             ; not hit by weapons
                 jsr     (jt_ObjInsert).w
                 movea.l (a7)+,a0
                 rts
@@ -692,8 +692,8 @@ Scant_NextMove:
                 tst.b   $3B(a0)                 ; leaving?
                 bmi.b   .4AD3E
                 move.w  $A(a0),d1
-                add.w   d2,d1                   ; or it would pass x $122:
-                cmp.w   #$122,d1
+                add.w   d2,d1
+                cmp.w   #$122,d1                ; or it would pass x $122:
                 ble.b   .4AD42
 .4AD3E:
                 moveq   #-2,d0                  ; go left
@@ -702,10 +702,10 @@ Scant_NextMove:
                 bsr.w   .4ADBE                  ; otherwise right (always 2: random(1) is 0)
 .4AD46:
                 tst.w   d0
-                bpl.b   .4AD4C                  ; target x
+                bpl.b   .4AD4C
                 neg.w   d2
 .4AD4C:
-                add.w   $A(a0),d2
+                add.w   $A(a0),d2               ; target x
                 move.w  d2,$36(a0)
                 move.b  #$1,$39(a0)             ; state 1
                 bra.w   .4ADAA
@@ -728,12 +728,12 @@ Scant_NextMove:
                 neg.w   d2
 .4AD8C:
                 move.w  d0,$34(a0)
-                move.w  $A(a0),d0               ; and the same distance sideways:
-                add.w   d2,d0
-                tst.b   $3B(a0)
-                bmi.b   .4ADA2                  ; leaving,
-                cmp.w   #$122,d0
-                ble.b   .4ADA6                  ; or past x $122:
+                move.w  $A(a0),d0
+                add.w   d2,d0                   ; the same distance sideways:
+                tst.b   $3B(a0)                 ; leaving,
+                bmi.b   .4ADA2
+                cmp.w   #$122,d0                ; or past x $122:
+                ble.b   .4ADA6
 .4ADA2:
                 moveq   #-2,d0                  ; go left
                 bra.b   .4ADAA
@@ -856,9 +856,9 @@ Bink_Jumping:
                 move.w  $36(a0),d0
                 moveq   #3,d2                   ; 3 pixels a frame sideways
                 move.b  (a2,d0.w),d3
-                cmp.b   #$7F,d3                 ; end of the arc:
-                bne.b   .4AF1A                  ; fall (state 2)
-                move.b  #$2,$34(a0)
+                cmp.b   #$7F,d3                 ; end of the arc?
+                bne.b   .4AF1A
+                move.b  #$2,$34(a0)             ; yes: fall (state 2)
                 bra.b   Bink_Fall
 .4AF1A:
                 ext.w   d3
@@ -1134,8 +1134,8 @@ Upd_Tabrok:
                 bmi.b   .4B254
                 subq.w  #$1,$34(a0)             ; count the pause down
                 cmpi.b  #$1,$32(a0)             ; in phase 1 it scrolls with the map;
-                bne.b   .4B252
-                subq.w  #$1,$A(a0)              ; otherwise it holds its screen position
+                bne.b   .4B252                  ; other phases hold their screen position
+                subq.w  #$1,$A(a0)              ; phase 1: scroll with the map
 .4B252:
                 rts
 .4B254:
@@ -1147,8 +1147,8 @@ Upd_Tabrok:
                 beq.w   .4B2E8                  ; 2: move forward
                 cmp.b   #$3,d0
                 beq.w   .4B30C                  ; 3: drop to the ground
-                subq.w  #$1,$A(a0)
-                rts                             ; 4: stand, scrolling with the map
+                subq.w  #$1,$A(a0)              ; 4: stand, scrolling with the map
+                rts
 .4B276:
                 movem.w $A(a0),d0-d1            ; probe the ground ahead at its feet
                 add.w   #$22,d1
@@ -1173,8 +1173,8 @@ Upd_Tabrok:
                 st.b    $22(a0)
                 tst.w   $36(a0)                 ; 28 frames:
                 bmi.b   .4B2D4
-                subq.w  #$1,$36(a0)             ; rise 2 pixels a frame
-                subq.w  #$2,$C(a0)
+                subq.w  #$1,$36(a0)
+                subq.w  #$2,$C(a0)              ; rise 2 pixels a frame
                 rts
 .4B2D4:
                 move.b  #$2,$32(a0)             ; phase 2
@@ -1184,8 +1184,8 @@ Upd_Tabrok:
 .4B2E8:
                 tst.w   $36(a0)                 ; 66 frames:
                 bmi.b   .4B2F8
-                subq.w  #$1,$36(a0)             ; 2 pixels a frame to the right
-                addq.w  #$2,$A(a0)
+                subq.w  #$1,$36(a0)
+                addq.w  #$2,$A(a0)              ; 2 pixels a frame to the right
                 rts
 .4B2F8:
                 move.b  #$3,$32(a0)             ; phase 3
@@ -1196,8 +1196,8 @@ Upd_Tabrok:
                 movem.w $A(a0),d0-d1            ; probe below its feet
                 add.w   #$2C,d1
                 add.w   #$16,d0
-                jsr     (jt_GetMapCell).w
-                bne.b   .4B32A                  ; ground?
+                jsr     (jt_GetMapCell).w       ; ground below?
+                bne.b   .4B32A
                 addq.w  #$2,$C(a0)              ; no: drop 2 down, 1 right
                 addq.w  #$1,$A(a0)
                 rts
@@ -1216,8 +1216,8 @@ Upd_Tabrok:
 .4B352:
                 move.w  $C(a0),d0               ; y distance from the ship
                 addq.w  #$8,d0
-                move.w  d0,d1
-                sub.w   ($F0).w,d0              ; d1 = launch y
+                move.w  d0,d1                   ; d1 = launch y
+                sub.w   ($F0).w,d0              ; minus the ship's y
                 bpl.b   .4B362
                 neg.w   d0
 .4B362:
@@ -1248,9 +1248,9 @@ Upd_Tabrok:
                 add.w   #$F,d0                  ; launch point
                 add.w   #$A,d1
                 moveq   #1,d2
-                moveq   #3,d7
-                lea.l   (TabrokHomerDirs).l,a4  ; 4 homers
-                lea.l   (Def_TabrokHomer).l,a2  ; starting directions (of 16)
+                moveq   #3,d7                   ; 4 homers
+                lea.l   (TabrokHomerDirs).l,a4  ; starting directions (of 16)
+                lea.l   (Def_TabrokHomer).l,a2  ; the homer
 .4B3C6:
                 jsr     (jt_ObjCreate).w
                 move.b  #$1,$21(a0)
@@ -1273,13 +1273,13 @@ Upd_TabrokHomer:
                 movem.w d0-d1,-(a7)
                 addq.w  #$8,d0
                 addq.w  #$8,d1                  ; hit the map?
-                jsr     (jt_GetMapCell).w
-                movem.w (a7)+,d0-d1             ; yes: explode
-                bne.b   .4B474                  ; direction to the ship
+                jsr     (jt_GetMapCell).w       ; hit the map?
+                movem.w (a7)+,d0-d1
+                bne.b   .4B474                  ; yes: explode
                 movem.w (ShipPos).w,d2-d3
-                jsr     (jt_DirectionTo).w      ; turn one step towards it
+                jsr     (jt_DirectionTo).w      ; direction to the ship
                 move.w  $1E(a0),d1
-                jsr     (jt_TurnTowards).w
+                jsr     (jt_TurnTowards).w      ; turn one step towards it
                 move.w  d1,$1E(a0)
 .4B434:
                 move.w  $1E(a0),d0              ; direction (frame) 0-15
@@ -1345,31 +1345,31 @@ LevelFrame:
                 bcs.w   .4B5B6
                 tst.b   (BossMouthOpen).l       ; mouth opening?
                 beq.b   .4B53E
-                subq.b  #$1,(BossMouthTimer).l  ; every 10 frames
+                subq.b  #$1,(BossMouthTimer).l  ; count down
                 bpl.b   .4B53E
-                move.b  #$A,(BossMouthTimer).l
-                moveq   #0,d4                   ; next mouth frame (4 of them)
-                move.b  (BossMouthStep).l,d4
+                move.b  #$A,(BossMouthTimer).l  ; every 10 frames
+                moveq   #0,d4
+                move.b  (BossMouthStep).l,d4    ; next mouth frame (4 of them)
                 lea.l   (BossMouthFrames).l,a0
                 movea.l (a0,d4.w),a0            ; its map cells
-                lea.l   ($5BB5E).l,a1           ; write 2x2 cells
-                bsr.w   .4B5B8
+                lea.l   ($5BB5E).l,a1           ; the mouth's place in the map
+                bsr.w   .4B5B8                  ; write 2x2 cells
                 addq.b  #$4,d4
-                move.b  d4,(BossMouthStep).l    ; all 4 shown:
-                cmp.b   #$C,d4
-                bls.b   .4B53E                  ; the mouth is done
-                clr.b   (BossMouthOpen).l
+                move.b  d4,(BossMouthStep).l
+                cmp.b   #$C,d4                  ; all 4 shown:
+                bls.b   .4B53E
+                clr.b   (BossMouthOpen).l       ; the mouth is done
                 clr.b   (BossMouthStep).l
                 clr.b   (BossMouthTimer).l
 .4B53E:
-                subq.b  #$1,(BossPulseTimer).l  ; body pulse: every 75 frames
+                subq.b  #$1,(BossPulseTimer).l  ; body pulse
                 bne.b   .4B57E
-                move.b  #$4B,(BossPulseTimer).l
+                move.b  #$4B,(BossPulseTimer).l ; every 75 frames
                 moveq   #0,d4
                 move.b  (BossPulseStep).l,d4    ; next pulse frame (4 of them)
                 lea.l   (BossPulseFrames).l,a0
-                movea.l (a0,d4.w),a0
-                lea.l   ($5B72A).l,a1           ; its map cells
+                movea.l (a0,d4.w),a0            ; its map cells
+                lea.l   ($5B72A).l,a1           ; the body's place in the map
                 bsr.w   .4B5B8
                 addq.b  #$4,d4
                 move.b  d4,(BossPulseStep).l
@@ -1433,9 +1433,9 @@ Upd_DobkeratopsTail:
                 tst.b   (BossDead).l            ; boss dead?
                 bpl.b   .4B652
                 tst.w   $36(a0)                 ; delay over:
-                bpl.b   .4B64C                  ; explode
-                move.b  #$1,$5(a0)              ; and stop updating
-                clr.l   $6(a0)
+                bpl.b   .4B64C
+                move.b  #$1,$5(a0)              ; explode
+                clr.l   $6(a0)                  ; and stop updating
                 rts
 .4B64C:
                 subq.w  #$1,$36(a0)             ; wait for this segment's turn
@@ -1457,8 +1457,8 @@ Upd_DobkeratopsTail:
                 sub.w   #$A,d3                  ; y - 10
                 movem.w d2-d3,$A(a0)
                 tst.b   $34(a0)                 ; the tip?
-                bmi.b   .4B69A                  ; no: done
-                rts
+                bmi.b   .4B69A
+                rts                             ; followers: done
 .4B69A:
                 tst.b   (ScrollActive).w        ; scrolling (the boss advances):
                 beq.b   .4B6A6
@@ -1484,9 +1484,9 @@ Upd_DobkeratopsTail:
                 sub.w   #$A,d3
                 movem.w d2-d3,$A(a0)
                 movem.w $A(a0),d0-d1
-                movem.w (ShipPos).w,d2-d3       ; tip frame: one of 4 directions towards the ship
-                jsr     (jt_DirectionTo).w
-                and.w   #$7,d0
+                movem.w (ShipPos).w,d2-d3
+                jsr     (jt_DirectionTo).w      ; direction to the ship
+                and.w   #$7,d0                  ; tip frame: one of 4 directions
                 lsr.w   #$1,d0
                 move.w  d0,$1E(a0)
                 rts
@@ -1512,8 +1512,8 @@ Upd_DobkeratopsCore:
                 move.l  a0,-(a7)
                 moveq   #4,d7                       ; 5 shots
                 moveq   #1,d5                   ; d5 = launch delay, 3 frames apart
-                movem.w $A(a0),d3-d4            ; from 20 pixels left of the core
-                sub.w   #$14,d3
+                movem.w $A(a0),d3-d4
+                sub.w   #$14,d3                 ; from 20 pixels left of the core
                 move.w  d4,d1
                 move.w  #$170,d0                ; created off screen, at x $170
                 move.w  ($F0).w,d2                  ; path set by the ship's height
@@ -1606,8 +1606,8 @@ Upd_DobkeratopsShot:
                 tst.w   $34(a0)                 ; waiting to launch?
                 beq.b   .4B89A
                 subq.w  #$1,$34(a0)
-                bne.b   .4B898                  ; launch: move to the core
-                move.w  $38(a0),$A(a0)
+                bne.b   .4B898
+                move.w  $38(a0),$A(a0)          ; launch: appear at the core
 .4B898:
                 rts
 .4B89A:
@@ -1625,9 +1625,9 @@ Upd_DobkeratopsShot:
 .4B8BC:
                 add.w   d3,$A(a0)
                 add.w   d4,$C(a0)
-                cmpi.w  #$29,$36(a0)            ; end of the curve:
-                bcc.b   .4B8D6
-                addq.w  #$1,$36(a0)             ; keeps its last step
+                cmpi.w  #$29,$36(a0)            ; end of the curve (step 41)?
+                bcc.b   .4B8D6                  ; then it keeps its last step
+                addq.w  #$1,$36(a0)             ; next step
                 bra.b   .4B8D6
 .4B8D2:
                 subq.w  #$6,$A(a0)              ; straight on

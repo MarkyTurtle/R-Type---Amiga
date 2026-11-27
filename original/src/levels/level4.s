@@ -644,9 +644,9 @@ Bink_Jumping:
                 move.w  $36(a0),d0
                 moveq   #2,d2                   ; 2 pixels a frame right in this copy
                 move.b  (a2,d0.w),d3
-                cmp.b   #$7F,d3                 ; end of the arc:
-                bne.b   .4AEEC                  ; fall (state 2)
-                move.b  #$2,$34(a0)
+                cmp.b   #$7F,d3                 ; end of the arc?
+                bne.b   .4AEEC
+                move.b  #$2,$34(a0)             ; yes: fall (state 2)
                 bra.b   Bink_Fall
 .4AEEC:
                 ext.w   d3

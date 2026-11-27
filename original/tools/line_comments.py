@@ -9,7 +9,7 @@ apply: SPEC has one comment per line, `Anchor[+n]  comment`, where Anchor
 is a label in FILE (a routine name or a local label such as .4A872) and
 n counts instructions after it (0 = the first, the default).  Blank
 lines and lines starting with # are ignored.  The comment replaces any
-comment already on that line.
+comment already on that line; a comment of `-` removes it.
 
 propagate: a routine in TO gets the line comments of the routine with
 the same name in FROM when both have the same instructions (local labels
@@ -17,7 +17,8 @@ and 5+ digit hex addresses are ignored in the comparison, so copies of
 an enemy at another load address still match).  Routines that differ
 are listed and left alone.  With --loose, a routine of the same length
 that differs in a few lines gets the comments of its matching lines, and
-the differing lines are printed for commenting by hand.
+the differing lines are printed for commenting by hand.  With --sync,
+matching lines also lose comments that FROM no longer has.
 
 Only comments change, so the assembled output stays identical; run
 tools/verify.py afterwards.
@@ -60,7 +61,7 @@ def apply(spec, path):
         s = s.rstrip('\n')
         if not s.strip() or s.lstrip().startswith('#'):
             continue
-        key, text = s.split(None, 1)
+        key, text = (s.split(None, 1) + ['-'])[:2]
         anchor, _, n = key.partition('+')
         n = int(n or 0)
         i = where.get(anchor)
@@ -75,17 +76,22 @@ def apply(spec, path):
                 k += 1
         if k != n:
             print('past the routine:', key); errors += 1; continue
-        lines[i] = with_comment(lines[i], text.strip())
+        if text.strip() == '-':
+            lines[i] = split(lines[i].rstrip('\n'))[0] + '\n'
+        else:
+            lines[i] = with_comment(lines[i], text.strip())
     open(path, 'w').writelines(lines)
     return errors
 
 def routines(lines):
+    """instruction lines per routine (data lines are left out: their
+    comments describe values that differ between levels)."""
     out, cur = {}, None
     for i, l in enumerate(lines):
         m = GLOBAL.match(l)
         if m:
             cur = m.group(1); out[cur] = []
-        elif cur and is_insn(l):
+        elif cur and is_insn(l) and not re.match(r'\s+dc\.', l):
             out[cur].append(i)
     return out
 
@@ -95,7 +101,7 @@ def norm(line, locals_):
     code = re.sub(r'\$[0-9A-F]{5,}', '$ADDR', code)
     return ' '.join(code.split())
 
-def propagate(src, dst, loose=False):
+def propagate(src, dst, loose=False, sync=False):
     sl = open(src).readlines(); dl = open(dst).readlines()
     sr, dr = routines(sl), routines(dl)
     copied, differ = 0, []
@@ -115,6 +121,9 @@ def propagate(src, dst, loose=False):
             c = split(sl[i])[1]
             if c and x == y and split(dl[j])[1] != c:
                 dl[j] = with_comment(dl[j], c)
+            elif sync and not c and x == y and split(dl[j])[1]:
+                print('  %s line %d: removed "%s"' % (name, j + 1, split(dl[j])[1]))
+                dl[j] = split(dl[j])[0] + '\n'
         copied += 1
     open(dst, 'w').writelines(dl)
     print('%s: %d routines from %s%s' % (dst, copied, src,
@@ -125,10 +134,10 @@ if __name__ == '__main__':
         sys.exit(1 if apply(sys.argv[2], sys.argv[3]) else 0)
     elif len(sys.argv) >= 4 and sys.argv[1] == 'propagate':
         args = sys.argv[2:]
-        loose = args[0] == '--loose'
-        if loose:
-            args = args[1:]
+        opts = set()
+        while args[0].startswith('--'):
+            opts.add(args.pop(0))
         for d in args[1:]:
-            propagate(args[0], d, loose)
+            propagate(args[0], d, '--loose' in opts, '--sync' in opts)
     else:
         sys.exit(__doc__)

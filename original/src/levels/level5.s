@@ -207,12 +207,12 @@ Spawn_Cancer:
 .4A836:
                 rts
 Upd_Cancer:
-                tst.w   $32(a0)
+                tst.w   $32(a0)                 ; waiting to start?
                 beq.b   .4A844
                 subq.w  #$1,$32(a0)
                 rts
 .4A844:
-                subq.w  #$1,$A(a0)
+                subq.w  #$1,$A(a0)              ; scrolls with the map
                 movem.w $A(a0),d0-d1
                 cmp.w   #$10,d0
                 bcs.b   .4A866
@@ -226,9 +226,9 @@ Upd_Cancer:
                 jmp     (jt_ObjKillSelf).w
 .4A86A:
                 move.w  $3A(a0),d4
-                cmp.w   (ScrollX).w,d4
+                cmp.w   (ScrollX).w,d4          ; past its scroll x:
                 bhi.b   .4A884
-                moveq   #10,d7
+                moveq   #10,d7                  ; make for the nearer edge
                 cmp.w   #$88,d1
                 bcs.b   .4A880
                 move.w  #$E0,d7
@@ -236,19 +236,19 @@ Upd_Cancer:
                 moveq   #4,d6
                 bra.b   .4A890
 .4A884:
-                subq.w  #$1,$38(a0)
+                subq.w  #$1,$38(a0)             ; time for a new heading?
                 bpl.b   .4A8CE
-                movem.w (ShipPos).w,d6-d7
+                movem.w (ShipPos).w,d6-d7       ; target: the ship
 .4A890:
                 moveq   #2,d4
-                lea.l   (CancerAnimRight).l,a1
+                lea.l   (CancerAnimRight).l,a1  ; x step +2 / -1, facing it
                 cmp.w   d6,d0
                 bcs.b   .4A8A4
                 moveq   #-1,d4
                 lea.l   (CancerAnimLeft).l,a1
 .4A8A4:
                 move.l  a1,$2A(a0)
-                moveq   #1,d5
+                moveq   #1,d5                   ; y step +1 / -1
                 cmp.w   d7,d1
                 bcs.b   .4A8B0
                 neg.w   d5
@@ -258,7 +258,7 @@ Upd_Cancer:
                 bpl.b   .4A8B8
                 neg.w   d2
 .4A8B8:
-                lsr.w   #$2,d2
+                lsr.w   #$2,d2                  ; hold it for |dx|/4 + random 25 frames
                 moveq   #25,d0
                 jsr     (jt_Random).w
                 add.w   d0,d2
@@ -277,9 +277,9 @@ Upd_Cancer:
                 add.w   #$20,d1
 .4A8E8:
                 addq.w  #$8,d0
-                jsr     (jt_GetMapCell).w
+                jsr     (jt_GetMapCell).w       ; blocked vertically?
                 bne.b   .4A8F4
-                add.w   d6,$C(a0)
+                add.w   d6,$C(a0)               ; no: move up/down
 .4A8F4:
                 movem.l (a7)+,d0-d1
                 addq.w  #$8,d1
@@ -291,9 +291,9 @@ Upd_Cancer:
 .4A906:
                 add.w   #$22,d0
 .4A90A:
-                jsr     (jt_GetMapCell).w
+                jsr     (jt_GetMapCell).w       ; blocked horizontally?
                 bne.b   .4A914
-                add.w   d4,$A(a0)
+                add.w   d4,$A(a0)               ; no: move left/right
 .4A914:
                 rts
 LevelInit:

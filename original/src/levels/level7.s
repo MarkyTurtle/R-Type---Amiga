@@ -605,24 +605,24 @@ Upd_Scant:
                 moveq   #2,d0                   ; fire: next beam after 1-2 more moves
                 jsr     (jt_Random).w
                 addq.w  #$1,d0
-                move.b  d0,$38(a0)              ; and recoil 10 pixels to the right
-                move.b  #$1,$39(a0)
+                move.b  d0,$38(a0)
+                move.b  #$1,$39(a0)             ; state 1: recoil
                 clr.w   $34(a0)
-                move.w  #$2,$32(a0)
+                move.w  #$2,$32(a0)             ; 10 pixels to the right
                 move.w  $A(a0),d0
                 add.w   #$A,d0
-                move.w  d0,$36(a0)              ; firing frame
+                move.w  d0,$36(a0)
                 move.w  #$2,$1E(a0)             ; firing frame
-                move.l  a0,-(a7)                ; the beam: 40 pixels in front, 10 down
-                movem.w $A(a0),d0-d1
+                move.l  a0,-(a7)
+                movem.w $A(a0),d0-d1            ; the beam: 40 pixels in front, 10 down
                 add.w   #$FFD8,d0
-                add.w   #$A,d1                  ; indestructible
-                moveq   #-1,d2                  ; the beam, 40 pixels in front
-                jsr     (jt_ObjAlloc).w         ; the beam, 40 pixels in front
+                add.w   #$A,d1
+                moveq   #-1,d2                  ; indestructible
+                jsr     (jt_ObjAlloc).w
                 move.l  #ScantBeamAnim,$2A(a0)
                 move.l  #Upd_ScantBeam,$6(a0)
-                move.l  #Def_ScantBeam,$12(a0)  ; not hit by weapons
-                bset.b  #$2,$23(a0)
+                move.l  #Def_ScantBeam,$12(a0)
+                bset.b  #$2,$23(a0)             ; not hit by weapons
                 jsr     (jt_ObjInsert).w
                 movea.l (a7)+,a0
                 rts
@@ -642,8 +642,8 @@ Scant_NextMove:
                 tst.b   $3B(a0)                 ; leaving?
                 bmi.b   .4AE2A
                 move.w  $A(a0),d1
-                add.w   d2,d1                   ; or it would pass x $122:
-                cmp.w   #$122,d1
+                add.w   d2,d1
+                cmp.w   #$122,d1                ; or it would pass x $122:
                 ble.b   .4AE2E
 .4AE2A:
                 moveq   #-2,d0                  ; go left
@@ -652,10 +652,10 @@ Scant_NextMove:
                 bsr.w   .4AEAA                  ; otherwise right (always 2: random(1) is 0)
 .4AE32:
                 tst.w   d0
-                bpl.b   .4AE38                  ; target x
+                bpl.b   .4AE38
                 neg.w   d2
 .4AE38:
-                add.w   $A(a0),d2
+                add.w   $A(a0),d2               ; target x
                 move.w  d2,$36(a0)
                 move.b  #$1,$39(a0)             ; state 1
                 bra.w   .4AE96
@@ -678,12 +678,12 @@ Scant_NextMove:
                 neg.w   d2
 .4AE78:
                 move.w  d0,$34(a0)
-                move.w  $A(a0),d0               ; and the same distance sideways:
-                add.w   d2,d0
-                tst.b   $3B(a0)
-                bmi.b   .4AE8E                  ; leaving,
-                cmp.w   #$122,d0
-                ble.b   .4AE92                  ; or past x $122:
+                move.w  $A(a0),d0
+                add.w   d2,d0                   ; the same distance sideways:
+                tst.b   $3B(a0)                 ; leaving,
+                bmi.b   .4AE8E
+                cmp.w   #$122,d0                ; or past x $122:
+                ble.b   .4AE92
 .4AE8E:
                 moveq   #-2,d0                  ; go left
                 bra.b   .4AE96
@@ -801,9 +801,9 @@ Bink_Jumping:
                 move.w  $36(a0),d0
                 moveq   #3,d2                   ; 3 pixels a frame sideways
                 move.b  (a2,d0.w),d3
-                cmp.b   #$7F,d3                 ; end of the arc:
-                bne.b   .4B006                  ; fall (state 2)
-                move.b  #$2,$34(a0)
+                cmp.b   #$7F,d3                 ; end of the arc?
+                bne.b   .4B006
+                move.b  #$2,$34(a0)             ; yes: fall (state 2)
                 bra.b   Bink_Fall
 .4B006:
                 ext.w   d3
