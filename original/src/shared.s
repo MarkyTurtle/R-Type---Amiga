@@ -23,35 +23,35 @@ AUD0LC          equ     $0A0
                 org     $4A300
 JinglePlayer:
                 movem.l a0-a3,-(a7)
-                lea.l   JingleState(pc),a0
+                lea.l   JingleState(pc),a0      ; song row pointer, pattern row pointer
                 movem.l (a0)+,a1-a2
-                tst.b   d0
+                tst.b   d0                      ; 0: play the next step
                 beq.w   .4A346
-                cmpi.b  #$FF,d0
+                cmpi.b  #$FF,d0                 ; $FF: start the song on four channels, looping
                 bne.b   .4A336
-                lea.l   JingleSequence(pc),a0
+                lea.l   JingleSequence(pc),a0   ; (this build has one song)
                 move.l  a0,d0
                 lea.l   SongPos(pc),a0
                 move.l  d0,(a0)
                 lea.l   SongStart(pc),a0
                 move.l  d0,(a0)
-                lea.l   LoopSong(pc),a0
+                lea.l   PlayOnce(pc),a0         ; loop it
                 move.w  #$0,(a0)
                 bra.w   Jingle_Start4Ch
 .4A336:
-                cmpi.b  #$1,d0
+                cmpi.b  #$1,d0                  ; 1: start a fade
                 beq.w   .4A3F2
-                cmpi.b  #$2,d0
+                cmpi.b  #$2,d0                  ; 2: carry on fading
                 beq.w   .4A3FA
 .4A346:
-                tst.w   d4
+                tst.w   d4                      ; d4 = n << 8 | $FF: start, played once
                 beq.b   .4A398
                 moveq   #0,d0
                 move.b  d4,d0
                 lsr.w   #$8,d4
-                cmpi.b  #$FF,d0
-                bne.b   .4A380
-                cmpi.b  #$1,d4
+                cmpi.b  #$FF,d0                 ; $FF?
+                bne.b   .4A380                  ; other d4: stop
+                cmpi.b  #$1,d4                  ; song n (both choices are the same song here)
                 bne.b   .4A362
                 lea.l   JingleSequence(pc),a0
                 bra.b   .4A366
@@ -63,25 +63,25 @@ JinglePlayer:
                 lea.l   SongStart(pc),a1
                 move.l  d0,(a0)
                 move.l  d0,(a1)
-                lea.l   LoopSong(pc),a0
+                lea.l   PlayOnce(pc),a0         ; play once
                 move.w  #$1,(a0)
                 bra.w   Jingle_Start4Ch
 .4A380:
-                bsr.w   JingleStop
+                bsr.w   JingleStop              ; stop: step the channels off
                 moveq   #0,d4
-                lea.l   SongEnded(pc),a0
+                lea.l   SongEnded(pc),a0        ; ended:
                 cmpi.w  #$1,(a0)
                 bne.w   Jingle_Exit
-                moveq   #-1,d4
+                moveq   #-1,d4                  ; d4 = -1 and silence
                 bra.w   Jingle_Silence
 .4A398:
                 moveq   #0,d0
-                tst.b   d3
+                tst.b   d3                      ; d3 = $FF: start on channels 0-1
                 beq.w   Jingle_Exit
                 move.w  d3,d0
                 cmpi.b  #$FF,d0
                 bne.b   .4A3E2
-                tst.w   d1
+                tst.w   d1                      ; d1 picks the song (the same either way)
                 bne.b   .4A3BE
                 lea.l   JingleSequence(pc),a0
                 move.l  a0,d0
@@ -99,36 +99,36 @@ JinglePlayer:
                 move.l  a0,d0
                 lea.l   SongPos(pc),a0
                 move.l  d0,(a0)
-                lea.l   LoopSong(pc),a0
+                lea.l   PlayOnce(pc),a0         ; loop it
                 move.w  #$0,(a0)
                 bra.w   Jingle_Start2Ch
 .4A3E2:
-                cmpi.b  #$1,d0
+                cmpi.b  #$1,d0                  ; d3 = 1 / 2: fade
                 beq.b   .4A3F2
                 cmpi.b  #$2,d0
                 beq.b   .4A3FA
                 bra.w   Jingle_Exit
 .4A3F2:
-                lea.l   FadeCount(pc),a0
+                lea.l   FadeCount(pc),a0        ; start fading (FadeCount = $3F marks it)
                 move.w  #$3F,(a0)
 .4A3FA:
-                bsr.w   JingleStop
+                bsr.w   JingleStop              ; play on
                 move.w  FadeCount(pc),d0
-                cmpi.w  #$3F,d0
+                cmpi.w  #$3F,d0                 ; fading?
                 bne.b   Jingle_Done
-                lea.l   FadeLevel(pc),a0
-                cmpi.w  #$3E,(a0)
+                lea.l   FadeLevel(pc),a0        ; volumes 2 lower every frame,
+                cmpi.w  #$3E,(a0)               ; until $3E: silent (31 frames)
                 beq.b   Jingle_Silence
                 addq.w  #$2,(a0)
 Jingle_Done:
-                moveq   #4,d0
+                moveq   #4,d0                   ; still playing
                 moveq   #0,d4
                 bra.w   Jingle_Exit
 Jingle_Silence:
-                moveq   #0,d0
-                move.w  #$F,(CUSTOM+DMACON).l
+                moveq   #0,d0                   ; finished: d0 = 0
+                move.w  #$F,(CUSTOM+DMACON).l   ; audio DMA off on all four channels
 Jingle_Exit:
-                lea.l   RowTicks(pc),a0
+                lea.l   ChannelBit(pc),a0       ; save the song and pattern row pointers
                 movem.l a1-a2,-(a0)
                 movem.l (a7)+,a0-a3
                 rts
@@ -137,13 +137,13 @@ FadeCount:
 FadeLevel:
                 dc.w    $0000,$0000
 Jingle_Start2Ch:
-                lea.l   FadeCount(pc),a0
+                lea.l   FadeCount(pc),a0        ; no fade
                 clr.w   $0(a0)
                 clr.w   $2(a0)
                 clr.w   $4(a0)
-                lea.l   RowBytes(pc),a0
+                lea.l   RowBytes(pc),a0         ; 2 channels: 4-byte song rows
                 move.w  #$4,(a0)
-                tst.w   d1
+                tst.w   d1                      ; d1 picks the song (the same either way)
                 bne.b   .4A45C
                 lea.l   JingleSequence(pc),a0
                 bra.b   .4A460
@@ -153,29 +153,29 @@ Jingle_Start2Ch:
                 move.l  a0,d0
                 lea.l   SongPos(pc),a0
                 move.l  d0,(a0)
-                lea.l   ChannelsMinus1(pc),a0
+                lea.l   ChannelsMinus1(pc),a0   ; channels 0-1
                 move.w  #$1,(a0)
-                lea.l   DmaChannels(pc),a0
+                lea.l   DmaChannels(pc),a0      ; DMA on for them
                 move.w  #$8203,(a0)
                 bsr.b   ClearRegs
-                bsr.w   StartChannelsA
+                bsr.w   StartChannelsA          ; first row from SongPos
                 bra.b   Jingle_Done
 Jingle_Start4Ch:
-                lea.l   SongEnded(pc),a0
+                lea.l   SongEnded(pc),a0        ; not ended
                 move.w  #$0,(a0)
-                move.w  #$F,(CUSTOM+DMACON).l
-                lea.l   FadeCount(pc),a0
+                move.w  #$F,(CUSTOM+DMACON).l   ; audio DMA off
+                lea.l   FadeCount(pc),a0        ; no fade
                 clr.w   $0(a0)
                 clr.w   $2(a0)
                 clr.w   $4(a0)
-                lea.l   RowBytes(pc),a0
+                lea.l   RowBytes(pc),a0         ; 4 channels: 8-byte song rows
                 move.w  #$8,(a0)
                 lea.l   ChannelsMinus1(pc),a0
                 move.w  #$3,(a0)
-                lea.l   DmaChannels(pc),a0
+                lea.l   DmaChannels(pc),a0      ; DMA on for all four
                 move.w  #$820F,(a0)
                 bsr.b   ClearRegs
-                bsr.b   StartChannelsB
+                bsr.b   StartChannelsB          ; first row from SongStart
                 bra.w   Jingle_Done
 ClearRegs:
                 moveq   #0,d0
@@ -186,11 +186,11 @@ ClearRegs:
                 rts
 JingleStop:
                 bsr.b   ClearRegs
-                lea.l   TickHalf(pc),a0
-                cmpi.w  #$0,(a0)
+                lea.l   RowPhase(pc),a0         ; two frames a row:
+                cmpi.w  #$0,(a0)                ; first frame:
                 bne.b   Jingle_NextRow
                 move.w  #$1,(a0)
-                move.w  TickCount(pc),d0
+                move.w  DmaOffMask(pc),d0       ; DMA off on the channels to retrigger
                 move.w  d0,(CUSTOM+DMACON).l
                 rts
 RowBytes:
@@ -203,25 +203,25 @@ ChannelsMinus1:
                 dc.w    $0000
 DmaChannels:
                 dc.w    $0000
-LoopSong:
+PlayOnce:
                 dc.w    $0000
 SongEnded:
                 dc.w    $0000
 Jingle_NextRow:
-                clr.w   (a0)
-                addq.w  #$4,a2
-                suba.w  RowBytes(pc),a1
-                cmpi.b  #$FF,(a2)
+                clr.w   (a0)                    ; second frame: the next row
+                addq.w  #$4,a2                  ; next pattern row (4 bytes)
+                suba.w  RowBytes(pc),a1         ; same song row (PlayRow steps a1 over it again)
+                cmpi.b  #$FF,(a2)               ; pattern end (pattern 0's terminator)?
                 bne.b   Jingle_PlayRowA
-                lea.l   NoteTable(pc),a2
-                adda.w  RowBytes(pc),a1
-                cmpi.b  #$FF,(a1)
+                lea.l   NoteTable(pc),a2        ; back to row 0
+                adda.w  RowBytes(pc),a1         ; and on to the next song row
+                cmpi.b  #$FF,(a1)               ; end of the song?
                 bne.b   Jingle_PlayRowA
-                lea.l   SongEnded(pc),a0
+                lea.l   SongEnded(pc),a0        ; ended
                 move.w  #$1,(a0)
-                lea.l   LoopSong(pc),a0
+                lea.l   PlayOnce(pc),a0         ; looping:
                 cmpi.w  #$1,(a0)
-                bne.b   StartChannelsB
+                bne.b   StartChannelsB          ; start again
                 rts
 StartChannelsA:
                 lea.l   SongPos(pc),a1
@@ -232,39 +232,39 @@ Jingle_PlayRow:
                 movea.l (a1),a1
                 lea.l   NoteTable(pc),a2
 Jingle_PlayRowA:
-                move.w  ChannelsMinus1(pc),d4
-                lea.l   TickCount(pc),a0
+                move.w  ChannelsMinus1(pc),d4   ; channels - 1
+                lea.l   DmaOffMask(pc),a0       ; no channels to retrigger yet
                 clr.w   (a0)
-                move.w  #$1,-$2(a0)
-                lea.l   (CUSTOM+AUD0LC).l,a3
+                move.w  #$1,-$2(a0)             ; channel 0's DMA bit
+                lea.l   (CUSTOM+AUD0LC).l,a3    ; Paula channel 0
 .4A550:
-                move.b  (a1),d0
-                move.b  $1(a1),d3
-                mulu.w  #$62,d0
-                move.b  (a2,d0.l),d2
-                move.b  $1(a2,d0.l),d1
-                asl.w   #$3,d2
+                move.b  (a1),d0                 ; pattern
+                move.b  $1(a1),d3               ; transpose
+                mulu.w  #$62,d0                 ; 98 bytes a pattern (24 rows of 4 + 2)
+                move.b  (a2,d0.l),d2            ; row: sample
+                move.b  $1(a2,d0.l),d1          ; note
+                asl.w   #$3,d2                  ; 8 bytes a sample
                 lea.l   SampleTable(pc),a0
-                move.w  $6(a0,d2.l),$4(a3)
-                move.l  (a0,d2.l),d2
+                move.w  $6(a0,d2.l),$4(a3)      ; length (words)
+                move.l  (a0,d2.l),d2            ; offset into Samples
                 lea.l   Samples(pc),a0
                 adda.l  d2,a0
-                move.l  a0,(a3)
+                move.l  a0,(a3)                 ; AUDxLC
                 moveq   #0,d2
                 move.w  d1,d2
-                add.w   d3,d1
+                add.w   d3,d1                   ; note + transpose
                 asl.w   #$1,d1
-                lea.l   PeriodTable(pc),a0
+                lea.l   PeriodTable(pc),a0      ; Amiga period
                 move.w  (a0,d1.l),d1
                 moveq   #0,d3
                 exg.l   d2,d3
-                bclr    #$7,d3
+                bclr    #$7,d3                  ; bit 7 of the note: slide
                 beq.b   .4A5B2
-                lea.l   LastPeriods(pc),a0
+                lea.l   LastPeriods(pc),a0      ; from the channel's last period
                 move.w  d4,d2
                 asl.w   #$1,d2
                 move.w  (a0,d2.l),d2
-                btst.b  #$7,$3(a2,d0.l)
+                btst.b  #$7,$3(a2,d0.l)         ; row flags bit 7: up or down
                 beq.b   .4A5AC
                 add.w   d2,d3
                 bra.b   .4A5B0
@@ -277,44 +277,44 @@ Jingle_PlayRowA:
                 lea.l   LastPeriods(pc),a0
                 move.w  d4,d2
                 asl.w   #$1,d2
-                move.w  d1,(a0,d2.l)
-                move.w  d1,$6(a3)
+                move.w  d1,(a0,d2.l)            ; remember the period
+                move.w  d1,$6(a3)               ; AUDxPER
                 moveq   #0,d3
                 moveq   #0,d2
                 moveq   #0,d1
-                move.b  $2(a2,d0.l),d2
-                move.b  $3(a2,d0.l),d1
-                move.w  FadeLevel(pc),d0
+                move.b  $2(a2,d0.l),d2          ; volume
+                move.b  $3(a2,d0.l),d1          ; flags
+                move.w  FadeLevel(pc),d0        ; minus the fade,
                 cmp.w   d0,d2
                 bgt.b   .4A5DE
-                move.w  #$1,d2
+                move.w  #$1,d2                  ; at least 1
                 bra.b   .4A5E0
 .4A5DE:
                 sub.w   d0,d2
 .4A5E0:
-                move.w  d2,$8(a3)
-                adda.w  #$10,a3
-                addq.w  #$2,a1
-                move.w  RowTicks(pc),d0
-                lea.l   TickCount(pc),a0
-                btst    #$0,d1
+                move.w  d2,$8(a3)               ; AUDxVOL
+                adda.w  #$10,a3                 ; next Paula channel
+                addq.w  #$2,a1                  ; next song row entry
+                move.w  ChannelBit(pc),d0
+                lea.l   DmaOffMask(pc),a0
+                btst    #$0,d1                  ; flags bit 0 clear:
                 bne.b   .4A5FA
-                add.w   d0,(a0)
+                add.w   d0,(a0)                 ; retrigger this channel next row
 .4A5FA:
-                asl.w   #$1,d0
+                asl.w   #$1,d0                  ; next channel's DMA bit
                 move.w  d0,-$2(a0)
                 dbra    d4,.4A550
-                movea.w DmaChannels(pc),a0
+                movea.w DmaChannels(pc),a0      ; DMA on
                 move.w  a0,(CUSTOM+DMACON).l
                 lea.l   (CUSTOM+AUD0LC).l,a3
                 rts
 JingleState:
                 dc.w    $0000,$0000,$0000,$0000
-RowTicks:
+ChannelBit:
                 dc.w    $0000
-TickCount:
+DmaOffMask:
                 dc.w    $0000
-TickHalf:
+RowPhase:
                 dc.w    $0000
 LastPeriods:
                 dc.w    $0000,$0000,$0000,$0000
