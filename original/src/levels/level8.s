@@ -72,15 +72,15 @@ LevelPalette:
 ; bit 30 = spawn a Win at this step - set here on CoreAnimWinStep), and
 ; the two initial map blocks.
 LevelInit:
-                move.w  #$6,(WinTurnDelay).l
-                move.l  #BossArea,(BossState).l
-                move.b  #$64,(MikunTimer).l
-                move.l  #WallAnim,(WallAnimPtr).l
+                move.w  #$6,(WinTurnDelay).l    ; Win turns: every 6 steps at first
+                move.l  #BossArea,(BossState).l ; boss state routine
+                move.b  #$64,(MikunTimer).l     ; first Mikun after 100 frames
+                move.l  #WallAnim,(WallAnimPtr).l ; the boss wall's animation list
                 clr.w   (StateTimer).l
                 clr.b   (CoreOpening).l
                 clr.b   (WinToggle).l
                 bset.b  #$6,(CoreAnimWinStep).l
-                lea.l   (InitialCellsA).l,a0
+                lea.l   (InitialCellsA).l,a0    ; blocks written at the start
                 bsr.w   PatchMap
                 lea.l   (InitialCellsB).l,a0
                 bra.w   PatchMap
@@ -95,81 +95,81 @@ FrameRts:
 ; (CoreOpenAnim); each time it is fully open a Win is released, and the
 ; Wins home in faster each time (WinTurnDelay counts down from 6).
 BossArea:
-                bsr.w   SpawnMikun
+                bsr.w   SpawnMikun              ; Mikuns throughout
                 move.w  (ScrollX).w,d7
-                cmp.w   #$5D2,d7
+                cmp.w   #$5D2,d7                ; from scroll x $5D2:
                 bcs.b   FrameRts
-                cmp.w   #$64D,d7
+                cmp.w   #$64D,d7                ; at $64D:
                 bne.b   .4A462
-                move.w  #$12C,d0
+                move.w  #$12C,d0                ; the Bydo core
                 moveq   #100,d1
-                move.w  #$7D0,d2
+                move.w  #$7D0,d2                ; 2000 hit points: its update decides
                 lea.l   (Def_BydoCore).l,a2
                 jsr     (jt_ObjCreate).w
-                clr.b   $22(a0)
-                clr.w   $32(a0)
+                clr.b   $22(a0)                 ; no animation
+                clr.w   $32(a0)                 ; damage seen
                 jsr     (jt_ObjInsert).w
-                st.b    (MusicFadeReq).w
+                st.b    (MusicFadeReq).w        ; fade the level music out
 .4A462:
-                cmp.w   #$64F,d7
+                cmp.w   #$64F,d7                ; at $64F:
                 bne.b   .4A46C
-                clr.b   (ScrollActive).w
+                clr.b   (ScrollActive).w        ; stop the scroll
 .4A46C:
-                subq.b  #$1,(StateTimer).l
+                subq.b  #$1,(StateTimer).l      ; wall animation: a step every 5 frames
                 bpl.b   .4A4CA
                 move.b  #$4,(StateTimer).l
                 movea.l (WallAnimPtr).l,a4
 .4A482:
-                move.l  (a4),d0
-                bpl.b   .4A4BC
-                btst    #$1E,d0
+                move.l  (a4),d0                 ; next entry: a cell block, or a control long
+                bpl.b   .4A4BC                  ; positive: a block
+                btst    #$1E,d0                 ; bit 30: jump (to the long at +4)
                 bne.b   .4A4B6
-                move.b  d0,d1
+                move.b  d0,d1                   ; otherwise a loop count in the low byte:
                 subq.b  #$1,d1
-                bne.b   .4A4B2
-                lsr.w   #$8,d0
+                bne.b   .4A4B2                  ; loops left: go round again
+                lsr.w   #$8,d0                  ; done: reload the count from byte 2
                 move.b  d0,$3(a4)
-                addq.l  #$8,a4
-                st.b    (CoreOpening).l
+                addq.l  #$8,a4                  ; go on past the loop
+                st.b    (CoreOpening).l         ; and open the core
                 clr.b   (StepTimer).l
                 move.l  #CoreOpenAnim,(CoreAnimPtr).l
                 bra.b   .4A482
 .4A4B2:
-                move.b  d1,$3(a4)
+                move.b  d1,$3(a4)               ; one loop fewer
 .4A4B6:
-                movea.l $4(a4),a4
+                movea.l $4(a4),a4               ; back to the loop start
                 bra.b   .4A482
 .4A4BC:
                 movea.l d0,a0
-                bsr.w   PatchMap
+                bsr.w   PatchMap                ; write the block into the map
                 addq.l  #$4,a4
                 move.l  a4,(WallAnimPtr).l
 .4A4CA:
-                tst.b   (CoreOpening).l
+                tst.b   (CoreOpening).l         ; core opening?
                 beq.b   .4A51E
-                subq.b  #$1,(StepTimer).l
+                subq.b  #$1,(StepTimer).l       ; a step every 5 frames
                 bpl.b   .4A51E
                 move.b  #$4,(StepTimer).l
                 movea.l (CoreAnimPtr).l,a4
-                move.l  (a4)+,d7
-                btst    #$1E,d7
+                move.l  (a4)+,d7                ; next block
+                btst    #$1E,d7                 ; bit 30: a Win step
                 beq.b   .4A50C
-                eori.b  #$FF,(WinToggle).l
+                eori.b  #$FF,(WinToggle).l      ; every other one
                 bne.b   .4A50C
-                bsr.w   SpawnWinAtCore
-                tst.w   (WinTurnDelay).l
+                bsr.w   SpawnWinAtCore          ; sends a Win out of the core
+                tst.w   (WinTurnDelay).l        ; and the Wins turn more often (down to 0)
                 beq.b   .4A50C
                 subq.w  #$1,(WinTurnDelay).l
 .4A50C:
-                btst    #$1F,d7
+                btst    #$1F,d7                 ; bit 31: the end
                 bne.b   .4A520
                 movea.l d7,a0
-                bsr.w   PatchMap
+                bsr.w   PatchMap                ; write the block into the map
                 move.l  a4,(CoreAnimPtr).l
 .4A51E:
                 rts
 .4A520:
-                clr.b   (CoreOpening).l
+                clr.b   (CoreOpening).l         ; opening done
                 rts
 ; Upd_BydoCore: the Bydo - flashes when hit; 60 hits end the game: music
 ; off, the autopilot takes the ship (ShipMode), 15000 points, and
@@ -184,7 +184,7 @@ Upd_BydoCore:
                 bcs.b   .4A57C
                 move.l  #EndingSequence,(BossState).l ; the ending
                 move.b  #$28,(StateTimer).l
-                move.w  #$F,$96(a6)
+                move.w  #$F,$96(a6)             ; DMACON: audio off
                 clr.b   (MusicFadeReq).w
                 clr.b   (MusicRequest).w
                 bset.b  #$0,(EndSequenceFlags).w    ; Wins vanish, autopilot
@@ -197,16 +197,16 @@ Upd_BydoCore:
 PatchMap:
                 moveq   #0,d0
                 moveq   #0,d1
-                movea.l (a0)+,a1
-                move.b  (a0)+,d0
-                move.b  (a0)+,d1
+                movea.l (a0)+,a1                ; map address
+                move.b  (a0)+,d0                ; width - 1
+                move.b  (a0)+,d1                ; height - 1
 .4A588:
                 move.w  d0,d2
                 movea.l a1,a2
 .4A58C:
                 move.w  (a0)+,(a2)+
                 dbra    d2,.4A58C
-                adda.l  (MapRowBytes).w,a1
+                adda.l  (MapRowBytes).w,a1      ; next map row
                 dbra    d1,.4A588
                 rts
 ; SpawnMikun: every 26 frames a Mikun appears at the top or bottom edge at a
@@ -240,12 +240,12 @@ SpawnMikun:
                 move.l  (a3,d0.w),d6
                 movea.l $40(a3,d0.w),a1
                 movem.w (a7)+,d0-d1
-                moveq   #-1,d2
+                moveq   #-1,d2                  ; indestructible: one hit bursts it
                 lea.l   (Def_Mikun).l,a2
                 jsr     (jt_ObjCreate).w
-                move.l  d6,$32(a0)
+                move.l  d6,$32(a0)              ; dx, dy
                 move.l  a1,$2A(a0)
-                clr.b   $36(a0)
+                clr.b   $36(a0)                 ; not burst
                 jmp     (jt_ObjInsert).w
 .4A616:
                 addq.l  #$4,a7
@@ -254,14 +254,14 @@ SpawnMikun:
 ; Mikun: a Bydo spirit drifting in a straight line; one hit turns it into
 ; a burst (sound 10, 200 points).
 Upd_Mikun:
-                tst.b   $36(a0)
+                tst.b   $36(a0)                 ; bursting?
                 bne.b   .4A682
-                cmpi.w  #$1,$26(a0)
+                cmpi.w  #$1,$26(a0)             ; hit?
                 bcc.b   .4A656
-                movem.w $A(a0),d0-d1
+                movem.w $A(a0),d0-d1            ; move
                 add.w   $32(a0),d0
                 add.w   $34(a0),d1
-                bmi.b   .4A64A
+                bmi.b   .4A64A                  ; off the screen:
                 cmp.w   #$E0,d1
                 bhi.b   .4A64A
                 cmp.w   #$10,d0
@@ -269,23 +269,23 @@ Upd_Mikun:
                 cmp.w   #$168,d0
                 bcs.b   .4A64E
 .4A64A:
-                jmp     (jt_ObjKillSelf).w
+                jmp     (jt_ObjKillSelf).w      ; remove
 .4A64E:
                 movem.w d0-d1,$A(a0)
                 rts
 .4A656:
-                st.b    $36(a0)
-                move.l  #Def_MikunBurst,$12(a0)
+                st.b    $36(a0)                 ; burst
+                move.l  #Def_MikunBurst,$12(a0) ; as a MikunBurst
                 clr.w   $1E(a0)
                 clr.b   $20(a0)
                 move.l  #MikunBurstAnim,$2A(a0)
-                moveq   #10,d0
+                moveq   #10,d0                  ; sound 10
                 jsr     (jt_PlaySound).w
-                move.l  #$200,d0
+                move.l  #$200,d0                ; 200 points
                 jsr     (jt_AddScore).w
 .4A682:
-                cmpi.w  #$D,$1E(a0)
-                bcc.b   .4A64A
+                cmpi.w  #$D,$1E(a0)             ; end of the burst animation:
+                bcc.b   .4A64A                  ; remove
                 rts
 ; EndingSequence: 40 frames of explosions round the core (its cells replaced by
 ; the wreck), then the scroll runs on while the palette fades to black;
@@ -466,41 +466,41 @@ Win_Insert:
                 move.b  #$A,$4(a0)
                 jmp     (jt_ObjInsert).w
 SpawnWinAtCore:
-                move.w  #$12C,d0
+                move.w  #$12C,d0                ; from the core's mouth
                 move.w  #$78,d1
-                moveq   #-1,d2
+                moveq   #-1,d2                  ; indestructible
                 lea.l   (Def_Win).l,a2
                 jsr     (jt_ObjCreate).w
-                move.w  #$C,$38(a0)
-                move.w  #$14,$34(a0)
+                move.w  #$C,$38(a0)             ; heading left (direction 12)
+                move.w  #$14,$34(a0)            ; first turn after 21 frames
                 bra.b   Win_Insert
 Upd_Win:
-                btst.b  #$0,(EndSequenceFlags).w
+                btst.b  #$0,(EndSequenceFlags).w ; ending under way:
                 beq.b   .4A912
-                jmp     (jt_ObjKillSelf).w
+                jmp     (jt_ObjKillSelf).w      ; vanish
 .4A912:
-                subq.w  #$1,$34(a0)
+                subq.w  #$1,$34(a0)             ; time to turn?
                 bpl.b   .4A940
-                move.w  (WinTurnDelay).l,$34(a0)
+                move.w  (WinTurnDelay).l,$34(a0) ; next after WinTurnDelay + 1 frames
                 subq.w  #$1,$36(a0)
-                movem.w $A(a0),d0-d1
+                movem.w $A(a0),d0-d1            ; direction to the ship
                 movem.w (ShipPos).w,d2-d3
                 jsr     (jt_DirectionTo).w
                 move.w  $38(a0),d1
-                jsr     (jt_TurnTowards).w
+                jsr     (jt_TurnTowards).w      ; one step towards it
                 move.w  d1,$38(a0)
 .4A940:
-                move.w  $38(a0),d0
+                move.w  $38(a0),d0              ; direction 0-15
                 lsl.w   #$2,d0
-                lea.l   (WinSteps).l,a1
+                lea.l   (WinSteps).l,a1         ; its step
                 movem.w $A(a0),d1-d2
                 add.w   (a1,d0.w),d1
                 add.w   $2(a1,d0.w),d2
-                bpl.b   .4A960
+                bpl.b   .4A960                  ; kept between the top
                 moveq   #0,d2
                 bra.b   .4A96A
 .4A960:
-                cmp.w   #$E0,d2
+                cmp.w   #$E0,d2                 ; and the bottom of the screen
                 bcs.b   .4A96A
                 move.w  #$DF,d2
 .4A96A:
