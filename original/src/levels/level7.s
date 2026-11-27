@@ -262,59 +262,59 @@ Upd_PataPata:
 .4A98C:
                 rts
 Spawn_Bug:
-                moveq   #7,d5
-                move.w  $A(a1),d7
-                cmp.w   #$9,d7
+                moveq   #7,d5                   ; Bugs 7 frames apart,
+                move.w  $A(a1),d7               ; entry $0A: number - 1
+                cmp.w   #$9,d7                  ; more than 10 Bugs:
                 bls.b   .4A99C
-                moveq   #10,d5
+                moveq   #10,d5                  ; 10 frames apart (level 7 only)
 .4A99C:
-                clr.w   d6
+                clr.w   d6                      ; d6 = start delay
 .4A99E:
                 move.w  $2(a1),d0
                 move.w  $4(a1),d1
-                moveq   #1,d2
+                moveq   #1,d2                   ; 1 hit point
                 jsr     (jt_ObjCreate).w
                 clr.b   $22(a0)
-                move.l  $6(a1),$32(a0)
-                clr.w   $36(a0)
-                move.w  $C(a1),$3A(a0)
-                move.b  d6,$38(a0)
+                move.l  $6(a1),$32(a0)          ; the path
+                clr.w   $36(a0)                 ; path step
+                move.w  $C(a1),$3A(a0)          ; extra x speed
+                move.b  d6,$38(a0)              ; start delay
                 jsr     (jt_ObjInsert).w
                 add.w   d5,d6
                 dbra    d7,.4A99E
                 rts
 Upd_Bug:
-                move.w  $3A(a0),d0
+                move.w  $3A(a0),d0              ; drift with its own x speed
                 add.w   d0,$A(a0)
-                tst.b   $38(a0)
+                tst.b   $38(a0)                 ; still waiting?
                 beq.b   .4A9E4
                 subq.b  #$1,$38(a0)
                 rts
 .4A9E4:
-                movea.l $32(a0),a1
-                move.w  $36(a0),d0
+                movea.l $32(a0),a1              ; path: steps, dx, dy, frame tables
+                move.w  $36(a0),d0              ; step number
                 move.w  (a1)+,d1
-                bsr.b   .4AA1E
+                bsr.b   .4AA1E                  ; x += dx[step]
                 add.w   d2,$A(a0)
-                bsr.b   .4AA1E
+                bsr.b   .4AA1E                  ; y += dy[step]
                 add.w   d2,$C(a0)
-                bsr.b   .4AA1E
+                bsr.b   .4AA1E                  ; frame
                 move.b  d2,$1F(a0)
-                cmp.w   d1,d0
+                cmp.w   d1,d0                   ; end of the path: keep the last step
                 bcc.b   .4AA08
                 addq.w  #$1,$36(a0)
 .4AA08:
-                cmpi.w  #$15E,$A(a0)
+                cmpi.w  #$15E,$A(a0)            ; off the screen:
                 bhi.b   .4AA18
                 cmpi.w  #$2,$A(a0)
                 bcc.b   .4AA1C
 .4AA18:
-                jmp     (jt_ObjKillSelf).w
+                jmp     (jt_ObjKillSelf).w      ; remove
 .4AA1C:
                 rts
 .4AA1E:
-                movea.l (a1)+,a2
-                move.b  (a2,d0.w),d2
+                movea.l (a1)+,a2                ; table
+                move.b  (a2,d0.w),d2            ; entry for this step
                 ext.w   d2
                 rts
 Spawn_PStaff:
@@ -544,16 +544,16 @@ Upd_PStaffMissile:
 .4ACD6:
                 rts
 Spawn_Scant:
-                st.b    (MusicFadeReq).w
+                st.b    (MusicFadeReq).w        ; level 7's Scant also fades the music out (the boss is near)
                 movem.w $2(a1),d0-d1
-                move.w  $8(a2),d2
-                moveq   #30,d2
+                move.w  $8(a2),d2               ; (overwritten:)
+                moveq   #30,d2                  ; 30 hit points
                 jsr     (jt_ObjCreate).w
                 clr.b   $22(a0)
-                move.b  #$2,$21(a0)
+                move.b  #$2,$21(a0)             ; explosion type 2
                 clr.w   $3A(a0)
-                move.w  #$7D,$3C(a0)
-                bsr.w   Scant_NextMove
+                move.w  #$7D,$3C(a0)            ; after 125 frames it heads off left
+                bsr.w   Scant_NextMove          ; first move
                 jmp     (jt_ObjInsert).w
 Upd_Scant:
                 tst.b   $39(a0)                 ; state: 0 vertical, 1 horizontal, 2 pause
@@ -946,11 +946,11 @@ Upd_Cancer:
 ; map address, build list) and pre-patches the map for every Collapse in
 ; the wave list (PrepareCollapses).
 LevelInit:
-                clr.b   (ChutesReady).l
+                clr.b   (ChutesReady).l         ; no chute complete yet
                 clr.b   (BossDead).l
-                lea.l   (Chutes).l,a0
-                lea.l   (ChuteBuild).l,a1
-                move.w  #$5,(a0)
+                lea.l   (Chutes).l,a0           ; 5 chutes
+                lea.l   (ChuteBuild).l,a1       ; all build from the same list
+                move.w  #$5,(a0)                ; start delays 5, 8, 11, 14, 17 steps
                 move.l  a1,$8(a0)
                 move.w  #$8,$C(a0)
                 move.l  a1,$14(a0)
@@ -963,12 +963,12 @@ LevelInit:
                 clr.b   (ChuteTimer).l
                 moveq   #4,d7
 .4B1BC:
-                movea.l $4(a0),a2
-                lea.l   (ChuteBase).l,a1
-                bsr.w   PatchMap
+                movea.l $4(a0),a2               ; its place in the map
+                lea.l   (ChuteBase).l,a1        ; its empty base
+                bsr.w   PatchMap                ; written in
                 adda.l  #$C,a0
                 dbra    d7,.4B1BC
-                bra.w   PrepareCollapses
+                bra.w   PrepareCollapses        ; and the Collapse cells
 FrameRts:
                 rts
 ; LevelFrame: at scroll x $83E Bronco (the boss) and a Sonar appear; from
@@ -977,71 +977,71 @@ FrameRts:
 ; a random object from DropList every 25-60 frames (Upd_Falling: 4 pixels
 ; a frame down).  After the boss dies: random explosions.
 LevelFrame:
-                tst.b   (BossDead).l
-                bne.w   BossExplosions
-                cmpi.w  #$83E,(ScrollX).w
+                tst.b   (BossDead).l            ; boss dead:
+                bne.w   BossExplosions          ; explosions
+                cmpi.w  #$83E,(ScrollX).w       ; at scroll x $83E:
                 bne.b   .4B1F4
-                bsr.w   Spawn_Sonar
-                bsr.w   Spawn_Bronco
+                bsr.w   Spawn_Sonar             ; a Sonar
+                bsr.w   Spawn_Bronco            ; and Bronco
 .4B1F4:
-                cmpi.w  #$83F,(ScrollX).w
+                cmpi.w  #$83F,(ScrollX).w       ; from $83F:
                 bcs.b   FrameRts
-                clr.b   (ScrollActive).w
+                clr.b   (ScrollActive).w        ; stop the scroll
                 moveq   #4,d7
                 lea.l   (Chutes).l,a4
-                cmpi.b  #$1F,(ChutesReady).l
+                cmpi.b  #$1F,(ChutesReady).l    ; all 5 chutes complete?
                 beq.b   .4B260
-                subq.b  #$1,(ChuteTimer).l
+                subq.b  #$1,(ChuteTimer).l      ; building: a step every 3 frames
                 bpl.b   FrameRts
                 move.b  #$2,(ChuteTimer).l
 .4B222:
-                tst.w   (a4)
+                tst.w   (a4)                    ; this chute's delay
                 bne.b   .4B252
-                movea.l $4(a4),a2
-                movea.l $8(a4),a0
+                movea.l $4(a4),a2               ; map address
+                movea.l $8(a4),a0               ; next build step
                 move.l  (a0)+,d0
-                bmi.b   .4B23E
+                bmi.b   .4B23E                  ; -1: complete
                 movea.l d0,a1
                 move.l  a0,$8(a4)
-                bsr.w   PatchMap
+                bsr.w   PatchMap                ; write it into the map
                 bra.b   .4B254
 .4B23E:
-                bset.b  d7,(ChutesReady).l
-                moveq   #20,d0
+                bset.b  d7,(ChutesReady).l      ; mark this chute complete
+                moveq   #20,d0                  ; first drop after 10-29 frames
                 jsr     (jt_Random).w
                 add.w   #$A,d0
                 move.w  d0,(a4)
                 bra.b   .4B254
 .4B252:
-                subq.w  #$1,(a4)
+                subq.w  #$1,(a4)                ; count the delay down
 .4B254:
-                adda.l  #$C,a4
+                adda.l  #$C,a4                  ; next chute
                 dbra    d7,.4B222
                 rts
 .4B260:
-                subq.w  #$1,(a4)
+                subq.w  #$1,(a4)                ; dropping: this chute's timer
                 bpl.b   .4B2B8
-                moveq   #35,d0
+                moveq   #35,d0                  ; next drop in 25-59 frames
                 jsr     (jt_Random).w
                 add.w   #$19,d0
                 move.w  d0,(a4)
-                moveq   #5,d0
+                moveq   #5,d0                   ; one of 5 things
                 jsr     (jt_Random).w
                 lsl.w   #$3,d0
                 lea.l   (DropList).l,a1
                 movea.l (a1,d0.w),a2
-                move.w  $6(a1,d0.w),d6
-                move.w  $2(a4),d0
-                moveq   #20,d1
+                move.w  $6(a1,d0.w),d6          ; its frame
+                move.w  $2(a4),d0               ; at the chute's x
+                moveq   #20,d1                  ; y 20
                 moveq   #1,d2
                 jsr     (jt_ObjCreate).w
                 move.w  d6,$1E(a0)
-                move.l  #Upd_Falling,$6(a0)
-                clr.b   $22(a0)
-                clr.w   $2E(a0)
-                cmpi.l  #$4B8F6,$12(a0)
+                move.l  #Upd_Falling,$6(a0)     ; falls 4 pixels a frame
+                clr.b   $22(a0)                 ; no animation
+                clr.w   $2E(a0)                 ; never fires
+                cmpi.l  #Def_Bug,$12(a0)        ; a Bug
                 bne.b   .4B2B4
-                st.b    $22(a0)
+                st.b    $22(a0)                 ; animates
 .4B2B4:
                 jsr     (jt_ObjInsert).w
 .4B2B8:
@@ -1101,19 +1101,19 @@ Upd_Bronco:
 .4B372:
                 rts
 BossExplosions:
-                move.w  #$A4,d0
+                move.w  #$A4,d0                 ; y = 40 + random(164)
                 jsr     (jt_Random).w
                 add.w   #$28,d0
                 move.w  d0,d1
-                move.w  #$118,d0
+                move.w  #$118,d0                ; x = 40 + random(280)
                 jsr     (jt_Random).w
                 add.w   #$28,d0
                 moveq   #-1,d2
-                lea.l   (Def_Bronco).l,a2
+                lea.l   (Def_Bronco).l,a2       ; as a plain explosion
                 jsr     (jt_ObjCreate).w
-                clr.l   $6(a0)
+                clr.l   $6(a0)                  ; exploding at once
                 move.b  #$1,$5(a0)
-                move.b  #$2,$21(a0)
+                move.b  #$2,$21(a0)             ; type 2
                 jmp     (jt_ObjInsert).w
 PrepareCollapses:
                 lea.l   (AllWaves).l,a0
@@ -1666,10 +1666,13 @@ ChuteTimer:
                 dc.b    $00
 BossDead:
                 dc.b    $00
+; DropList: what the chutes drop - definition, frame (as a long).
 DropList:
-                dc.w    $0004,$BCF6,$0000,$0000,$0004,$BCF6,$0000,$0001
-                dc.w    $0004,$BCF6,$0000,$0002,$0004,$BCF6,$0000,$0003
-                dc.w    $0004,$B8F6,$0000,$0000
+                dc.l    Def_Junk,0              ; junk, frame 0
+                dc.l    Def_Junk,1
+                dc.l    Def_Junk,2
+                dc.l    Def_Junk,3
+                dc.l    Def_Bug,0               ; or a Bug
 ; object definition: 32x31, 4 frames, gfx $68026, score 100, update Upd_Falling
 Def_Junk:
                 dc.w    $1F03,$002E,$03E0,$0000
