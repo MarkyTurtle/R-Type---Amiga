@@ -806,122 +806,123 @@ InitRts:
 ; (CompilerSections: definition, x, y, priority), each with an invisible
 ; core target and a gun turret.  The level ends when SectionsLeft is 0.
 LevelFrame:
-                cmpi.w  #$970,(ScrollX).w
+                cmpi.w  #$970,(ScrollX).w       ; boss area yet?
                 bcs.b   InitRts
-                tst.b   (BossStarted).l
+                tst.b   (BossStarted).l         ; built already?
                 bne.w   .4B186
-                clr.b   (ScrollActive).w
-                movea.l (PalettePtr).w,a4
+                clr.b   (ScrollActive).w        ; stop the scroll
+                movea.l (PalettePtr).w,a4       ; boss colours: 7 = $F99,
                 move.w  #$F99,$1E(a4)
-                move.w  #$3,$2A(a4)
-                move.w  #$F55,$2E(a4)
-                lea.l   (CompilerSections).l,a4
-                lea.l   (CompilerGunParents).l,a1
-                moveq   #2,d7
-                moveq   #0,d6
-                move.l  #$6CFB2,d5
+                move.w  #$3,$2A(a4)             ; 10 = $003,
+                move.w  #$F55,$2E(a4)           ; 11 = $F55
+                lea.l   (CompilerSections).l,a4 ; definition, x, y, priority per section
+                lea.l   (CompilerGunParents).l,a1 ; the section each gun sits on
+                moveq   #2,d7                   ; 3 sections
+                moveq   #0,d6                   ; d6 = section number
+                move.l  #$6CFB2,d5              ; d5 = its path (x bytes, then y bytes)
 .4B0BA:
                 movea.l (a4)+,a2
                 move.w  (a4)+,d0
                 move.w  (a4)+,d1
-                moveq   #-1,d2
+                moveq   #-1,d2                  ; indestructible: the core takes the hits
                 jsr     (jt_ObjCreate).w
-                move.w  (a4)+,d0
+                move.w  (a4)+,d0                ; priority
                 move.b  d0,$4(a0)
                 movea.l a0,a3
-                clr.b   $22(a0)
-                clr.b   $33(a0)
-                clr.b   $3C(a0)
-                move.b  d6,$32(a0)
-                clr.w   $34(a0)
-                move.l  d5,$36(a0)
+                clr.b   $22(a0)                 ; no animation
+                clr.b   $33(a0)                 ; flying in
+                clr.b   $3C(a0)                 ; not destroyed
+                move.b  d6,$32(a0)              ; section number
+                clr.w   $34(a0)                 ; path step
+                move.l  d5,$36(a0)              ; path
                 st.b    (CompilerEntering).l
                 jsr     (jt_ObjInsert).w
-                moveq   #1,d0
+                moveq   #1,d0                   ; its core, placed by its update
                 moveq   #1,d1
-                moveq   #-1,d2
+                moveq   #-1,d2                  ; indestructible: hits counted by its update
                 lea.l   (Def_CompilerCore).l,a2
                 jsr     (jt_ObjCreate).w
-                move.w  #$11,$3C(a0)
-                move.b  #$A,$4(a0)
-                move.l  a3,$32(a0)
+                move.w  #$11,$3C(a0)            ; $3C = 0 (alive), $3D = 17 explosions when destroyed
+                move.b  #$A,$4(a0)              ; priority 10
+                move.l  a3,$32(a0)              ; its section
                 clr.b   $22(a0)
-                move.w  d6,$1E(a0)
+                move.w  d6,$1E(a0)              ; frame = section number (its hit box)
                 clr.w   $36(a0)
                 jsr     (jt_ObjInsert).w
-                tst.w   d6
+                tst.w   d6                      ; section 0 carries two guns
                 bne.b   .4B126
                 move.l  a3,(a1)+
 .4B126:
-                move.l  a3,(a1)+
+                move.l  a3,(a1)+                ; gun parent
                 addq.w  #$1,d6
-                add.l   #$8E8,d5
+                add.l   #$8E8,d5                ; next section's path
                 dbra    d7,.4B0BA
-                moveq   #2,d7
+                moveq   #2,d7                   ; 3 guns: two on section 0, one on section 1
                 moveq   #0,d6
                 lea.l   (CompilerGunParents).l,a1
 .4B13E:
-                moveq   #1,d0
+                moveq   #1,d0                   ; placed by its update
                 moveq   #1,d1
                 moveq   #-1,d2
                 lea.l   (Def_CompilerGun).l,a2
                 jsr     (jt_ObjCreate).w
-                move.b  #$B,$4(a0)
-                move.l  (a1)+,$32(a0)
+                move.b  #$B,$4(a0)              ; priority 11
+                move.l  (a1)+,$32(a0)           ; its section
                 clr.b   $22(a0)
                 clr.w   $1E(a0)
-                clr.w   $38(a0)
-                move.w  d6,$36(a0)
-                beq.b   .4B170
-                bset.b  #$2,$23(a0)
+                clr.w   $38(a0)                 ; fire timer
+                move.w  d6,$36(a0)              ; gun number * 4 (CompilerGunOffsets)
+                beq.b   .4B170                  ; only the first gun
+                bset.b  #$2,$23(a0)             ; can be hit by weapons
 .4B170:
                 jsr     (jt_ObjInsert).w
                 addq.w  #$4,d6
                 dbra    d7,.4B13E
                 st.b    (BossStarted).l
-                st.b    (MusicFadeReq).w
+                st.b    (MusicFadeReq).w        ; fade the level music out
                 rts
 .4B186:
-                tst.b   (SectionsLeft).l
+                tst.b   (SectionsLeft).l        ; all sections destroyed:
                 bne.b   .4B192
-                st.b    (LevelComplete).w
+                st.b    (LevelComplete).w       ; the level ends
 .4B192:
                 rts
 ; Upd_CompilerSection: the sections fly in from the left (3 pixels a
 ; frame) to their start, then each follows its own path ($6CFB2 + n *
 ; $8E8: $474 x bytes, then $474 y bytes) round the screen.  Section 2 also
-; fires CompilerLasers forwards when the ship is level with it and ahead.
+; fires CompilerLasers forwards, every 15 frames, when the ship is ahead
+; (to its right) and within 28 lines of its middle.
 Upd_CompilerSection:
                 tst.b   $3C(a0)                     ; destroyed by its core?
                 beq.b   .4B1AC
-                clr.l   $6(a0)
-                move.b  #$1,$5(a0)
+                clr.l   $6(a0)                  ; stop updating
+                move.b  #$1,$5(a0)              ; explode
                 subq.b  #$1,(SectionsLeft).l        ; one section fewer
                 rts
 .4B1AC:
-                bsr.w   .4B216
+                bsr.w   .4B216                  ; section 2 fires lasers
                 tst.b   (CompilerEntering).l        ; still flying in?
                 bpl.b   .4B1DA
                 addq.w  #$3,$A(a0)                  ; 3 pixels a frame to the right
                 moveq   #0,d0
                 movea.l $36(a0),a1                  ; path: x bytes, then y bytes $474 later
                 move.b  (a1),d0
-                add.w   #$20,d0
-                cmp.w   $A(a0),d0
+                add.w   #$20,d0                 ; its path starts at x + 32
+                cmp.w   $A(a0),d0               ; reached?
                 bgt.b   .4B1D8
-                clr.b   (CompilerEntering).l
-                subq.w  #$3,$A(a0)
+                clr.b   (CompilerEntering).l    ; yes: all sections start their paths
+                subq.w  #$3,$A(a0)              ; (back to the start point)
 .4B1D8:
                 rts
 .4B1DA:
                 movea.l $36(a0),a1
-                move.w  $34(a0),d0
-                move.b  (a1,d0.w),d2
+                move.w  $34(a0),d0              ; path step
+                move.b  (a1,d0.w),d2            ; x
                 adda.l  #$474,a1
-                move.b  (a1,d0.w),d3
+                move.b  (a1,d0.w),d3            ; y
                 and.w   #$FF,d2
                 and.w   #$FF,d3
-                add.w   #$20,d2
+                add.w   #$20,d2                 ; x + 32
                 move.w  d2,$A(a0)
                 move.w  d3,$C(a0)
                 addq.w  #$1,$34(a0)
@@ -931,9 +932,9 @@ Upd_CompilerSection:
 .4B214:
                 rts
 .4B216:
-                cmpi.b  #$2,$32(a0)
+                cmpi.b  #$2,$32(a0)             ; only section 2
                 bne.b   .4B228
-                tst.b   $33(a0)
+                tst.b   $33(a0)                 ; reloading?
                 beq.b   .4B22A
                 subq.b  #$1,$33(a0)
 .4B228:
@@ -941,43 +942,44 @@ Upd_CompilerSection:
 .4B22A:
                 movem.w $A(a0),d0-d1
                 move.w  d1,d2
-                cmp.w   (ShipPos).w,d0
+                cmp.w   (ShipPos).w,d0          ; ship ahead (to the right)?
                 bhi.b   .4B228
-                add.w   #$22,d2
+                add.w   #$22,d2                 ; and level with it:
                 sub.w   ($F0).w,d2
                 bpl.b   .4B244
                 neg.w   d2
 .4B244:
-                cmp.w   #$1C,d2
+                cmp.w   #$1C,d2                 ; within 28 lines of its middle
                 bhi.b   .4B228
-                add.w   #$14,d1
+                add.w   #$14,d1                 ; y + 20 + random(40)
                 movem.l a0,-(a7)
                 movem.w d0,-(a7)
                 moveq   #40,d0
                 jsr     (jt_Random).w
                 add.w   d0,d1
                 movem.w (a7)+,d0
-                add.w   #$3C,d0
-                moveq   #-1,d2
+                add.w   #$3C,d0                 ; from its front, 60 pixels in
+                moveq   #-1,d2                  ; indestructible
                 lea.l   (Def_CompilerLaser).l,a2
                 jsr     (jt_ObjCreate).w
-                bset.b  #$2,$23(a0)
+                bset.b  #$2,$23(a0)             ; not hit by weapons
                 jsr     (jt_ObjInsert).w
                 movem.l (a7)+,a0
-                move.b  #$E,$33(a0)
+                move.b  #$E,$33(a0)             ; 15 frames to the next
                 rts
 ; Upd_CompilerCore: the target inside a section; hits flash the section.
-; After 30 hits the section is destroyed: explosions, 5000 points, one
-; section fewer.
+; After 30 hits the section is destroyed: 17 explosions, 5000 points, one
+; section fewer.  Section 0 carries two gun turrets and section 1 one
+; (only section 0's first gun can be shot); section 2 has the lasers.
 Upd_CompilerCore:
                 tst.b   $3C(a0)
                 bne.w   .4B2DC
                 movea.l $32(a0),a1
                 movem.w $A(a1),d0-d1                ; sits inside its section
                 movem.w d0-d1,$A(a0)
-                tst.b   $28(a1)
+                tst.b   $28(a1)                 ; section still flashing: wait
                 bne.b   .4B2CC
-                move.w  $26(a0),d0
+                move.w  $26(a0),d0              ; hit?
                 cmp.w   $36(a0),d0
                 beq.b   .4B2CC
                 move.w  d0,$36(a0)
@@ -997,24 +999,24 @@ Upd_CompilerCore:
                 subq.b  #$1,$3D(a0)                 ; explosions, then
                 bne.b   .4B2F6
                 clr.l   $6(a0)
-                move.b  #$1,$5(a0)
+                move.b  #$1,$5(a0)              ; after 17, explode itself
                 move.l  #$5000,d0                   ; 5000 points
                 jsr     (jt_AddScore).w
 .4B2F6:
                 move.l  a0,-(a7)
-                moveq   #60,d0
+                moveq   #60,d0                  ; explosions: y + random(60)
                 jsr     (jt_Random).w
                 move.w  d0,d1
-                moveq   #80,d0
+                moveq   #80,d0                  ; x + random(80)
                 jsr     (jt_Random).w
                 add.w   $A(a0),d0
                 add.w   $C(a0),d1
                 moveq   #1,d2
-                lea.l   (Def_CompilerCore).l,a2
+                lea.l   (Def_CompilerCore).l,a2 ; as a plain explosion
                 jsr     (jt_ObjCreate).w
-                move.b  #$14,$4(a0)
+                move.b  #$14,$4(a0)             ; priority 20
                 clr.l   $6(a0)
-                move.b  #$1,$5(a0)
+                move.b  #$1,$5(a0)              ; exploding at once
                 jsr     (jt_ObjInsert).w
                 movea.l (a7)+,a0
                 rts
@@ -1022,42 +1024,42 @@ Upd_CompilerCore:
 ; towards the ship, firing every 35-105 frames from its muzzle when the
 ; ship is behind it (directions 8-15).
 Upd_CompilerGun:
-                movea.l $32(a0),a1
-                tst.b   $3C(a1)
+                movea.l $32(a0),a1              ; its section
+                tst.b   $3C(a1)                 ; destroyed:
                 beq.b   .4B348
-                clr.l   $6(a0)
+                clr.l   $6(a0)                  ; the gun goes too
                 move.b  #$1,$5(a0)
                 rts
 .4B348:
-                lea.l   (CompilerGunOffsets).l,a2
+                lea.l   (CompilerGunOffsets).l,a2 ; its place on the section
                 move.w  $36(a0),d2
                 movem.w (a2,d2.w),d2-d3
                 movea.l $32(a0),a1
                 movem.w $A(a1),d0-d1
                 add.w   d2,d0
                 add.w   d3,d1
-                movem.w d0-d1,$A(a0)
+                movem.w d0-d1,$A(a0)            ; ride along
                 move.w  d0,d5
                 movem.w (ShipPos).w,d2-d3
-                jsr     (jt_DirectionTo).w
+                jsr     (jt_DirectionTo).w      ; direction to the ship
                 move.w  d0,d6
-                cmp.w   #$8,d0
+                cmp.w   #$8,d0                  ; only directions 8-15 (behind it)
                 bcs.b   .4B3AC
-                subq.w  #$1,$38(a0)
+                subq.w  #$1,$38(a0)             ; fire timer
                 bpl.b   .4B3AC
-                subq.w  #$8,d0
+                subq.w  #$8,d0                  ; muzzle for the direction
                 lea.l   (CompilerGunMuzzles).l,a1
                 lsl.w   #$2,d0
                 add.w   (a1,d0.w),d5
                 add.w   $2(a1,d0.w),d1
                 move.w  d5,d0
-                jsr     (jt_FireEnemyBullet).w
-                moveq   #70,d0
+                jsr     (jt_FireEnemyBullet).w  ; fire at the ship
+                moveq   #70,d0                  ; next in 35-104 frames
                 jsr     (jt_Random).w
                 add.w   #$23,d0
                 move.w  d0,$38(a0)
 .4B3AC:
-                lea.l   (CompilerGunFrames).l,a1
+                lea.l   (CompilerGunFrames).l,a1 ; turret frame for the direction
                 move.b  (a1,d6.w),d0
                 ext.w   d0
                 move.w  d0,$1E(a0)
