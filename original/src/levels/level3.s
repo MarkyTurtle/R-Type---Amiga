@@ -666,109 +666,109 @@ Upd_Fireball:
                 rts
 Spawn_MainEngine:
                 clr.w   (FlameToggle).l
-                move.l  #Flame_Wait,(FlameState).l
+                move.l  #Flame_Wait,(FlameState).l ; flame: off for 100 frames first
                 move.w  #$64,(FlameTimer).l
                 movem.w $2(a1),d0-d1
-                move.w  #$BB8,d2
+                move.w  #$BB8,d2                ; 3000 hit points: the damage checks decide
                 jsr     (jt_ObjCreate).w
-                move.b  #$1,$4(a0)
-                move.w  (ScrollX).w,$38(a0)
+                move.b  #$1,$4(a0)              ; priority 1
+                move.w  (ScrollX).w,$38(a0)     ; scroll position now (FollowScroll)
                 move.w  (ScrollY).w,$3A(a0)
-                move.b  #$19,$3D(a0)
-                move.b  #$32,$32(a0)
-                clr.w   $34(a0)
-                move.w  #$3E8,$36(a0)
+                move.b  #$19,$3D(a0)            ; 25 explosions when it goes
+                move.b  #$32,$32(a0)            ; first volley after 50 frames
+                clr.w   $34(a0)                 ; breakaway path step
+                move.w  #$3E8,$36(a0)           ; breaks away after 1000 frames anyway
                 jmp     (jt_ObjInsert).w
 Upd_MainEngine:
-                cmpi.w  #$1E,$26(a0)
-                bcc.w   .4AF2A
-                cmpi.w  #$14,$26(a0)
-                bhi.b   .4AE90
-                subq.w  #$1,$36(a0)
+                cmpi.w  #$1E,$26(a0)            ; 30 damage:
+                bcc.w   .4AF2A                  ; explode
+                cmpi.w  #$14,$26(a0)            ; more than 20:
+                bhi.b   .4AE90                  ; break away
+                subq.w  #$1,$36(a0)             ; or 1000 frames up:
                 bpl.b   .4AEDE
 .4AE90:
-                st.b    (EngineDead).l
+                st.b    (EngineDead).l          ; breaking away: the flame stops
                 clr.w   (FlameTimer).l
-                lea.l   ($6FAD0).l,a1
+                lea.l   ($6FAD0).l,a1           ; path: dx table, dy table 235 bytes on (level B)
                 move.w  $34(a0),d2
-                cmpi.w  #$EA,$34(a0)
-                bcc.w   .4AF2A
+                cmpi.w  #$EA,$34(a0)            ; after 234 steps
+                bcc.w   .4AF2A                  ; it explodes
                 move.b  (a1,d2.w),d0
                 add.w   #$EB,d2
                 move.b  (a1,d2.w),d1
                 ext.w   d0
                 ext.w   d1
                 add.w   d1,$C(a0)
-                add.w   d0,$A(a0)
-                bmi.b   .4AED2
+                add.w   d0,$A(a0)               ; (no longer fixed to the hull)
+                bmi.b   .4AED2                  ; off the left or the bottom:
                 cmpi.w  #$D0,$C(a0)
                 bcs.b   .4AED6
 .4AED2:
-                jmp     (jt_ObjKillSelf).w
+                jmp     (jt_ObjKillSelf).w      ; remove
 .4AED6:
-                addq.w  #$1,$34(a0)
+                addq.w  #$1,$34(a0)             ; next step
                 bra.w   .4AF9C
 .4AEDE:
-                bsr.w   FollowScroll
-                bsr.w   .4AF9C
-                subq.b  #$1,$32(a0)
+                bsr.w   FollowScroll            ; on the hull: move with it
+                bsr.w   .4AF9C                  ; and run the flame
+                subq.b  #$1,$32(a0)             ; volley due?
                 bpl.b   .4AF28
-                move.b  #$23,$32(a0)
+                move.b  #$23,$32(a0)            ; every 36 frames
                 movea.l a0,a4
-                lea.l   (EngineShotDirs).l,a3
-                moveq   #2,d7
+                lea.l   (EngineShotDirs).l,a3   ; per shot: y offset, dx, dy
+                moveq   #2,d7                   ; 3 shots
 .4AEFC:
                 movem.w $A(a4),d0-d1
-                add.w   #$10,d0
+                add.w   #$10,d0                 ; from 16 pixels in
                 add.w   (a3)+,d1
-                moveq   #-1,d2
+                moveq   #-1,d2                  ; indestructible
                 lea.l   (Def_EngineShot).l,a2
                 jsr     (jt_ObjCreate).w
-                move.b  #$14,$4(a0)
-                move.l  (a3)+,$32(a0)
+                move.b  #$14,$4(a0)             ; priority 20
+                move.l  (a3)+,$32(a0)           ; dx, dy
                 jsr     (jt_ObjInsert).w
                 dbra    d7,.4AEFC
                 movea.l a4,a0
 .4AF28:
                 rts
 .4AF2A:
-                st.b    (EngineDead).l
+                st.b    (EngineDead).l          ; exploding: the flame stops
                 clr.w   (FlameTimer).l
-                subq.b  #$1,$3D(a0)
+                subq.b  #$1,$3D(a0)             ; 25 explosions, one a frame
                 bmi.b   .4AF88
-                move.w  #$FFFF,$24(a0)
+                move.w  #$FFFF,$24(a0)          ; indestructible meanwhile
                 movea.l a0,a3
-                moveq   #30,d0
+                moveq   #30,d0                  ; y = engine y - 10 + random(30)
                 jsr     (jt_Random).w
                 sub.w   #$A,d0
                 add.w   $C(a0),d0
                 move.w  d0,d1
-                moveq   #96,d0
+                moveq   #96,d0                  ; x = engine x - 15 + random(96)
                 jsr     (jt_Random).w
                 add.w   $A(a0),d0
                 sub.w   #$F,d0
                 moveq   #-1,d2
-                lea.l   (Def_MainEngine).l,a2
+                lea.l   (Def_MainEngine).l,a2   ; as a plain explosion
                 jsr     (jt_ObjCreate).w
-                clr.l   $6(a0)
+                clr.l   $6(a0)                  ; exploding at once
                 move.b  #$1,$5(a0)
-                move.b  #$A,$4(a0)
+                move.b  #$A,$4(a0)              ; priority 10
                 jsr     (jt_ObjInsert).w
                 movea.l a3,a0
                 bra.w   .4AF9C
 .4AF88:
-                move.b  #$1,$5(a0)
+                move.b  #$1,$5(a0)              ; then it explodes itself
                 clr.l   $6(a0)
-                move.l  #$800,d0
+                move.l  #$800,d0                ; 800 points
                 jmp     (jt_AddScore).w
 .4AF9C:
                 move.l  a0,-(a7)
-                movea.l (FlameState).l,a1
+                movea.l (FlameState).l,a1       ; flame state routine
                 jsr     (a1)
-                tst.b   (EngineDead).l
+                tst.b   (EngineDead).l          ; engine gone or breaking away:
                 beq.b   .4AFCC
-                move.l  #FlameRts,(FlameState).l
-                lea.l   (EngineGoneCells1).l,a0
+                move.l  #FlameRts,(FlameState).l ; no more flame
+                lea.l   (EngineGoneCells1).l,a0 ; and the map shows it gone
                 bsr.w   PatchMap
                 lea.l   (EngineGoneCells2).l,a0
                 bsr.w   PatchMap
@@ -783,47 +783,47 @@ Flame_Wait:
 FlameRts:
                 rts
 Flame_Start:
-                movea.l (FlamePtr).l,a4
-                move.l  (a4)+,d0
+                movea.l (FlamePtr).l,a4         ; flame start blocks, in pairs
+                move.l  (a4)+,d0                ; first of the pair (0 = none)
                 beq.b   .4AFFE
                 movea.l d0,a0
                 bsr.w   PatchMap
 .4AFFE:
-                move.l  (a4)+,d0
+                move.l  (a4)+,d0                ; second (-1 = the end of the list)
                 bmi.b   .4B010
                 movea.l d0,a0
                 bsr.w   PatchMap
-                move.l  a4,(FlamePtr).l
+                move.l  a4,(FlamePtr).l         ; one pair a frame
                 rts
 .4B010:
-                move.w  #$4B,(FlameTimer).l
+                move.w  #$4B,(FlameTimer).l     ; then 76 frames of flame
                 move.l  #.4B022,(FlameState).l
 .4B022:
                 subq.w  #$1,(FlameTimer).l
                 bpl.b   .4B046
-                move.w  #$4B,(FlameTimer).l
+                move.w  #$4B,(FlameTimer).l     ; then 76 frames off
                 move.l  #Flame_Wait,(FlameState).l
-                lea.l   (EngineGoneCells2).l,a0
+                lea.l   (EngineGoneCells2).l,a0 ; (the cells without flame)
                 bra.w   PatchMap
 .4B046:
-                lea.l   (FlameCellsA).l,a0
+                lea.l   (FlameCellsA).l,a0      ; flicker between two flame frames
                 eori.b  #$FF,(FlameToggle).l
                 beq.b   .4B05C
                 lea.l   (FlameCellsB).l,a0
 .4B05C:
                 bra.w   PatchMap
 Upd_EngineShot:
-                movem.w $32(a0),d0-d1
+                movem.w $32(a0),d0-d1           ; dx, dy
                 add.w   d0,$A(a0)
                 add.w   d1,$C(a0)
-                cmpi.w  #$10,$A(a0)
+                cmpi.w  #$10,$A(a0)             ; off the screen:
                 bcs.b   .4B086
                 cmpi.w  #$10,$C(a0)
                 bcs.b   .4B086
                 cmpi.w  #$E0,$C(a0)
                 bcs.b   .4B08A
 .4B086:
-                jmp     (jt_ObjKillSelf).w
+                jmp     (jt_ObjKillSelf).w      ; remove
 .4B08A:
                 rts
 Spawn_LaserTower:
@@ -1254,10 +1254,13 @@ FireballLaunches:
 FireballSteps:
                 dc.w    $FFFE,$0002,$0000,$0002,$0002,$0002,$0002,$0000
                 dc.w    $0002,$FFFE,$0000,$FFFE,$FFFE,$FFFE
-; MainEngine: the big thruster (96x32), fires three EngineShots every 35
+; MainEngine: the big thruster (96x32), fires three EngineShots every 36
 ; frames (EngineShotDirs).  Its exhaust flame is animated in the map
-; (FlameState).  After 20 hits it breaks away on a path ($6FAD0); after 30
-; it explodes (25 explosions) for 800 points, and the map shows it gone.
+; (FlameState: 100 frames off, the flame building up, 76 frames
+; flickering, 76 off).  After more than 20 damage, or after 1000 frames,
+; it breaks away on a 234-step path ($6FAD0) and then explodes; at 30 it
+; explodes at once (25 explosions) for 800 points, and the map shows it
+; gone.
 ; (96x32, 1 frame, gfx $69F50, score 1000, update Upd_MainEngine, spawn Spawn_MainEngine)
 Def_MainEngine:
                 dc.w    $2007,$0026,$0C00,$0000,$0000,$0000,$0006,$9F50
