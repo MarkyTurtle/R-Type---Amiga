@@ -1,5 +1,7 @@
 # Assemble every source, check it is byte-identical to the original files,
 # and build a bootable disk image (WinUAE extended ADF) from the sources.
+# Then the enhanced game's AmigaDOS disk (enhanced/tools/build.py), with its
+# emulator tests (enhanced/tools/test_disk.py).
 name: Build
 
 on:
@@ -15,6 +17,9 @@ jobs:
       # pinned so builds stay reproducible
       VASM_REPO: https://github.com/StarWolf3000/vasm-mirror
       VASM_COMMIT: a13e7e728a3dd5a9ba468bf479119e0bc23e70fd
+      # salvador (Emmanuel Marty), the ZX0 packer, pinned the same way
+      SALVADOR_REPO: https://github.com/emmanuel-marty/salvador
+      SALVADOR_COMMIT: 1662b625a8dcd6f3f7e3491c88840611776533f5
     steps:
       - uses: actions/checkout@v4
 
@@ -53,4 +58,34 @@ jobs:
         with:
           name: R-Type-adf
           path: build/R-Type.adf
+          if-no-files-found: error
+
+      - name: Cache salvador
+        id: salvador-cache
+        uses: actions/cache@v4
+        with:
+          path: salvador/salvador
+          key: salvador-${{ env.SALVADOR_COMMIT }}
+
+      - name: Build salvador
+        if: steps.salvador-cache.outputs.cache-hit != 'true'
+        run: |
+          git clone --quiet "$SALVADOR_REPO" salvador
+          git -C salvador checkout --quiet "$SALVADOR_COMMIT"
+          make -C salvador -j"$(nproc)"
+
+      - name: Build the enhanced disk
+        env:
+          VASM: ${{ github.workspace }}/vasm/vasmm68k_mot
+          SALVADOR: ${{ github.workspace }}/salvador/salvador
+        run: |
+          pip install --quiet unicorn==2.1.4 amitools==0.9.1
+          python3 -I enhanced/tools/build.py
+          python3 -I enhanced/tools/test_disk.py
+
+      - name: Upload the enhanced disk image
+        uses: actions/upload-artifact@v4
+        with:
+          name: R-Type-enhanced-adf
+          path: enhanced/build/rtype.adf
           if-no-files-found: error
