@@ -607,162 +607,164 @@ Upd_Scant:
                 bmi.b   .4AC96
                 rts
 .4AC32:
-                move.w  $C(a0),d1
-                tst.w   $34(a0)
+                move.w  $C(a0),d1               ; state 0, diagonal move: y
+                tst.w   $34(a0)                 ; moving up?
                 bmi.b   .4AC54
-                cmp.w   $36(a0),d1                  ; reached the target y?
+                cmp.w   $36(a0),d1              ; down: reached the target y?
                 bgt.b   .4AC80
 .4AC42:
-                movem.w $32(a0),d0-d1
+                movem.w $32(a0),d0-d1           ; move by dx, dy
                 add.w   d0,$A(a0)
                 add.w   d1,$C(a0)
                 bra.w   Scant_Age
 .4AC54:
-                cmp.w   $36(a0),d1                  ; reached the target x?
+                cmp.w   $36(a0),d1              ; up: reached the target y?
                 blt.b   .4AC80
                 bra.b   .4AC42
 .4AC5C:
-                move.w  $A(a0),d1
-                tst.w   $32(a0)
+                move.w  $A(a0),d1               ; state 1, sideways move: x
+                tst.w   $32(a0)                 ; moving left?
                 bmi.b   .4AC78
-                cmp.w   $36(a0),d1
+                cmp.w   $36(a0),d1              ; right: reached the target x?
                 bgt.b   .4AC80
 .4AC6C:
-                move.w  $32(a0),d0
+                move.w  $32(a0),d0              ; move by dx
                 add.w   d0,$A(a0)
                 bra.w   Scant_Age
 .4AC78:
-                cmp.w   $36(a0),d1
+                cmp.w   $36(a0),d1              ; left: reached the target x?
                 blt.b   .4AC80
                 bra.b   .4AC6C
 .4AC80:
-                move.b  #$2,$39(a0)
+                move.b  #$2,$39(a0)             ; arrived: pause (state 2)
                 moveq   #25,d0
                 jsr     (jt_Random).w               ; pause up to 25 frames
                 move.b  d0,$3A(a0)
-                clr.w   $1E(a0)
+                clr.w   $1E(a0)                 ; resting frame
                 rts
 .4AC96:
-                subq.b  #$1,$38(a0)                 ; beams left in this pause?
+                subq.b  #$1,$38(a0)             ; moves left before the next beam
                 bpl.b   Scant_NextMove
-                moveq   #2,d0
+                moveq   #2,d0                   ; fire: next beam after 1-2 more moves
                 jsr     (jt_Random).w
                 addq.w  #$1,d0
-                move.b  d0,$38(a0)
+                move.b  d0,$38(a0)              ; and recoil 10 pixels to the right
                 move.b  #$1,$39(a0)
                 clr.w   $34(a0)
                 move.w  #$2,$32(a0)
                 move.w  $A(a0),d0
                 add.w   #$A,d0
-                move.w  d0,$36(a0)
+                move.w  d0,$36(a0)              ; firing frame
                 move.w  #$2,$1E(a0)                 ; firing frame
-                move.l  a0,-(a7)
+                move.l  a0,-(a7)                ; the beam: 40 pixels in front, 10 down
                 movem.w $A(a0),d0-d1
                 add.w   #$FFD8,d0
-                add.w   #$A,d1
-                moveq   #-1,d2
+                add.w   #$A,d1                  ; indestructible
+                moveq   #-1,d2                  ; the beam, 40 pixels in front
                 jsr     (jt_ObjAlloc).w             ; the beam, 40 pixels in front
                 move.l  #ScantBeamAnim,$2A(a0)
                 move.l  #Upd_ScantBeam,$6(a0)
-                move.l  #Def_ScantBeam,$12(a0)
+                move.l  #Def_ScantBeam,$12(a0)  ; not hit by weapons
                 bset.b  #$2,$23(a0)
                 jsr     (jt_ObjInsert).w
                 movea.l (a7)+,a0
                 rts
-; Scant: moves in steps - level with the ship (within 10 pixels) it moves
-; sideways a random distance, otherwise up or down towards the ship's y;
-; between moves it waits a random time and fires its beam (ScantBeam, 8
-; pixels a frame) 1-3 times.  After 125 frames (Scant_Age) it only moves
-; left.
+; Scant: moves in steps - level with the ship (ship y -15..+5) it moves
+; sideways up to 49 pixels, otherwise diagonally towards a random y near
+; the ship's.  It moves right unless that would pass x $122 (the random
+; choice of right step always gives 2).  Between moves it pauses up to 25
+; frames; every second or third pause it fires its beam (ScantBeam, 8
+; pixels a frame) and recoils 10 pixels.  After 125 frames (Scant_Age) it
+; only moves left.
 Scant_NextMove:
-                move.w  ($F0).w,d0
+                move.w  ($F0).w,d0              ; ship y - 15 .. ship y + 5:
                 sub.w   #$F,d0
                 move.w  d0,d1
                 add.w   #$14,d1
-                cmp.w   $C(a0),d0
+                cmp.w   $C(a0),d0               ; above the band:
                 bgt.b   .4AD5E
-                cmp.w   $C(a0),d1
+                cmp.w   $C(a0),d1               ; or below it: move diagonally
                 blt.b   .4AD5E
-                clr.w   $34(a0)
-                moveq   #50,d0
+                clr.w   $34(a0)                 ; level with the ship: sideways only
+                moveq   #50,d0                  ; a random distance up to 49 pixels
                 jsr     (jt_Random).w
                 move.w  d0,d2
-                tst.b   $3B(a0)
+                tst.b   $3B(a0)                 ; leaving?
                 bmi.b   .4AD3E
                 move.w  $A(a0),d1
-                add.w   d2,d1
+                add.w   d2,d1                   ; or it would pass x $122:
                 cmp.w   #$122,d1
                 ble.b   .4AD42
 .4AD3E:
-                moveq   #-2,d0
+                moveq   #-2,d0                  ; go left
                 bra.b   .4AD46
 .4AD42:
-                bsr.w   .4ADBE
+                bsr.w   .4ADBE                  ; otherwise right (always 2: random(1) is 0)
 .4AD46:
                 tst.w   d0
-                bpl.b   .4AD4C
+                bpl.b   .4AD4C                  ; target x
                 neg.w   d2
 .4AD4C:
                 add.w   $A(a0),d2
                 move.w  d2,$36(a0)
-                move.b  #$1,$39(a0)
+                move.b  #$1,$39(a0)             ; state 1
                 bra.w   .4ADAA
 .4AD5E:
-                clr.b   $39(a0)
-                move.w  ($F0).w,d2
+                clr.b   $39(a0)                 ; state 0: diagonal
+                move.w  ($F0).w,d2              ; target y = ship y - 30 + random(59),
                 sub.w   #$1E,d2
                 moveq   #59,d0
                 jsr     (jt_Random).w
                 add.w   d0,d2
-                cmp.w   #$B1,d2
+                cmp.w   #$B1,d2                 ; at most $B0
                 blt.b   .4AD7C
                 move.w  #$B0,d2
 .4AD7C:
                 move.w  d2,$36(a0)
-                moveq   #2,d0
+                moveq   #2,d0                   ; 2 pixels a frame up or down
                 sub.w   $C(a0),d2
                 bpl.b   .4AD8C
                 neg.w   d0
                 neg.w   d2
 .4AD8C:
                 move.w  d0,$34(a0)
-                move.w  $A(a0),d0
+                move.w  $A(a0),d0               ; and the same distance sideways:
                 add.w   d2,d0
                 tst.b   $3B(a0)
-                bmi.b   .4ADA2
+                bmi.b   .4ADA2                  ; leaving,
                 cmp.w   #$122,d0
-                ble.b   .4ADA6
+                ble.b   .4ADA6                  ; or past x $122:
 .4ADA2:
-                moveq   #-2,d0
+                moveq   #-2,d0                  ; go left
                 bra.b   .4ADAA
 .4ADA6:
-                bsr.w   .4ADBE
+                bsr.w   .4ADBE                  ; otherwise right
 .4ADAA:
-                move.w  #$1,$1E(a0)
+                move.w  #$1,$1E(a0)             ; frame 1 moving right,
                 move.w  d0,$32(a0)
                 bpl.b   .4ADBC
-                move.w  #$2,$1E(a0)
+                move.w  #$2,$1E(a0)             ; frame 2 moving left
 .4ADBC:
                 rts
 .4ADBE:
-                moveq   #1,d0
+                moveq   #1,d0                   ; random(1) is always 0, so this is always 2
                 jsr     (jt_Random).w
                 asl.w   #$1,d0
                 addq.w  #$1,d0
                 asl.w   #$1,d0
                 rts
 Scant_Age:
-                subq.w  #$1,$3C(a0)
+                subq.w  #$1,$3C(a0)             ; after 125 frames
                 bpl.b   .4ADD6
-                st.b    $3B(a0)
+                st.b    $3B(a0)                 ; it only moves left
 .4ADD6:
-                tst.w   $A(a0)
+                tst.w   $A(a0)                  ; off the left edge: remove
                 bpl.b   ScantRts
                 jmp     (jt_ObjKillSelf).w
 ScantRts:
                 rts
 Upd_ScantBeam:
-                subq.w  #$8,$A(a0)
+                subq.w  #$8,$A(a0)              ; 8 pixels a frame
                 tst.w   $A(a0)
                 bpl.b   ScantRts
                 jmp     (jt_ObjKillSelf).w
