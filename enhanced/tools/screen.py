@@ -11,7 +11,7 @@ Not emulated: interrupts, sprites, audio, the disk (the files are copied into me
     from screen import Title
     t = Title(); t.frames(400); t.png('title.png')"""
 import os, re, struct
-from unicorn import Uc, UC_ARCH_M68K, UC_MODE_BIG_ENDIAN, UC_HOOK_CODE, UC_HOOK_MEM_WRITE
+from unicorn import Uc, UC_ARCH_M68K, UC_MODE_BIG_ENDIAN, UC_HOOK_CODE, UC_HOOK_MEM_WRITE, UC_HOOK_MEM_READ
 from unicorn.m68k_const import (UC_CPU_M68K_M68000, UC_M68K_REG_A6, UC_M68K_REG_D0, UC_M68K_REG_A7, UC_M68K_REG_D7,
                                 UC_M68K_REG_PC, UC_M68K_REG_SR)
 
@@ -66,6 +66,13 @@ class Title:
         self.w32(self.g['DrawBuffer'], SCREEN_B)
         self.w8(CIAA_PRA, 0xFF)
         u.hook_add(UC_HOOK_MEM_WRITE, self._bltsize, begin=CUSTOM + 0x58, end=CUSTOM + 0x59)
+        # a 68000 takes an address error on a word or long access at an odd address;
+        # Unicorn doesn't, so check every access here
+        self.odd = []
+        def odd(uc, acc, addr, size, value, ud):
+            if size > 1 and addr & 1 and len(self.odd) < 20:
+                self.odd.append((uc.reg_read(UC_M68K_REG_PC), addr, size))
+        u.hook_add(UC_HOOK_MEM_READ | UC_HOOK_MEM_WRITE, odd)
         self.waits = {self.g['TitleLoop'], self.g['MainLoop']}
         u.hook_add(UC_HOOK_CODE, self._loop, begin=min(self.waits), end=max(self.waits))
         u.reg_write(UC_M68K_REG_SR, 0x2700)          # (first: it selects the stack pointer)

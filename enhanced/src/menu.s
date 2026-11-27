@@ -496,6 +496,8 @@ TxtWeapons:     dc.b    "off   ",0
                 dc.b    "blue  ",0
                 dc.b    "red   ",0
                 dc.b    "yellow",0
+                even                    ; (a long table after the strings: an odd
+                                        ;  address is an address error on a 68000)
 OptLabels:      dc.l    TxtLives,TxtInvincible,TxtStage,TxtFull,TxtSkip,TxtSound,TxtExit
 TxtLives:       dc.b    "infinite lives",0
 TxtInvincible:  dc.b    "invincibility",0
