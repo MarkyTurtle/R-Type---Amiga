@@ -1116,104 +1116,107 @@ BossExplosions:
                 move.b  #$2,$21(a0)             ; type 2
                 jmp     (jt_ObjInsert).w
 PrepareCollapses:
-                lea.l   (AllWaves).l,a0
-                lea.l   (CollapseCells).l,a4
+                lea.l   (AllWaves).l,a0         ; every wave entry
+                lea.l   (CollapseCells).l,a4    ; rubble blocks; the standing buildings are at +$18
 .4B3BA:
-                cmpi.w  #$7530,(a0)
+                cmpi.w  #$7530,(a0)             ; end of the list ($7530)?
                 beq.b   .4B3EA
-                cmpi.l  #$4BE14,$E(a0)
+                cmpi.l  #Def_Collapse,$E(a0)    ; a Collapse?
                 bne.b   .4B3E2
-                lea.l   ($57300).l,a2
-                adda.w  $6(a0),a2
-                move.w  $8(a0),d0
+                lea.l   ($57300).l,a2           ; the map (level B)
+                adda.w  $6(a0),a2               ; + entry $06: its cells
+                move.w  $8(a0),d0               ; entry $08: which block
                 lsl.w   #$2,d0
-                movea.l $18(a4,d0.w),a1
-                bsr.w   PatchMap
+                movea.l $18(a4,d0.w),a1         ; the standing building's cells
+                bsr.w   PatchMap                ; written into the map
 .4B3E2:
-                adda.l  #$12,a0
+                adda.l  #$12,a0                 ; next entry (18 bytes)
                 bra.b   .4B3BA
 .4B3EA:
                 rts
-; Collapse: a building in the ruins that blows up - 15 frames of
-; explosions, then its map cells are replaced by rubble (CollapseCells)
-; and it slides away with the scroll (sound 12).  Placed by the wave list.
+; Collapse: a building in the ruins that blows up - 3 explosions, and
+; 16 frames after it appears its map cells are replaced by rubble
+; (CollapseCells: 6 rubble blocks, then the standing buildings that
+; PrepareCollapses writes into the map at level start) and the collapse
+; animation plays as it slides away with the scroll (sound 12).  Placed by
+; the wave list; it cannot be shot.
 Spawn_Collapse:
-                moveq   #-1,d0
+                moveq   #-1,d0                  ; placed by its update
                 moveq   #0,d1
-                moveq   #-1,d2
+                moveq   #-1,d2                  ; indestructible
                 jsr     (jt_ObjCreate).w
-                move.l  $2(a1),$32(a0)
-                move.l  $6(a1),$36(a0)
-                move.b  #$F,$3A(a0)
-                move.b  #$2,$3B(a0)
-                move.b  #$2,$4(a0)
-                moveq   #16,d0
-                tst.w   $A(a1)
+                move.l  $2(a1),$32(a0)          ; entry $02: x, y
+                move.l  $6(a1),$36(a0)          ; entry $06: map offset, $08: block
+                move.b  #$F,$3A(a0)             ; rubble after 16 frames
+                move.b  #$2,$3B(a0)             ; 3 explosions first
+                move.b  #$2,$4(a0)              ; priority 2
+                moveq   #16,d0                  ; explosion height 16,
+                tst.w   $A(a1)                  ; entry $0A non-zero (taller):
                 beq.b   .4B420
-                add.w   #$A,d0
+                add.w   #$A,d0                  ; 26
 .4B420:
                 move.w  d0,$3C(a0)
                 clr.b   $22(a0)
                 jmp     (jt_ObjInsert).w
 Upd_Collapse:
-                subq.w  #$1,$32(a0)
-                subq.b  #$1,$3A(a0)
+                subq.w  #$1,$32(a0)             ; x moves with the scroll
+                subq.b  #$1,$3A(a0)             ; time for the rubble?
                 bmi.b   .4B47E
-                tst.b   $3B(a0)
+                tst.b   $3B(a0)                 ; explosions left?
                 bmi.b   .4B47C
                 subq.b  #$1,$3B(a0)
-                moveq   #10,d0
+                moveq   #10,d0                  ; y = y + height - 5 + random(10)
                 jsr     (jt_Random).w
                 subq.w  #$5,d0
                 add.w   $3C(a0),d0
                 add.w   $34(a0),d0
                 move.w  d0,d1
-                moveq   #20,d0
+                moveq   #20,d0                  ; x = x - 5 + random(20)
                 jsr     (jt_Random).w
                 subq.w  #$5,d0
                 add.w   $32(a0),d0
                 moveq   #-1,d2
-                lea.l   (Def_Collapse).l,a2
+                lea.l   (Def_Collapse).l,a2     ; as a plain explosion
                 movea.l a0,a3
                 jsr     (jt_ObjCreate).w
-                clr.l   $6(a0)
+                clr.l   $6(a0)                  ; exploding at once
                 move.b  #$1,$5(a0)
                 jsr     (jt_ObjInsert).w
                 movea.l a3,a0
 .4B47C:
                 rts
 .4B47E:
-                lea.l   ($57300).l,a2
-                adda.w  $36(a0),a2
-                lea.l   (CollapseCells).l,a1
+                lea.l   ($57300).l,a2           ; the map (level B)
+                adda.w  $36(a0),a2              ; + its offset
+                lea.l   (CollapseCells).l,a1    ; the rubble cells
                 move.w  $38(a0),d0
                 lsl.w   #$2,d0
                 movea.l (a1,d0.w),a1
-                bsr.w   PatchMap
-                move.l  $32(a0),$A(a0)
-                st.b    $22(a0)
-                move.l  #.4B4B4,$6(a0)
-                moveq   #12,d0
+                bsr.w   PatchMap                ; replace the building
+                move.l  $32(a0),$A(a0)          ; and show the collapse itself here
+                st.b    $22(a0)                 ; animated
+                move.l  #.4B4B4,$6(a0)          ; from now on
+                moveq   #12,d0                  ; sound 12
                 jmp     (jt_PlaySound).w
 .4B4B4:
-                subq.w  #$1,$A(a0)
-                cmpi.w  #$19,$1E(a0)
+                subq.w  #$1,$A(a0)              ; scroll with the map
+                cmpi.w  #$19,$1E(a0)            ; last frame:
                 bne.b   .4B4C4
-                jmp     (jt_ObjKillSelf).w
+                jmp     (jt_ObjKillSelf).w      ; gone
 .4B4C4:
                 rts
 PatchMap:
-                moveq   #0,d0
+                moveq   #0,d0                   ; a1 = cells, a2 = map address (level 3's takes a0)
                 moveq   #0,d1
-                move.b  (a1)+,d0
-                move.b  (a1)+,d1
+                move.b  (a1)+,d0                ; width - 1
+                move.b  (a1)+,d1                ; height - 1
 .4B4CE:
                 move.w  d0,d2
                 movea.l a2,a3
 .4B4D2:
                 move.w  (a1)+,(a3)+
                 dbra    d2,.4B4D2
-                adda.l  (MapRowBytes).w,a2
+                adda.l  (MapRowBytes).w,a2      ; next map row
                 dbra    d1,.4B4CE
                 rts
 ; Crawler (arcade name not identified, perhaps the Newt): runs left along
@@ -1221,29 +1224,29 @@ PatchMap:
 ; map.
 Spawn_Crawler:
                 movem.w $2(a1),d0-d1
-                moveq   #1,d2
+                moveq   #1,d2                   ; 1 hit point
                 jsr     (jt_ObjCreate).w
-                move.w  $6(a1),$32(a0)
+                move.w  $6(a1),$32(a0)          ; entry $06: y step
                 clr.b   $22(a0)
                 jmp     (jt_ObjInsert).w
 Upd_Crawler:
-                subq.w  #$1,$A(a0)
+                subq.w  #$1,$A(a0)              ; scroll with the map
                 movem.w $A(a0),d0-d1
-                move.w  $32(a0),d7
-                bpl.b   .4B512
-                add.w   #$15,d1
+                move.w  $32(a0),d7              ; y step
+                bpl.b   .4B512                  ; positive: probe 2 px above,
+                add.w   #$15,d1                 ; negative: 21 px below
                 bra.b   .4B514
 .4B512:
                 subq.w  #$2,d1
 .4B514:
-                subq.w  #$8,d0
+                subq.w  #$8,d0                  ; 8 px ahead
                 jsr     (jt_GetMapCell).w
-                beq.b   .4B522
-                add.w   d7,$C(a0)
+                beq.b   .4B522                  ; map there:
+                add.w   d7,$C(a0)               ; step in y
                 bra.b   .4B532
 .4B522:
-                subq.w  #$2,$A(a0)
-                cmpi.w  #$10,$A(a0)
+                subq.w  #$2,$A(a0)              ; clear: run left 2 more pixels
+                cmpi.w  #$10,$A(a0)             ; off the left edge: remove
                 bhi.b   .4B532
                 jmp     (jt_ObjKillSelf).w
 .4B532:
