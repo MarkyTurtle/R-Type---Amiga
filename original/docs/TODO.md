@@ -86,6 +86,8 @@ The `original/` sources stay byte-identical; changes go in a separate `enhanced/
 3. [x] **The cheats**, on the options page: infinite lives, invincibility, start stage (1-8), full weapons (the Force at full strength, both Bits, the missiles, a chosen laser), the stage-skip key. A game with cheats gets no high-score place.
 4. **CD32 pad support** as the enhanced controller option. The original already reads button 2 (or Space) for the Force, as the arcade does, so the option adds the pad's extra buttons (read through the CD32 pad's serial protocol on port 2) for a third function, such as charging the beam or autofire.
 
+6. **Next (after the WinUAE tests of the menu and level branches): the corkscrew scroller and 50 Hz** (section "Display and drawing speed-ups" below). Memory: the two screens now take 2 × 55.3K with 96-pixel side margins and 32-line top and bottom margins for BOB clipping; with clipping in the blitter routine instead, three buffers of 336 × 208 (about 34K each, plus the corkscrew's run-on) fit in the same space. Level 3 (26-row map, vertical scroll) needs its own answer: a vertical wrap with a copper split, or taller buffers.
+
 Each feature on its own branch, tested in WinUAE, then merged (as in GnG).
 
 ### A normal AmigaDOS disk
