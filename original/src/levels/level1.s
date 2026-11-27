@@ -590,27 +590,27 @@ Blaster:
 Spawn_Scant:
                 movem.w $2(a1),d0-d1
                 move.w  $8(a2),d2
-                moveq   #30,d2
+                moveq   #30,d2                      ; 30 hit points
                 jsr     (jt_ObjCreate).w
                 clr.b   $22(a0)
                 move.b  #$2,$21(a0)
                 clr.w   $3A(a0)
-                move.w  #$7D,$3C(a0)
-                bsr.w   Scant_NextMove
+                move.w  #$7D,$3C(a0)                ; after 125 frames it heads off left
+                bsr.w   Scant_NextMove              ; first move
                 jmp     (jt_ObjInsert).w
 Upd_Scant:
-                tst.b   $39(a0)
+                tst.b   $39(a0)                     ; state: 0 vertical, 1 horizontal, 2 pause
                 beq.b   .4AC32
                 cmpi.b  #$1,$39(a0)
                 beq.b   .4AC5C
-                subq.b  #$1,$3A(a0)
+                subq.b  #$1,$3A(a0)                 ; pausing
                 bmi.b   .4AC96
                 rts
 .4AC32:
                 move.w  $C(a0),d1
                 tst.w   $34(a0)
                 bmi.b   .4AC54
-                cmp.w   $36(a0),d1
+                cmp.w   $36(a0),d1                  ; reached the target y?
                 bgt.b   .4AC80
 .4AC42:
                 movem.w $32(a0),d0-d1
@@ -618,7 +618,7 @@ Upd_Scant:
                 add.w   d1,$C(a0)
                 bra.w   Scant_Age
 .4AC54:
-                cmp.w   $36(a0),d1
+                cmp.w   $36(a0),d1                  ; reached the target x?
                 blt.b   .4AC80
                 bra.b   .4AC42
 .4AC5C:
@@ -638,12 +638,12 @@ Upd_Scant:
 .4AC80:
                 move.b  #$2,$39(a0)
                 moveq   #25,d0
-                jsr     (jt_Random).w
+                jsr     (jt_Random).w               ; pause up to 25 frames
                 move.b  d0,$3A(a0)
                 clr.w   $1E(a0)
                 rts
 .4AC96:
-                subq.b  #$1,$38(a0)
+                subq.b  #$1,$38(a0)                 ; beams left in this pause?
                 bpl.b   Scant_NextMove
                 moveq   #2,d0
                 jsr     (jt_Random).w
@@ -655,13 +655,13 @@ Upd_Scant:
                 move.w  $A(a0),d0
                 add.w   #$A,d0
                 move.w  d0,$36(a0)
-                move.w  #$2,$1E(a0)
+                move.w  #$2,$1E(a0)                 ; firing frame
                 move.l  a0,-(a7)
                 movem.w $A(a0),d0-d1
                 add.w   #$FFD8,d0
                 add.w   #$A,d1
                 moveq   #-1,d2
-                jsr     (jt_ObjAlloc).w
+                jsr     (jt_ObjAlloc).w             ; the beam, 40 pixels in front
                 move.l  #ScantBeamAnim,$2A(a0)
                 move.l  #Upd_ScantBeam,$6(a0)
                 move.l  #Def_ScantBeam,$12(a0)
@@ -771,10 +771,10 @@ Spawn_Bink:
                 move.w  $4(a1),d1
                 move.w  $8(a2),d2
                 jsr     (jt_ObjCreate).w
-                move.l  #BinkWalkRight,$2A(a0)
-                move.w  $6(a1),$32(a0)
+                move.l  #BinkWalkRight,$2A(a0)      ; walking right,
+                move.w  $6(a1),$32(a0)              ; step (entry $06)
                 bpl.b   .4AE18
-                move.l  #BinkWalkLeft,$2A(a0)
+                move.l  #BinkWalkLeft,$2A(a0)       ; negative: walking left
 .4AE18:
                 move.w  $32(a0),d2
                 bsr.w   Bink_Jump
@@ -783,7 +783,7 @@ Spawn_Bink:
                 bsr.w   Bink_Fall
                 jmp     (jt_ObjInsert).w
 Upd_Bink:
-                cmpi.w  #$10,$A(a0)
+                cmpi.w  #$10,$A(a0)                 ; off the screen: remove
                 bcs.b   .4AE4A
                 cmpi.w  #$170,$A(a0)
                 bhi.b   .4AE4A
@@ -792,14 +792,14 @@ Upd_Bink:
 .4AE4A:
                 jmp     (jt_ObjKillSelf).w
 .4AE4E:
-                move.b  $34(a0),d0
+                move.b  $34(a0),d0                  ; state: 0 walk, 1 jump, 2 fall, -1 stopped
                 beq.b   .4AE9A
                 cmp.b   #$1,d0
                 beq.w   Bink_Jumping
                 cmp.b   #$2,d0
                 beq.w   Bink_Fall
-                subq.w  #$1,$A(a0)
-                subq.b  #$1,$35(a0)
+                subq.w  #$1,$A(a0)                  ; stopped: scrolls with the map
+                subq.b  #$1,$35(a0)                 ; every 10 frames
                 bmi.b   .4AE80
                 rts
 .4AE70:
@@ -808,7 +808,7 @@ Upd_Bink:
                 move.l  #BinkWalkLeft,$2A(a0)
 .4AE80:
                 move.b  #$A,$35(a0)
-                bsr.w   ShipDistX
+                bsr.w   ShipDistX                   ; face the ship
                 move.w  #$B,$1E(a0)
                 tst.w   d2
                 bpl.b   .4AE98
@@ -824,12 +824,12 @@ Upd_Bink:
                 bmi.b   .4AEB2
                 add.w   #$23,d0
 .4AEB2:
-                jsr     (jt_GetMapCell).w
+                jsr     (jt_GetMapCell).w           ; walking: a tile ahead?
                 bne.b   .4AE70
                 adda.l  (MapRowBytes).w,a4
-                btst.b  #$7,(a4)
+                btst.b  #$7,(a4)                    ; ground ahead (one row down)?
                 beq.b   Bink_Jump
-                add.w   d2,$A(a0)
+                add.w   d2,$A(a0)                   ; yes: step on
                 rts
 ; Bink states ($34): 0 walk along the ground (entry $06: step and
 ; direction); a tile ahead -> -1: it stops and keeps turning to face the
