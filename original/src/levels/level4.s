@@ -38,7 +38,7 @@ LevelInterface:
                 dc.l    $0
                 dc.l    LevelFrame
                 dc.l    LevelInit
-                dc.l    $52078               ; LvMusic: player in level B; samples $53FB6 (8), data $5404C, periods $53FF6
+                dc.l    $52078                  ; LvMusic: player in level B; samples $604F8 (9), data $60594, periods $60540
 ScrollScript:
                 dc.w    $000B,$0000,$0064,$0000,$0000,$FFFF
 ; Checkpoint list (LV_Waves): scroll x reached, where to resume in the
@@ -336,14 +336,14 @@ Upd_Bug:
                 ext.w   d2
                 rts
 Spawn_PStaff:
-                move.w  $2(a1),d0
+                move.w  $2(a1),d0               ; x, y from the wave entry
                 move.w  $4(a1),d1
-                move.w  $8(a2),d2
+                move.w  $8(a2),d2               ; hit points from the definition
                 jsr     (jt_ObjCreate).w
-                move.w  $6(a2),$38(a0)
-                move.w  $8(a2),$3A(a0)
-                bsr.w   PStaff_Approach
-                move.b  #$1,$4(a0)
+                move.w  $6(a2),$38(a0)          ; definition word $06 (2): first-shot delay
+                move.w  $8(a2),$3A(a0)          ; hit points (6): low byte is the volley size
+                bsr.w   PStaff_Approach         ; start walking
+                move.b  #$1,$4(a0)              ; priority 1
                 jmp     (jt_ObjInsert).w
 Upd_PStaff:
                 cmpi.w  #$10,$A(a0)             ; off the left edge?
@@ -408,8 +408,8 @@ PStaff_TryFire:
                 bgt.b   PStaff_Approach         ; keep walking
                 bsr.w   PStaff_Approach         ; face the ship
                 move.b  #$1,$36(a0)             ; start a volley (state 1)
-                move.b  $3B(a0),$37(a0)         ; shots per volley (spawn parameter)
-                move.w  $38(a0),$34(a0)         ; delay before the first shot (spawn parameter)
+                move.b  $3B(a0),$37(a0)         ; shots per volley ($3B, from the hit points: 6)
+                move.w  $38(a0),$34(a0)         ; delay before the first shot (definition word $06: 2)
                 st.b    $22(a0)                 ; animate
                 move.l  #PStaffFireAnim,$2A(a0) ; with the fire animation
                 move.w  #$3,$1E(a0)
@@ -562,9 +562,9 @@ Upd_PStaffMissile:
 .4ADC0:
                 rts
 Spawn_Bink:
-                move.w  $2(a1),d0
+                move.w  $2(a1),d0               ; x, y from the wave entry
                 move.w  $4(a1),d1
-                move.w  $8(a2),d2
+                move.w  $8(a2),d2               ; hit points from the definition
                 jsr     (jt_ObjCreate).w
                 move.l  #BinkWalkRight,$2A(a0)  ; walking right,
                 move.w  $6(a1),$32(a0)          ; step (entry $06)
@@ -572,10 +572,10 @@ Spawn_Bink:
                 move.l  #BinkWalkLeft,$2A(a0)   ; negative: walking left
 .4ADEA:
                 move.w  $32(a0),d2
-                bsr.w   Bink_Jump
-                move.w  #$200,$34(a0)
-                clr.w   $1E(a0)
-                bsr.w   Bink_Fall
+                bsr.w   Bink_Jump               ; start with a jump
+                move.w  #$200,$34(a0)           ; then state 2 (falling), byte $35 = 0
+                clr.w   $1E(a0)                 ; first walking frame
+                bsr.w   Bink_Fall               ; drop to the ground
                 jmp     (jt_ObjInsert).w
 Upd_Bink:
                 cmpi.w  #$10,$A(a0)             ; off the screen: remove
@@ -598,78 +598,78 @@ Upd_Bink:
                 bmi.b   .4AE52
                 rts
 .4AE42:
-                st.b    $34(a0)
-                clr.b   $22(a0)
+                st.b    $34(a0)                 ; blocked: stop (state -1)
+                clr.b   $22(a0)                 ; hold the animation
                 move.l  #BinkWalkLeft,$2A(a0)
 .4AE52:
-                move.b  #$A,$35(a0)
+                move.b  #$A,$35(a0)             ; turn to face the ship every 10 frames
                 bsr.w   ShipDistX               ; face the ship
-                move.w  #$B,$1E(a0)
+                move.w  #$B,$1E(a0)             ; frame 11: facing right
                 tst.w   d2
                 bpl.b   .4AE6A
                 clr.w   $1E(a0)
 .4AE6A:
                 rts
 .4AE6C:
-                move.w  $32(a0),d2
-                movem.w $A(a0),d0-d1
+                move.w  $32(a0),d2              ; walking: step and direction
+                movem.w $A(a0),d0-d1            ; probe at foot height
                 add.w   #$C,d1
-                subq.w  #$3,d0
+                subq.w  #$3,d0                  ; 3 pixels behind the left edge
                 tst.w   d2
-                bmi.b   .4AE84
-                add.w   #$23,d0
+                bmi.b   .4AE84                  ; walking left?
+                add.w   #$23,d0                 ; right: just past the body
 .4AE84:
                 jsr     (jt_GetMapCell).w       ; walking: a tile ahead?
                 bne.b   .4AE42
-                adda.l  (MapRowBytes).w,a4
+                adda.l  (MapRowBytes).w,a4      ; the cell below
                 btst.b  #$7,(a4)                ; ground ahead (one row down)?
-                beq.b   Bink_Jump
+                beq.b   Bink_Jump               ; no ground: jump off
                 add.w   d2,$A(a0)               ; yes: step on
                 rts
 Bink_Jump:
-                move.b  #$1,$34(a0)
-                clr.w   $36(a0)
+                move.b  #$1,$34(a0)             ; state 1: jumping
+                clr.w   $36(a0)                 ; start of the jump arc
                 move.w  #$23,$38(a0)
-                move.l  #BinkJumpRight,$2A(a0)
+                move.l  #BinkJumpRight,$2A(a0)  ; jump animation for the direction
                 tst.w   d2
                 bpl.b   .4AEBE
                 move.l  #BinkJumpLeft,$2A(a0)
 .4AEBE:
-                move.w  #$3,$1E(a0)
+                move.w  #$3,$1E(a0)             ; animate from frame 3
                 clr.b   $20(a0)
                 st.b    $22(a0)
                 rts
 Bink_Jumping:
-                lea.l   (BinkJumpArc).l,a2
+                lea.l   (BinkJumpArc).l,a2      ; signed y steps, $7F ends
                 move.w  $36(a0),d0
-                moveq   #2,d2
+                moveq   #2,d2                   ; 2 pixels a frame right in this copy
                 move.b  (a2,d0.w),d3
-                cmp.b   #$7F,d3
-                bne.b   .4AEEC
+                cmp.b   #$7F,d3                 ; end of the arc:
+                bne.b   .4AEEC                  ; fall (state 2)
                 move.b  #$2,$34(a0)
                 bra.b   Bink_Fall
 .4AEEC:
                 ext.w   d3
-                tst.w   $32(a0)
+                tst.w   $32(a0)                 ; walking left?
                 bpl.b   .4AEF6
-                moveq   #-3,d2
+                moveq   #-3,d2                  ; and 3 to the left
 .4AEF6:
                 add.w   d2,$A(a0)
                 add.w   d3,$C(a0)
-                addq.w  #$1,$36(a0)
+                addq.w  #$1,$36(a0)             ; next point of the arc
                 rts
 Bink_Fall:
-                subq.w  #$1,$A(a0)
-                movem.w $A(a0),d0-d1
+                subq.w  #$1,$A(a0)              ; scroll with the map
+                movem.w $A(a0),d0-d1            ; probe under the feet
                 addq.w  #$8,d0
                 add.w   #$1A,d1
-                jsr     (jt_GetMapCell).w
+                jsr     (jt_GetMapCell).w       ; ground?
                 bne.b   .4AF20
-                addq.w  #$4,$C(a0)
+                addq.w  #$4,$C(a0)              ; no: fall 4 pixels a frame
                 rts
 .4AF20:
-                clr.w   $34(a0)
-                move.l  #BinkWalkRight,$2A(a0)
+                clr.w   $34(a0)                 ; landed: walk (state 0)
+                move.l  #BinkWalkRight,$2A(a0)  ; walking animation for the direction
                 clr.b   $20(a0)
                 clr.w   $1E(a0)
                 tst.w   $32(a0)
@@ -696,18 +696,18 @@ Spawn_Cancer:
 .4AF72:
                 rts
 Upd_Cancer:
-                tst.w   $32(a0)
+                tst.w   $32(a0)                 ; waiting to start?
                 beq.b   .4AF80
                 subq.w  #$1,$32(a0)
                 rts
 .4AF80:
-                subq.w  #$1,$A(a0)
+                subq.w  #$1,$A(a0)              ; scrolls with the map
                 movem.w $A(a0),d0-d1
                 cmp.w   #$10,d0
                 bcs.b   .4AFA2
                 cmp.w   #$170,d0
                 bhi.b   .4AFA2
-                cmp.w   #$2,d1
+                cmp.w   #$2,d1                  ; top limit 2 here (16 in level 1)
                 bcs.b   .4AFA2
                 cmp.w   #$E0,d1
                 bcs.b   .4AFA6
@@ -715,9 +715,9 @@ Upd_Cancer:
                 jmp     (jt_ObjKillSelf).w
 .4AFA6:
                 move.w  $3A(a0),d4
-                cmp.w   (ScrollX).w,d4
+                cmp.w   (ScrollX).w,d4          ; past its scroll x:
                 bhi.b   .4AFC0
-                moveq   #10,d7
+                moveq   #10,d7                  ; make for the nearer edge
                 cmp.w   #$88,d1
                 bcs.b   .4AFBC
                 move.w  #$E0,d7
@@ -725,19 +725,19 @@ Upd_Cancer:
                 moveq   #4,d6
                 bra.b   .4AFCC
 .4AFC0:
-                subq.w  #$1,$38(a0)
+                subq.w  #$1,$38(a0)             ; time for a new heading?
                 bpl.b   .4B00A
-                movem.w (ShipPos).w,d6-d7
+                movem.w (ShipPos).w,d6-d7       ; target: the ship
 .4AFCC:
                 moveq   #2,d4
-                lea.l   (CancerAnimRight).l,a1
+                lea.l   (CancerAnimRight).l,a1  ; x step +2 / -1, facing it
                 cmp.w   d6,d0
                 bcs.b   .4AFE0
                 moveq   #-1,d4
                 lea.l   (CancerAnimLeft).l,a1
 .4AFE0:
                 move.l  a1,$2A(a0)
-                moveq   #1,d5
+                moveq   #1,d5                   ; y step +1 / -1
                 cmp.w   d7,d1
                 bcs.b   .4AFEC
                 neg.w   d5
@@ -747,7 +747,7 @@ Upd_Cancer:
                 bpl.b   .4AFF4
                 neg.w   d2
 .4AFF4:
-                lsr.w   #$2,d2
+                lsr.w   #$2,d2                  ; hold it for |dx|/4 + random 25 frames
                 moveq   #25,d0
                 jsr     (jt_Random).w
                 add.w   d0,d2
@@ -766,9 +766,9 @@ Upd_Cancer:
                 add.w   #$20,d1
 .4B024:
                 addq.w  #$8,d0
-                jsr     (jt_GetMapCell).w
+                jsr     (jt_GetMapCell).w       ; blocked vertically?
                 bne.b   .4B030
-                add.w   d6,$C(a0)
+                add.w   d6,$C(a0)               ; no: move up/down
 .4B030:
                 movem.l (a7)+,d0-d1
                 addq.w  #$8,d1
@@ -780,9 +780,9 @@ Upd_Cancer:
 .4B042:
                 add.w   #$22,d0
 .4B046:
-                jsr     (jt_GetMapCell).w
+                jsr     (jt_GetMapCell).w       ; blocked horizontally?
                 bne.b   .4B050
-                add.w   d4,$A(a0)
+                add.w   d4,$A(a0)               ; no: move left/right
 .4B050:
                 rts
 ; The level 4 map is stored at $50F00 (level B) and copied to $6EA6A, the

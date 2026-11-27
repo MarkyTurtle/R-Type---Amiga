@@ -3,7 +3,7 @@
 
 usage:
   python3 -I tools/line_comments.py apply SPEC FILE.s
-  python3 -I tools/line_comments.py propagate FROM.s TO.s [...]
+  python3 -I tools/line_comments.py propagate [--loose] FROM.s TO.s [...]
 
 apply: SPEC has one comment per line, `Anchor[+n]  comment`, where Anchor
 is a label in FILE (a routine name or a local label such as .4A872) and
@@ -15,7 +15,9 @@ propagate: a routine in TO gets the line comments of the routine with
 the same name in FROM when both have the same instructions (local labels
 and 5+ digit hex addresses are ignored in the comparison, so copies of
 an enemy at another load address still match).  Routines that differ
-are listed and left alone.
+are listed and left alone.  With --loose, a routine of the same length
+that differs in a few lines gets the comments of its matching lines, and
+the differing lines are printed for commenting by hand.
 
 Only comments change, so the assembled output stays identical; run
 tools/verify.py afterwards.
@@ -93,7 +95,7 @@ def norm(line, locals_):
     code = re.sub(r'\$[0-9A-F]{5,}', '$ADDR', code)
     return ' '.join(code.split())
 
-def propagate(src, dst):
+def propagate(src, dst, loose=False):
     sl = open(src).readlines(); dl = open(dst).readlines()
     sr, dr = routines(sl), routines(dl)
     copied, differ = 0, []
@@ -102,11 +104,16 @@ def propagate(src, dst):
             continue
         di = dr[name]
         a, b = {}, {}
-        if [norm(sl[i], a) for i in si] != [norm(dl[i], b) for i in di]:
-            differ.append(name); continue
-        for i, j in zip(si, di):
+        ns, nd = [norm(sl[i], a) for i in si], [norm(dl[i], b) for i in di]
+        if ns != nd:
+            if not loose or len(ns) != len(nd):
+                differ.append(name); continue
+            for x, y, j in zip(ns, nd, di):
+                if x != y:
+                    print('  %s line %d: %s' % (name, j + 1, dl[j].strip()))
+        for i, j, x, y in zip(si, di, ns, nd):
             c = split(sl[i])[1]
-            if c and split(dl[j])[1] != c:
+            if c and x == y and split(dl[j])[1] != c:
                 dl[j] = with_comment(dl[j], c)
         copied += 1
     open(dst, 'w').writelines(dl)
@@ -117,7 +124,11 @@ if __name__ == '__main__':
     if len(sys.argv) == 4 and sys.argv[1] == 'apply':
         sys.exit(1 if apply(sys.argv[2], sys.argv[3]) else 0)
     elif len(sys.argv) >= 4 and sys.argv[1] == 'propagate':
-        for d in sys.argv[3:]:
-            propagate(sys.argv[2], d)
+        args = sys.argv[2:]
+        loose = args[0] == '--loose'
+        if loose:
+            args = args[1:]
+        for d in args[1:]:
+            propagate(args[0], d, loose)
     else:
         sys.exit(__doc__)

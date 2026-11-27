@@ -260,14 +260,14 @@ Upd_Bug:
                 ext.w   d2
                 rts
 Spawn_PStaff:
-                move.w  $2(a1),d0
+                move.w  $2(a1),d0               ; x, y from the wave entry
                 move.w  $4(a1),d1
-                move.w  $8(a2),d2
+                move.w  $8(a2),d2               ; hit points from the definition
                 jsr     (jt_ObjCreate).w
-                move.w  $6(a2),$38(a0)
-                move.w  $8(a2),$3A(a0)
-                bsr.w   PStaff_Approach
-                move.b  #$1,$4(a0)
+                move.w  $6(a2),$38(a0)          ; definition word $06 (2): first-shot delay
+                move.w  $8(a2),$3A(a0)          ; hit points (6): low byte is the volley size
+                bsr.w   PStaff_Approach         ; start walking
+                move.b  #$1,$4(a0)              ; priority 1
                 jmp     (jt_ObjInsert).w
 Upd_PStaff:
                 cmpi.w  #$10,$A(a0)             ; off the left edge?
@@ -336,8 +336,8 @@ PStaff_TryFire:
                 bgt.b   PStaff_Approach         ; keep walking
                 bsr.w   PStaff_Approach         ; face the ship
                 move.b  #$1,$36(a0)             ; start a volley (state 1)
-                move.b  $3B(a0),$37(a0)         ; shots per volley (spawn parameter)
-                move.w  $38(a0),$34(a0)         ; delay before the first shot (spawn parameter)
+                move.b  $3B(a0),$37(a0)         ; shots per volley ($3B, from the hit points: 6)
+                move.w  $38(a0),$34(a0)         ; delay before the first shot (definition word $06: 2)
                 st.b    $22(a0)                 ; animate
                 move.l  #PStaffFireAnim,$2A(a0) ; with the fire animation
                 move.w  #$3,$1E(a0)
@@ -767,9 +767,9 @@ Upd_ScantBeam:
                 bpl.b   ScantRts
                 jmp     (jt_ObjKillSelf).w
 Spawn_Bink:
-                move.w  $2(a1),d0
+                move.w  $2(a1),d0               ; x, y from the wave entry
                 move.w  $4(a1),d1
-                move.w  $8(a2),d2
+                move.w  $8(a2),d2               ; hit points from the definition
                 jsr     (jt_ObjCreate).w
                 move.l  #BinkWalkRight,$2A(a0)      ; walking right,
                 move.w  $6(a1),$32(a0)              ; step (entry $06)
@@ -777,10 +777,10 @@ Spawn_Bink:
                 move.l  #BinkWalkLeft,$2A(a0)       ; negative: walking left
 .4AE18:
                 move.w  $32(a0),d2
-                bsr.w   Bink_Jump
-                move.w  #$200,$34(a0)
-                clr.w   $1E(a0)
-                bsr.w   Bink_Fall
+                bsr.w   Bink_Jump               ; start with a jump
+                move.w  #$200,$34(a0)           ; then state 2 (falling), byte $35 = 0
+                clr.w   $1E(a0)                 ; first walking frame
+                bsr.w   Bink_Fall               ; drop to the ground
                 jmp     (jt_ObjInsert).w
 Upd_Bink:
                 cmpi.w  #$10,$A(a0)                 ; off the screen: remove
@@ -803,32 +803,32 @@ Upd_Bink:
                 bmi.b   .4AE80
                 rts
 .4AE70:
-                st.b    $34(a0)
-                clr.b   $22(a0)
+                st.b    $34(a0)                 ; blocked: stop (state -1)
+                clr.b   $22(a0)                 ; hold the animation
                 move.l  #BinkWalkLeft,$2A(a0)
 .4AE80:
-                move.b  #$A,$35(a0)
+                move.b  #$A,$35(a0)             ; turn to face the ship every 10 frames
                 bsr.w   ShipDistX                   ; face the ship
-                move.w  #$B,$1E(a0)
+                move.w  #$B,$1E(a0)             ; frame 11: facing right
                 tst.w   d2
                 bpl.b   .4AE98
                 clr.w   $1E(a0)
 .4AE98:
                 rts
 .4AE9A:
-                move.w  $32(a0),d2
-                movem.w $A(a0),d0-d1
+                move.w  $32(a0),d2              ; walking: step and direction
+                movem.w $A(a0),d0-d1            ; probe at foot height
                 add.w   #$C,d1
-                subq.w  #$3,d0
+                subq.w  #$3,d0                  ; 3 pixels behind the left edge
                 tst.w   d2
-                bmi.b   .4AEB2
-                add.w   #$23,d0
+                bmi.b   .4AEB2                  ; walking left?
+                add.w   #$23,d0                 ; right: just past the body
 .4AEB2:
                 jsr     (jt_GetMapCell).w           ; walking: a tile ahead?
                 bne.b   .4AE70
-                adda.l  (MapRowBytes).w,a4
+                adda.l  (MapRowBytes).w,a4      ; the cell below
                 btst.b  #$7,(a4)                    ; ground ahead (one row down)?
-                beq.b   Bink_Jump
+                beq.b   Bink_Jump               ; no ground: jump off
                 add.w   d2,$A(a0)                   ; yes: step on
                 rts
 ; Bink states ($34): 0 walk along the ground (entry $06: step and
@@ -837,49 +837,49 @@ Upd_Bink:
 ; frame across, until $7F -> 2 Bink_Fall: 4 pixels down a frame until it
 ; lands, then it walks again.  It fires at its definition's rate.
 Bink_Jump:
-                move.b  #$1,$34(a0)
-                clr.w   $36(a0)
+                move.b  #$1,$34(a0)             ; state 1: jumping
+                clr.w   $36(a0)                 ; start of the jump arc
                 move.w  #$23,$38(a0)
-                move.l  #BinkJumpRight,$2A(a0)
+                move.l  #BinkJumpRight,$2A(a0)  ; jump animation for the direction
                 tst.w   d2
                 bpl.b   .4AEEC
                 move.l  #BinkJumpLeft,$2A(a0)
 .4AEEC:
-                move.w  #$3,$1E(a0)
+                move.w  #$3,$1E(a0)             ; animate from frame 3
                 clr.b   $20(a0)
                 st.b    $22(a0)
                 rts
 Bink_Jumping:
-                lea.l   (BinkJumpArc).l,a2
+                lea.l   (BinkJumpArc).l,a2      ; signed y steps, $7F ends
                 move.w  $36(a0),d0
-                moveq   #3,d2
+                moveq   #3,d2                   ; 3 pixels a frame sideways
                 move.b  (a2,d0.w),d3
-                cmp.b   #$7F,d3
-                bne.b   .4AF1A
+                cmp.b   #$7F,d3                 ; end of the arc:
+                bne.b   .4AF1A                  ; fall (state 2)
                 move.b  #$2,$34(a0)
                 bra.b   Bink_Fall
 .4AF1A:
                 ext.w   d3
-                tst.w   $32(a0)
+                tst.w   $32(a0)                 ; walking left?
                 bpl.b   .4AF24
-                neg.w   d2
+                neg.w   d2                      ; yes: sideways step to the left
 .4AF24:
                 add.w   d2,$A(a0)
                 add.w   d3,$C(a0)
-                addq.w  #$1,$36(a0)
+                addq.w  #$1,$36(a0)             ; next point of the arc
                 rts
 Bink_Fall:
-                subq.w  #$1,$A(a0)
-                movem.w $A(a0),d0-d1
+                subq.w  #$1,$A(a0)              ; scroll with the map
+                movem.w $A(a0),d0-d1            ; probe under the feet
                 addq.w  #$8,d0
                 add.w   #$1A,d1
-                jsr     (jt_GetMapCell).w
+                jsr     (jt_GetMapCell).w       ; ground?
                 bne.b   .4AF4E
-                addq.w  #$4,$C(a0)
+                addq.w  #$4,$C(a0)              ; no: fall 4 pixels a frame
                 rts
 .4AF4E:
-                clr.w   $34(a0)
-                move.l  #BinkWalkRight,$2A(a0)
+                clr.w   $34(a0)                 ; landed: walk (state 0)
+                move.l  #BinkWalkRight,$2A(a0)  ; walking animation for the direction
                 clr.b   $20(a0)
                 clr.w   $1E(a0)
                 tst.w   $32(a0)
