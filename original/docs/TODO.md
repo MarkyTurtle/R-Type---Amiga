@@ -82,11 +82,11 @@ Each feature on its own branch, tested in WinUAE, then merged (as in GnG).
 
 Replace the custom-track loader with one that reads a standard AmigaDOS (11-sector, `$4489`) disk that has a proper file system, so the disk can be copied, browsed and checked with ordinary tools.
 
-- [ ] **Loader**: use the 4489 byte loader from [MarkyTurtle/infinitedreams](https://github.com/MarkyTurtle/infinitedreams) (`src-singledisk/demo-redux/4489Loader/`: disassembled, TOD-timed fork of [4489/4489_byteloader](https://github.com/4489/4489_byteloader)).
+- [x] **Loader** (branch `enhanced/disk`, `enhanced/src/disk.s`, `stage2.s`): the 4489 byte loader from [MarkyTurtle/infinitedreams](https://github.com/MarkyTurtle/infinitedreams) (`src-singledisk/demo-redux/4489Loader/`: disassembled, TOD-timed fork of [4489/4489_byteloader](https://github.com/4489/4489_byteloader)).
   - Interface: d0 = disk offset, d1 = length, d2 = drive, a0 = destination, a1 = MFM buffer. It returns d0 = 0 on success.
   - It needs `$1760` words of MFM buffer. The game's `TRACK_BUFFER` at `$7C400` has room (`$7C400`–`$7F2C0`); check nothing else uses that area while loading.
-- [ ] **Compress the files with ZX0.** The files don't fit on an 880K disk as they are. The custom tracks hold about 987K, which is why the original uses long tracks.
-  - Use the 68000 ZX0 decompressor already in infinitedreams (`src-singledisk/demo-redux/zx0/unzx0_68000.s`, Emmanuel Marty, 88 bytes; a0 = packed data, a1 = destination). Pack with [salvador](https://github.com/emmanuel-marty/salvador) `-classic`.
+- [x] **Compress the files with ZX0** (`enhanced/tools/build.py`; the files now take about 600K). The files don't fit on an 880K disk as they are. The custom tracks hold about 987K, which is why the original uses long tracks.
+  - Use the 68000 ZX0 decompressor already in infinitedreams (`src-singledisk/demo-redux/zx0/unzx0_68000.s`, Emmanuel Marty, 88 bytes; a0 = packed data, a1 = destination). Pack with [salvador](https://github.com/emmanuel-marty/salvador) in its default format: `unzx0_68000.s` reads that one, not `-classic`.
   - Measured with salvador (track padding trimmed, level B files packed from their unpacked form):
 
     | | on disk now | ZX0 |
@@ -107,18 +107,19 @@ Replace the custom-track loader with one that reads a standard AmigaDOS (11-sect
     - Load the packed data at the *end* of the destination area plus salvador's safety margin and unpack forwards. Or use salvador's backwards mode (`-b`, which needs the backwards 68000 decompressor) to keep the original's layout.
     - Check memory per file. Level B now loads at `$4CB00` and unpacks to `$4D300`, ending at up to `$7975B`, close to `TRACK_BUFFER` at `$7C400`.
   - Time how long the 68000 takes to unpack the largest files (`$6000` block, level B) on an A500 against the original load times.
-- [ ] **File-system layout**: make an **FFS** disk (`DOS\1`) with each file in **contiguous** blocks.
+- [x] **File-system layout**: an **FFS** disk (`DOS\1`) with each file in **contiguous** blocks (`enhanced/tools/ffs.py`; `xdftool fsck` finds it clean).
   - FFS data blocks hold 512 bytes of plain data, with no 24-byte header as on OFS. A contiguous file can therefore be read directly by the byte loader at a known disk offset, with no file-system code in the game.
   - Have the build tool write the disk and an offset/length table that the loader assembles in.
   - Optionally add a small root-directory/file-header lookup instead, so the files can be replaced without rebuilding.
-- [ ] **Patch the load calls** in the bootblock, stage 2 (title, music, game program, `$6000` block, shared file) and `LevelTable`/`LoadLevel` (level A/B by track) to use file offsets instead of track numbers.
-- [ ] **Bootblock**: a standard `DOS\1` bootblock that loads stage 2 with the byte loader (or through trackdisk.device before taking over the machine).
-- [ ] **Saving high scores**: use the **Rob Northen disk routines** for the write.
+- [x] **Patch the load calls** in the bootblock, stage 2 (title, music, game program, `$6000` block, shared file) and `LevelTable`/`LoadLevel` (level A/B by track) to use file offsets instead of track numbers.
+- [x] **Bootblock**: a standard `DOS\1` bootblock that loads stage 2 with the byte loader (or through trackdisk.device before taking over the machine).
+- [x] **Saving high scores**: written in `enhanced/src/disk.s` (read the track, replace the block, MFM-encode the 11 sectors, write the track); no Rob Northen code was to hand. Still to try on the new disk in WinUAE.
   - The byte loader is read-only.
   - Writing to an AmigaDOS disk means MFM-encoding and writing a whole 11-sector track, or reading, modifying and rewriting the sector.
   - Keep the high-score table as a one-block file in a fixed place, so the save never touches the file system's bitmap or directory.
   - Keep the checksum check so a bad or missing table falls back to the default.
-- [ ] **Build**: extend `build_disk.py` (or add an `enhanced` mode) to write a plain ADF and verify it, and test it in WinUAE on a 512K A500 and with more memory.
+- [x] **Build**: `enhanced/tools/build.py` writes `enhanced/build/rtype.adf` and checks it; `enhanced/tools/test_disk.py` runs the bootblock, stage 2's and the engine's loads and the high-score save in a 68000 emulator; CI builds and tests it.
+- [ ] **Test it in WinUAE** on a 512K A500, with 512K slow RAM (the file cache) and on an A1200, from DF0 and (Kickstart 2.0+) DF1; then merge `enhanced/disk` to main.
 
 ### Cheat mode
 
