@@ -194,30 +194,30 @@ Upd_Gouger:
                 rts
 Spawn_Wick:
                 move.w  $6(a1),d7                   ; number - 1
-                moveq   #0,d6
-                moveq   #4,d5
+                moveq   #0,d6                   ; first start delay 0
+                moveq   #4,d5                   ; count to every 5th
 .4A640:
                 subq.w  #$1,d5
                 bpl.b   .4A64C
-                move.w  (ShipPos).w,d1              ; every 5th at the ship
+                move.w  (ShipPos).w,d1          ; every 5th: y = the ship's x (ShipPos is x)
                 moveq   #4,d5
                 bra.b   .4A658
 .4A64C:
-                moveq   #105,d0                     ; the others at a random height 80-185
+                moveq   #105,d0                 ; the others at a random height 80-184
                 jsr     (jt_Random).w
                 add.w   #$50,d0
                 move.w  d0,d1
 .4A658:
                 move.w  #$174,d0                    ; enter at the right
-                moveq   #1,d2
+                moveq   #1,d2                   ; 1 hit point
                 jsr     (jt_ObjCreate).w
                 move.w  d6,$32(a0)                  ; 20 frames apart
-                move.b  #$1,$21(a0)
-                move.b  #$1,$34(a0)
-                moveq   #7,d0
+                move.b  #$1,$21(a0)             ; explosion type 1
+                move.b  #$1,$34(a0)             ; bob 1 pixel,
+                moveq   #7,d0                   ; first bob after 0-6 steps
                 jsr     (jt_Random).w
                 move.b  d0,$35(a0)
-                clr.w   $38(a0)
+                clr.w   $38(a0)                 ; step 0: fly left
                 move.w  #$7FFF,$36(a0)              ; 70%: never dives
                 moveq   #100,d0
                 jsr     (jt_Random).w
@@ -239,16 +239,16 @@ Upd_Wick:
                 rts
 .4A6BA:
                 moveq   #0,d0
-                move.b  $38(a0),d0
-                bne.b   .4A6E4
+                move.b  $38(a0),d0              ; step: 0 left, 1 dive left, 2 dive right
+                bne.b   .4A6E4                  ; diving: no bob
                 eori.b  #$FF,$39(a0)                ; every other frame:
                 beq.b   .4A6E4
                 move.b  $34(a0),d1
                 ext.w   d1
                 add.w   d1,$C(a0)                   ; bob up and down
-                subq.b  #$1,$35(a0)
+                subq.b  #$1,$35(a0)             ; 7 bobs each way
                 bpl.b   .4A6E4
-                neg.b   $34(a0)
+                neg.b   $34(a0)                 ; then turn
                 move.b  #$6,$35(a0)
 .4A6E4:
                 lsl.w   #$2,d0
@@ -256,30 +256,30 @@ Upd_Wick:
                 movem.w (a1,d0.w),d1-d2
                 add.w   d1,$A(a0)
                 add.w   d2,$C(a0)
-                move.w  $A(a0),d0
+                move.w  $A(a0),d0               ; off the screen:
                 cmp.w   #$10,d0
                 bcs.b   .4A750
                 cmp.w   #$173,d0
                 bhi.b   .4A750
                 cmpi.w  #$C4,$C(a0)
                 bhi.b   .4A750
-                subq.w  #$1,$36(a0)                 ; time to turn?
+                subq.w  #$1,$36(a0)             ; time to dive?
                 bpl.b   .4A740
-                add.w   #$14,d0
-                cmp.w   (ShipPos).w,d0              ; towards the ship:
-                bhi.b   .4A742
-                move.b  #$2,$38(a0)                 ; dive
-                lea.l   (WickAnimClimb).l,a1
+                add.w   #$14,d0                 ; centre x
+                cmp.w   (ShipPos).w,d0          ; right of the ship:
+                bhi.b   .4A742                  ; dive left
+                move.b  #$2,$38(a0)             ; ship to the right: dive down-right
+                lea.l   (WickAnimDiveRight).l,a1
 .4A72E:
                 move.l  a1,$2A(a0)
-                move.w  #$7FFF,$36(a0)
+                move.w  #$7FFF,$36(a0)          ; no more turns
                 clr.b   $20(a0)
                 clr.w   $1E(a0)
 .4A740:
                 rts
 .4A742:
-                move.b  #$1,$38(a0)                 ; climb
-                lea.l   (WickAnimDive).l,a1
+                move.b  #$1,$38(a0)             ; dive down-left
+                lea.l   (WickAnimDiveLeft).l,a1
                 bra.b   .4A72E
 .4A750:
                 jmp     (jt_ObjKillSelf).w
@@ -882,8 +882,10 @@ GougerAnims:
 WickSteps:
                 dc.w    $FFFB,$0000,$FFFC,$0004,$0004,$0004
 ; Wick: small creatures in groups (entry $06 = count - 1), 20 frames apart,
-; at random heights (every 5th at the ship's).  They fly left bobbing up
-; and down, and after a random time dive or climb towards the ship.
+; at random heights 80-184; every 5th starts at y = the ship's x (it reads
+; ShipPos, the x, where the y is at $F0).  They fly left 5 px a frame,
+; bobbing up and down; 30% of them dive after 25-57 frames, down-left if
+; the ship is to their left, otherwise down-right (WickSteps).
 ; (16x13, 3 frames, gfx $67516, 1 hit point, score 100, update Upd_Wick, spawn Spawn_Wick)
 Def_Wick:
                 dc.w    $0D02,$0030
@@ -892,9 +894,9 @@ Def_Wick:
                 dc.l    Upd_Wick
                 dc.l    Spawn_Wick
                 dc.w    $0000,$0100,$0001,$02FF
-WickAnimDive:
+WickAnimDiveLeft:
                 dc.w    $0304,$05FF
-WickAnimClimb:
+WickAnimDiveRight:
                 dc.w    $0607,$08FF,$0000,$0000,$0010,$0009,$0000,$0000
                 dc.w    $0010,$0009,$0000,$0000,$0010,$0009,$0000,$0002
                 dc.w    $000E,$000B,$0000,$0002,$000E,$000B,$0000,$0002
