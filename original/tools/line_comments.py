@@ -2,8 +2,12 @@
 """Add line comments to the sources without retyping the code (editing helper).
 
 usage:
+  python3 -I tools/line_comments.py list FILE.s ROUTINE [...]
   python3 -I tools/line_comments.py apply SPEC FILE.s
   python3 -I tools/line_comments.py propagate [--loose] FROM.s TO.s [...]
+
+list: prints each instruction of the routines with its anchor, the form
+apply takes, so a SPEC can be written against it.
 
 apply: SPEC has one comment per line, `Anchor[+n]  comment`, where Anchor
 is a label in FILE (a routine name or a local label such as .4A872) and
@@ -129,7 +133,26 @@ def propagate(src, dst, loose=False, sync=False):
     print('%s: %d routines from %s%s' % (dst, copied, src,
           ('; differ: ' + ' '.join(differ)) if differ else ''))
 
+def listing(path, names):
+    lines = open(path).readlines()
+    on, anchor, n = False, None, 0
+    for l in lines:
+        m = GLOBAL.match(l)
+        if m:
+            on = m.group(1) in names
+        if not on:
+            continue
+        m = LABEL.match(l)
+        if m:
+            anchor, n = m.group(1), 0
+            print(l.rstrip()); continue
+        if is_insn(l):
+            print('  %-20s %s' % ('%s+%d' % (anchor, n), l.strip()))
+            n += 1
+
 if __name__ == '__main__':
+    if len(sys.argv) >= 4 and sys.argv[1] == 'list':
+        listing(sys.argv[2], set(sys.argv[3:])); sys.exit()
     if len(sys.argv) == 4 and sys.argv[1] == 'apply':
         sys.exit(1 if apply(sys.argv[2], sys.argv[3]) else 0)
     elif len(sys.argv) >= 4 and sys.argv[1] == 'propagate':

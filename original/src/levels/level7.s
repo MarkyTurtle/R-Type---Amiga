@@ -837,29 +837,29 @@ Bink_Fall:
 Spawn_Cancer:
                 movea.l $A(a1),a3               ; list of x, y
                 move.w  $8(a1),d7               ; frames between them
-                clr.w   d6
+                clr.w   d6                      ; first start delay 0
 .4B068:
-                move.w  (a3)+,d0
+                move.w  (a3)+,d0                ; x ($FFFF ends the list)
                 bmi.b   .4B08C
-                move.w  (a3)+,d1
-                move.w  $8(a2),d2
+                move.w  (a3)+,d1                ; y
+                move.w  $8(a2),d2               ; hit points from the definition
                 jsr     (jt_ObjCreate).w
                 move.w  $6(a1),$3A(a0)          ; scroll x at which it gives up
-                clr.w   $38(a0)
+                clr.w   $38(a0)                 ; new heading at once
                 move.w  d6,$32(a0)              ; start delay
-                add.w   d7,d6
+                add.w   d7,d6                   ; the next one starts later
                 jsr     (jt_ObjInsert).w
-                bra.b   .4B068
+                bra.b   .4B068                  ; next position
 .4B08C:
                 rts
 Upd_Cancer:
                 tst.w   $32(a0)                 ; waiting to start?
                 beq.b   .4B09A
-                subq.w  #$1,$32(a0)
+                subq.w  #$1,$32(a0)             ; count the delay down
                 rts
 .4B09A:
                 subq.w  #$1,$A(a0)              ; scrolls with the map
-                movem.w $A(a0),d0-d1
+                movem.w $A(a0),d0-d1            ; off the screen:
                 cmp.w   #$10,d0
                 bcs.b   .4B0BC
                 cmp.w   #$170,d0
@@ -869,18 +869,18 @@ Upd_Cancer:
                 cmp.w   #$E0,d1
                 bcs.b   .4B0C0
 .4B0BC:
-                jmp     (jt_ObjKillSelf).w
+                jmp     (jt_ObjKillSelf).w      ; remove
 .4B0C0:
-                move.w  $3A(a0),d4
+                move.w  $3A(a0),d4              ; scroll x at which it gives up
                 cmp.w   (ScrollX).w,d4          ; past its scroll x:
                 bhi.b   .4B0DA
                 moveq   #10,d7                  ; make for the nearer edge
-                cmp.w   #$88,d1
+                cmp.w   #$88,d1                 ; upper half: the top (y 10),
                 bcs.b   .4B0D6
-                move.w  #$E0,d7
+                move.w  #$E0,d7                 ; lower half: the bottom (y $E0)
 .4B0D6:
-                moveq   #4,d6
-                bra.b   .4B0E6
+                moveq   #4,d6                   ; and x 4: off to the left
+                bra.b   .4B0E6                  ; steer at once
 .4B0DA:
                 subq.w  #$1,$38(a0)             ; time for a new heading?
                 bpl.b   .4B124
@@ -888,18 +888,18 @@ Upd_Cancer:
 .4B0E6:
                 moveq   #2,d4
                 lea.l   (CancerAnimRight).l,a1  ; x step +2 / -1, facing it
-                cmp.w   d6,d0
+                cmp.w   d6,d0                   ; target to the right:
                 bcs.b   .4B0FA
-                moveq   #-1,d4
+                moveq   #-1,d4                  ; left: x step -1
                 lea.l   (CancerAnimLeft).l,a1
 .4B0FA:
                 move.l  a1,$2A(a0)
                 moveq   #1,d5                   ; y step +1 / -1
-                cmp.w   d7,d1
+                cmp.w   d7,d1                   ; target below:
                 bcs.b   .4B106
-                neg.w   d5
+                neg.w   d5                      ; above: -1
 .4B106:
-                move.w  d0,d2
+                move.w  d0,d2                   ; |dx| to the target
                 sub.w   d6,d2
                 bpl.b   .4B10E
                 neg.w   d2
@@ -908,34 +908,34 @@ Upd_Cancer:
                 moveq   #25,d0
                 jsr     (jt_Random).w
                 add.w   d0,d2
-                move.w  d2,$38(a0)
-                move.b  d4,$36(a0)
-                move.b  d5,$37(a0)
+                move.w  d2,$38(a0)              ; frames on this heading
+                move.b  d4,$36(a0)              ; x step
+                move.b  d5,$37(a0)              ; y step
 .4B124:
                 movem.w $A(a0),d0-d1
                 movem.l d0-d1,-(a7)
-                move.b  $37(a0),d6
+                move.b  $37(a0),d6              ; y step
                 ext.w   d6
-                bpl.b   .4B13A
-                subq.w  #$2,d1
+                bpl.b   .4B13A                  ; moving down?
+                subq.w  #$2,d1                  ; up: probe just above it
                 bra.b   .4B13E
 .4B13A:
-                add.w   #$20,d1
+                add.w   #$20,d1                 ; down: just below it (32 pixels tall)
 .4B13E:
-                addq.w  #$8,d0
+                addq.w  #$8,d0                  ; at its middle
                 jsr     (jt_GetMapCell).w       ; blocked vertically?
                 bne.b   .4B14A
                 add.w   d6,$C(a0)               ; no: move up/down
 .4B14A:
                 movem.l (a7)+,d0-d1
-                addq.w  #$8,d1
-                move.b  $36(a0),d4
+                addq.w  #$8,d1                  ; probe at its middle height
+                move.b  $36(a0),d4              ; x step
                 ext.w   d4
-                bpl.b   .4B15C
-                subq.w  #$2,d0
+                bpl.b   .4B15C                  ; moving right?
+                subq.w  #$2,d0                  ; left: probe just left of it
                 bra.b   .4B160
 .4B15C:
-                add.w   #$22,d0
+                add.w   #$22,d0                 ; right: just past it (34 pixels wide)
 .4B160:
                 jsr     (jt_GetMapCell).w       ; blocked horizontally?
                 bne.b   .4B16A
