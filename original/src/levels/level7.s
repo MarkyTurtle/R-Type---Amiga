@@ -39,7 +39,7 @@ LevelInterface:
                 dc.l    $0
                 dc.l    LevelFrame
                 dc.l    LevelInit
-                dc.l    $582A4                  ; LvMusic: player in level B; samples $604F8 (9), data $60594, periods $60540
+                dc.l    $582A4                  ; LvMusic: player in level B; samples $5A914 (8), data $5A9AA, periods $5A954
 ScrollScript:
                 dc.w    $000B,$0000,$0064,$0000,$0000,$FFFF
 ; Checkpoint list (LV_Waves): scroll x reached, where to resume in the
