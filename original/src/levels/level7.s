@@ -1049,20 +1049,20 @@ LevelFrame:
                 dbra    d7,.4B260
                 rts
 Upd_Falling:
-                addq.w  #$4,$C(a0)
-                cmpi.w  #$BA,$C(a0)
+                addq.w  #$4,$C(a0)              ; 4 pixels a frame down
+                cmpi.w  #$BA,$C(a0)             ; reached the floor:
                 bcs.b   .4B2DA
-                move.b  #$1,$5(a0)
+                move.b  #$1,$5(a0)              ; explode
                 clr.l   $6(a0)
 .4B2DA:
                 rts
 Spawn_Bronco:
                 moveq   #95,d1
-                move.w  #$172,d0
-                move.w  #$7D0,d2
+                move.w  #$172,d0                ; off the right edge
+                move.w  #$7D0,d2                ; 2000 hit points: 50 damage decides
                 lea.l   (Def_Bronco).l,a2
                 jsr     (jt_ObjCreate).w
-                move.w  #$AF,$32(a0)
+                move.w  #$AF,$32(a0)            ; first slide after 176 frames
                 clr.b   $22(a0)
                 jmp     (jt_ObjInsert).w
 ; Bronco: the runaway disposal machine.  It waits, slides out to x $131,
@@ -1071,7 +1071,7 @@ Spawn_Bronco:
 Upd_Bronco:
                 subq.w  #$1,$32(a0)                 ; wait
                 bpl.b   .4B352
-                clr.w   $1E(a0)
+                clr.w   $1E(a0)                 ; closed frame
                 move.l  #.4B312,$6(a0)
                 bra.b   .4B352
 .4B312:
@@ -1082,13 +1082,13 @@ Upd_Bronco:
                 move.l  #.4B32C,$6(a0)
                 bra.b   .4B352
 .4B32C:
-                cmpi.w  #$10,$1E(a0)
+                cmpi.w  #$10,$1E(a0)            ; opening animation at frame 16?
                 bne.b   .4B352
                 clr.b   $22(a0)
                 addq.w  #$2,$A(a0)                  ; closed again: slide back
                 cmpi.w  #$163,$A(a0)
                 bcs.b   .4B352
-                move.w  #$7D,$32(a0)
+                move.w  #$7D,$32(a0)            ; wait 126 frames
                 move.l  #Upd_Bronco,$6(a0)
 .4B352:
                 cmpi.w  #$32,$26(a0)                ; 50 hits:
