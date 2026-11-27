@@ -224,38 +224,38 @@ LevelPalette:
                 dc.w    $0555,$0BBB,$0777,$0500,$005F,$0066,$0044,$0955
                 dc.w    $0B00,$09BF,$000B,$0F77,$0C70,$0FF0,$0FFF
 ; Level 6 has no boss.  At scroll x $900 the scroll stops and a queue of
-; Dops (DopQueueList: their route lists) comes in, one every 50 frames
-; (longer pauses where marked); when the queue ends the level is over.
+; Dops (DopQueueList: their route lists) comes in, one every 51 frames
+; (211 after a marked entry); when the queue ends the level is over.
 LevelInit:
                 clr.w   (DopTimer).l
                 move.l  #DopQueueList,(DopQueue).l
                 rts
 LevelFrame:
-                cmpi.w  #$8FC,(ScrollX).w
+                cmpi.w  #$8FC,(ScrollX).w       ; near the end of the map:
                 bne.b   .4A958
-                st.b    (MusicFadeReq).w
+                st.b    (MusicFadeReq).w        ; fade the music
 .4A958:
-                cmpi.w  #$900,(ScrollX).w
+                cmpi.w  #$900,(ScrollX).w       ; at the end: the Dop queue
                 beq.b   .4A962
 .4A960:
                 rts
 .4A962:
-                clr.b   (ScrollActive).w
-                subq.w  #$1,(DopTimer).l
+                clr.b   (ScrollActive).w        ; stop the scroll
+                subq.w  #$1,(DopTimer).l        ; one Dop every 51 frames
                 bpl.b   .4A960
                 move.w  #$32,(DopTimer).l
-                movea.l (DopQueue).l,a1
+                movea.l (DopQueue).l,a1         ; next route list
                 move.l  (a1)+,d0
-                bmi.b   .4A9AA
-                tst.w   (a1)
+                bmi.b   .4A9AA                  ; -1: queue done
+                tst.w   (a1)                    ; marked (next word negative):
                 bpl.b   .4A98C
-                move.w  #$D2,(DopTimer).l
+                move.w  #$D2,(DopTimer).l       ; a 211-frame pause after this one
 .4A98C:
                 move.l  a1,(DopQueue).l
                 movea.l d0,a1
-                move.w  #$B1,d0
+                move.w  #$B1,d0                 ; enters at the top
                 moveq   #0,d1
-                moveq   #4,d2
+                moveq   #4,d2                   ; 4 hit points (but see Upd_Dop)
                 lea.l   (Def_Dop).l,a2
                 jsr     (jt_ObjCreate).w
                 bra.w   Dop_Start
@@ -275,91 +275,91 @@ Spawn_Dop:
                 lea.l   $6(a1),a1
 Dop_Start:
                 moveq   #0,d0
-                move.b  (a1)+,d0
-                bne.b   .4A9CE
-                move.l  #DopAnimLeft,$2A(a0)
+                move.b  (a1)+,d0                ; route byte 0: first direction
+                bne.b   .4A9CE                  ; 0 (left):
+                move.l  #DopAnimLeft,$2A(a0)    ; face left
 .4A9CE:
-                move.b  d0,$33(a0)
-                move.b  (a1)+,$32(a0)
-                clr.w   $34(a0)
-                move.l  a1,$36(a0)
-                move.b  #$2,$21(a0)
-                move.w  #$7D0,$24(a0)
+                move.b  d0,$33(a0)              ; facing
+                move.b  (a1)+,$32(a0)           ; direction 0-3
+                clr.w   $34(a0)                 ; core hits
+                move.l  a1,$36(a0)              ; the rest of the route
+                move.b  #$2,$21(a0)             ; explosion type 2
+                move.w  #$7D0,$24(a0)           ; 2000 hit points: the hit count decides
                 jmp     (jt_ObjInsert).w
 Upd_Dop:
                 move.w  $A(a0),d0
-                move.w  $26(a0),d1
-                clr.w   $26(a0)
+                move.w  $26(a0),d1              ; damage this frame
+                clr.w   $26(a0)                 ; (counted here, not by ObjDamage)
                 tst.b   $33(a0)                     ; which way it faces:
                 bne.b   .4AA1A
-                add.w   #$30,d0
+                add.w   #$30,d0                 ; core at its right end
                 move.w  #$7D0,$24(a0)
                 sub.w   (ShipPos).w,d0              ; ship on the core side?
                 bmi.b   .4AA18
                 move.w  #$FFFF,$24(a0)              ; armoured side: indestructible,
-                moveq   #0,d1
+                moveq   #0,d1                   ; and the hit doesn't count
 .4AA18:
                 bra.b   .4AA2E
 .4AA1A:
                 move.w  #$7D0,$24(a0)
-                sub.w   (ShipPos).w,d0
+                sub.w   (ShipPos).w,d0          ; core at its left end
                 bpl.b   .4AA2E
-                moveq   #0,d1
-                move.w  #$FFFF,$24(a0)
+                moveq   #0,d1                   ; armoured side: the hit doesn't count,
+                move.w  #$FFFF,$24(a0)          ; indestructible
 .4AA2E:
                 add.w   d1,$34(a0)
                 cmpi.w  #$4,$34(a0)                 ; 4 hits from the core side destroy it
                 blt.b   .4AA46
-                move.b  #$1,$5(a0)
+                move.b  #$1,$5(a0)              ; explode (no score)
                 clr.l   $6(a0)
                 rts
 .4AA46:
                 movem.w $A(a0),d0-d1
                 jsr     (jt_AdjustForScroll).w      ; moves with the map
                 moveq   #0,d2
-                move.b  $32(a0),d2
+                move.b  $32(a0),d2              ; direction
                 lea.l   (DopMoves).l,a1             ; per direction: step, probe, rail offset
-                lsl.w   #$1,d2
+                lsl.w   #$1,d2                  ; 10 bytes a direction
                 adda.l  d2,a1
                 lsl.w   #$2,d2
                 adda.l  d2,a1
-                add.w   (a1)+,d0
-                bmi.b   .4AA98
+                add.w   (a1)+,d0                ; step x
+                bmi.b   .4AA98                  ; off the screen:
                 cmp.w   #$15E,d0
                 bhi.b   .4AA98
-                add.w   (a1)+,d1
+                add.w   (a1)+,d1                ; step y
                 bmi.b   .4AA98
                 cmp.w   #$E1,d1
                 bhi.b   .4AA98
                 movem.w d0-d1,-(a7)
-                add.w   (a1)+,d0
+                add.w   (a1)+,d0                ; probe point
                 add.w   (a1)+,d1
-                jsr     (jt_GetMapCell).w           ; the rail ahead
+                jsr     (jt_GetMapCell).w       ; solid ahead?
                 bne.b   .4AA9C
-                move.w  (a1)+,d2
+                move.w  (a1)+,d2                ; or at the rail offset:
                 lea.l   (a4,d2.w),a4
-                btst.b  #$F,(a4)                    ; still rail?
-                bne.b   .4AA9C
-                move.l  (a7)+,$A(a0)
+                btst.b  #$F,(a4)                ; solid there too?
+                bne.b   .4AA9C                  ; turn
+                move.l  (a7)+,$A(a0)            ; no: move
                 rts
 .4AA98:
-                jmp     (jt_ObjKillSelf).w
+                jmp     (jt_ObjKillSelf).w      ; remove
 .4AA9C:
-                clr.l   (a7)+
+                clr.l   (a7)+                   ; (drop the saved position)
                 movea.l $36(a0),a1                  ; no: next turn from the route
                 moveq   #0,d2
                 move.b  (a1),d2
-                bpl.b   .4AABA
-                subq.l  #$1,$36(a0)
+                bpl.b   .4AABA                  ; $FF: turn back,
+                subq.l  #$1,$36(a0)             ; without using up a route byte
                 move.b  $32(a0),d2
                 addq.w  #$2,d2
                 cmp.w   #$3,d2
                 bls.b   .4AABA
                 subq.w  #$4,d2
 .4AABA:
-                move.b  d2,$32(a0)
-                addq.l  #$1,$36(a0)
-                bra.w   Upd_Dop
+                move.b  d2,$32(a0)              ; new direction
+                addq.l  #$1,$36(a0)             ; next route byte
+                bra.w   Upd_Dop                 ; and try again
 Spawn_Bink:
                 move.w  $2(a1),d0               ; x, y from the wave entry
                 move.w  $4(a1),d1
@@ -483,11 +483,11 @@ ShipDistX:
                 bpl.b   .4AC5C
                 neg.w   d0
                 neg.w   d2
-                add.w   #$F,d0
+                add.w   #$F,d0                  ; (15 here, 30 in level 1)
 .4AC5C:
                 rts
 .4AC5E:
-                moveq   #1,d2
+                moveq   #1,d2                   ; (ShipDistY without its label; not called)
                 move.w  ($F0).w,d0
                 sub.w   $C(a0),d0
                 bpl.b   .4AC6E
@@ -495,37 +495,40 @@ ShipDistX:
                 neg.w   d2
 .4AC6E:
                 rts
-; Capsule (arcade name not identified): moves in a list of modes (entry
-; $06: CapsuleModes - animation, duration, direction; CapsuleSteps) and
-; fires at the ship every 60-120 frames.
+; Capsule (arcade name not identified): shuttles back and forth, 2 px a
+; frame, up and down or left and right, turning every entry $08 + 1
+; frames (entry $06 = start mode 0-3; CapsuleModes: animation, then the
+; next mode, which is also the direction for CapsuleSteps: 0 up, 1 right,
+; 2 down, 3 left), while the map scrolls it along.  It fires at the ship
+; every 60-119 frames.
 Spawn_Capsule:
                 movem.w $2(a1),d0-d1
-                moveq   #2,d2
+                moveq   #2,d2                   ; 2 hit points
                 jsr     (jt_ObjCreate).w
-                move.l  $6(a1),$32(a0)
-                clr.w   $36(a0)
-                clr.w   $38(a0)
+                move.l  $6(a1),$32(a0)          ; entry $06: start mode, $08: frames per leg
+                clr.w   $36(a0)                 ; turn at once
+                clr.w   $38(a0)                 ; fire at once
                 jmp     (jt_ObjInsert).w
 Upd_Capsule:
                 movem.w $A(a0),d0-d1
-                jsr     (jt_AdjustForScroll).w
-                move.w  $32(a0),d2
-                subq.w  #$1,$36(a0)
+                jsr     (jt_AdjustForScroll).w  ; moves with the map
+                move.w  $32(a0),d2              ; mode
+                subq.w  #$1,$36(a0)             ; time to turn?
                 bpl.b   .4ACC6
-                move.w  $34(a0),$36(a0)
-                lea.l   (CapsuleModes).l,a2
+                move.w  $34(a0),$36(a0)         ; frames per leg
+                lea.l   (CapsuleModes).l,a2     ; animation, next mode
                 lsl.w   #$3,d2
                 move.l  (a2,d2.w),$2A(a0)
                 clr.b   $20(a0)
                 clr.w   $1E(a0)
-                move.w  $6(a2,d2.w),d2
+                move.w  $6(a2,d2.w),d2          ; next mode = the new direction
                 move.w  d2,$32(a0)
 .4ACC6:
                 lsl.w   #$2,d2
-                lea.l   (CapsuleSteps).l,a2
+                lea.l   (CapsuleSteps).l,a2     ; 0 up, 1 right, 2 down, 3 left, 2 px a frame
                 add.w   $2(a2,d2.w),d1
                 add.w   (a2,d2.w),d0
-                bmi.b   .4ACEA
+                bmi.b   .4ACEA                  ; off the screen:
                 cmp.w   #$170,d0
                 bhi.b   .4ACEA
                 cmp.w   #$4,d1
@@ -533,25 +536,25 @@ Upd_Capsule:
                 cmp.w   #$E0,d1
                 bcs.b   .4ACEE
 .4ACEA:
-                jmp     (jt_ObjKillSelf).w
+                jmp     (jt_ObjKillSelf).w      ; remove
 .4ACEE:
                 movem.w d0-d1,$A(a0)
-                subq.w  #$1,$38(a0)
+                subq.w  #$1,$38(a0)             ; time to fire?
                 bpl.b   .4AD28
                 move.w  d0,d2
                 move.w  d1,d3
-                subq.w  #$5,d0
+                subq.w  #$5,d0                  ; from its left side,
                 sub.w   (ShipPos).w,d2
                 bpl.b   .4AD0A
-                add.w   #$17,d0
+                add.w   #$17,d0                 ; or its right if the ship is that way
 .4AD0A:
-                subq.w  #$5,d1
+                subq.w  #$5,d1                  ; its top,
                 sub.w   ($F0).w,d3
                 bpl.b   .4AD16
-                add.w   #$15,d1
+                add.w   #$15,d1                 ; or its bottom if the ship is lower
 .4AD16:
-                jsr     (jt_FireEnemyBullet).w
-                moveq   #60,d0
+                jsr     (jt_FireEnemyBullet).w  ; fire at the ship
+                moveq   #60,d0                  ; next in 60-119 frames
                 jsr     (jt_Random).w
                 add.w   #$3C,d0
                 move.w  d0,$38(a0)

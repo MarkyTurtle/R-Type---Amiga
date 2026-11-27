@@ -173,7 +173,7 @@ Every wave entry is `trigger.w, x.w, y.w`, 8 bytes of parameters (`$06`–`$0D`)
 | Pursuer (5) | `$06.w` starting direction (0–15) |
 | Mid-phase Cheetah (5) | `$06.w` number − 1, `$08.w` random y range, `$0A.w` lowest y |
 | Dop (6) | from `$06`: its route, bytes - first the start direction, then a direction change at each junction |
-| Capsule (6) | `$06.l` list of modes (animation, duration, direction) |
+| Capsule (6) | `$06.w` start mode 0–3 (it shuttles up/down or left/right), `$08.w` frames per leg − 1 |
 | Collapse (7) | `$02.l` (x, y), `$06.w` offset of its map cells, `$08.w` which rubble block, `$0A.w` non-zero = taller |
 | Crawler (7) | `$06.w` y step towards the floor or ceiling |
 | Win (8) | `$06.w` starting direction |
