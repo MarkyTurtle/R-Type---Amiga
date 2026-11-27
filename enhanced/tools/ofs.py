@@ -1,15 +1,19 @@
-"""Write an AmigaDOS Fast File System (DOS\\1) floppy image (ADF) whose files are
+"""Write an AmigaDOS Old File System (DOS\\0) floppy image (ADF) whose files are
 each stored in one contiguous run of data blocks, so that a loader can read a
-file as a plain offset and length on the disk (the game's 4489_byteloader)
-while the disk stays a normal disk that Workbench and the shell can read.
+file's blocks as one plain offset and length on the disk (the game's
+4489_byteloader) while the disk stays a normal disk that Workbench and the
+shell can read - under Kickstart 1.3 too, which only boots DOS\\0 floppies
+and only reads OFS ones.
 
-FFS data blocks hold 512 bytes of the file with no header (OFS has a 24-byte
-header in every data block), so a file's bytes are simply its blocks in a row.
-The file header blocks (and the extension blocks of files over 72 blocks) are
-kept together in one run after the root and bitmap blocks, out of the way of
-the data runs.
+An OFS data block is a 24-byte header (T_DATA, the file header block, the
+block's number in the file, how many data bytes it holds, the next data block,
+a checksum) and 488 bytes of the file.  So a file of n blocks is n * 512 bytes
+on the disk, its data at 24 + 512 * i (488 bytes each, the last one short);
+the loaders read the run and squeeze the headers out.  The file header blocks
+(and the extension blocks of files over 72 blocks) are kept together in one
+run after the root and bitmap blocks, out of the way of the data runs.
 
-    disk = FFSDisk('R-TYPE')
+    disk = OFSDisk('R-TYPE')
     off = disk.add('boot', data, block=2)     # place a file at a given block
     off = disk.add('music', data)             # or at the next free run
     adf = disk.image(bootblock)               # 901,120 bytes
@@ -21,8 +25,9 @@ them reserved), the data everywhere else.
 import struct, time
 
 BSIZE, NBLOCKS, ROOT, BITMAP = 512, 1760, 880, 881
+DATA = BSIZE - 24             # file bytes in an OFS data block
 HT_SIZE = 72                    # hash table / data block pointers per block
-T_HEADER, T_LIST = 2, 16
+T_HEADER, T_LIST, T_DATA = 2, 16, 8
 ST_ROOT, ST_FILE = 1, -3 & 0xFFFFFFFF
 
 
@@ -56,7 +61,7 @@ def amiga_date(t=None):
     return s // 86400, (s % 86400) // 60, (s % 60) * 50
 
 
-class FFSDisk:
+class OFSDisk:
     HEADERS = 64                # blocks reserved for file headers and extension blocks
 
     def __init__(self, name, date=None):
@@ -89,14 +94,24 @@ class FFSDisk:
         self.hdr_next += 1
         return b
 
+    @staticmethod
+    def nblocks(length):
+        return max(1, (length + DATA - 1) // DATA)
+
     def add(self, name, data, block=None):
-        n = max(1, (len(data) + BSIZE - 1) // BSIZE)
+        n = self.nblocks(len(data))
         first = self._run(n, block)
+        header = self._hdr_block()
         for i in range(n):
             self.used[first + i] = True
-            self.blocks[first + i] = data[i * BSIZE:(i + 1) * BSIZE].ljust(BSIZE, b'\0')
+            part = data[i * DATA:(i + 1) * DATA]
+            blk = bytearray(BSIZE)
+            struct.pack_into('>6L', blk, 0, T_DATA, header, i + 1, len(part),
+                             first + i + 1 if i + 1 < n else 0, 0)
+            blk[24:24 + len(part)] = part
+            struct.pack_into('>L', blk, 20, checksum(blk))
+            self.blocks[first + i] = bytes(blk)
         data_blocks = list(range(first, first + n))
-        header = self._hdr_block()
         # the header holds the first 72 block pointers, extension blocks the rest
         chunks = [data_blocks[i:i + HT_SIZE] for i in range(0, n, HT_SIZE)] or [[]]
         exts = [self._hdr_block() for _ in chunks[1:]]
@@ -122,6 +137,19 @@ class FFSDisk:
             self.blocks[key] = bytes(blk)
         self.files.append((name, header, first, len(data)))
         return first * BSIZE
+
+    def rewrite(self, name, data):
+        """new contents for a file, of the same number of blocks and length"""
+        fname, header, first, length = next(f for f in self.files if f[0] == name)
+        assert len(data) == length, 'rewrite: the length must stay the same'
+        n = self.nblocks(length)
+        for i in range(n):
+            blk = bytearray(self.blocks[first + i])
+            part = data[i * DATA:(i + 1) * DATA]
+            blk[24:24 + len(part)] = part
+            struct.pack_into('>L', blk, 20, 0)
+            struct.pack_into('>L', blk, 20, checksum(blk))
+            self.blocks[first + i] = bytes(blk)
 
     def image(self, bootblock):
         root = bytearray(BSIZE)

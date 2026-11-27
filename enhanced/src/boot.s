@@ -1,5 +1,6 @@
 ;==============================================================================
-; R-Type (Amiga) enhanced - the bootblock of the AmigaDOS (FFS) disk
+; R-Type (Amiga) enhanced - the bootblock of the AmigaDOS (OFS, DOS\0) disk
+; (Kickstart 1.3 boots only DOS\0 floppies)
 ;
 ; As the original (original/src/bootblock.s), with the OS still running:
 ;  1. bitplane/copper DMA off, COLOR00 black
@@ -10,13 +11,16 @@
 ;     if none is).  Kickstart 1.3 boots only from DF0; 2.0 and later from any
 ;     drive (the early startup menu).  Every later read (stage 2, the game)
 ;     uses that drive.
-;  4. reads the boot file (title picture + font + stage 2) from its blocks -
-;     the build tool stores it in one piece from block 2 - to $6EFA0 with
-;     trackdisk CMD_READ, then the motor off
-;  5. jumps to stage 2 at $79360 with d0 = MemBase, d1 = MemLimit, d2 = drive
+;  4. reads the boot file (the packed title picture + font, then stage 2)
+;     with trackdisk CMD_READ: its blocks - stored in one run from block 2 -
+;     go to BOOT_RAW, so that they end at $7A7A0 (where the original's boot
+;     read ended), then the motor off, and the OFS block headers are
+;     squeezed out: the file's bytes moved up to end at $7A7A0
+;  5. jumps to stage 2 (STAGE2_ORG) with d0 = MemBase, d1 = MemLimit,
+;     d2 = the drive
 ;
-; BOOT_LEN comes from the build (build/layout.i): the boot file's length,
-; rounded up to whole blocks.
+; BOOT_RAW, BOOT_BLOCKS, BOOT_LAST (bytes in its last block) and STAGE2_ORG
+; come from the build (build/layout.i).
 ;==============================================================================
                 include "layout.i"
 
@@ -36,12 +40,11 @@ CMD_READ        equ     2
 TD_MOTOR        equ     9
 DMACON          equ     $DFF096
 COLOR00         equ     $DFF180
-BOOT_LOAD_ADDR  equ     $6EFA0
 BOOT_LOAD_OFS   equ     $400            ; block 2
-STAGE2_ENTRY    equ     $79360
+BOOT_END        equ     $7A7A0          ; the boot file ends here
 
                 org     0
-                dc.b    "DOS",1         ; FFS
+                dc.b    "DOS",0         ; OFS
                 dc.l    0               ; checksum (the build tool)
                 dc.l    880             ; root block
 
@@ -82,8 +85,8 @@ BootEntry:
         ; --- read the boot file ---------------------------------------------
                 movea.l a5,a1
                 move.w  #CMD_READ,IO_COMMAND(a1)
-                move.l  #BOOT_LOAD_ADDR,IO_DATA(a1)
-                move.l  #BOOT_LEN,IO_LENGTH(a1)
+                move.l  #BOOT_RAW,IO_DATA(a1)
+                move.l  #BOOT_BLOCKS*512,IO_LENGTH(a1)
                 move.l  #BOOT_LOAD_OFS,IO_OFFSET(a1)
                 movem.l d5-d7,-(a7)
                 jsr     _LVODoIO(a6)
@@ -92,10 +95,21 @@ BootEntry:
                 clr.l   IO_LENGTH(a1)           ; motor off
                 jsr     _LVODoIO(a6)
                 movem.l (a7)+,d5-d7
+        ; --- the block headers out: each block's bytes moved up -------------
+                lea     BOOT_RAW+(BOOT_BLOCKS-1)*512+24+BOOT_LAST,a0
+                lea     BOOT_END,a1
+                move.w  #BOOT_BLOCKS-1,d0
+                move.w  #BOOT_LAST,d1
+.blk:           subq.w  #1,d1
+.cp:            move.b  -(a0),-(a1)
+                dbra    d1,.cp
+                lea     -24(a0),a0              ; skip the block's header
+                move.w  #488,d1
+                dbra    d0,.blk
                 move.l  d5,d0                   ; MemBase
                 move.l  d6,d1                   ; MemLimit
                 move.l  d7,d2                   ; the drive
-                jmp     STAGE2_ENTRY
+                jmp     STAGE2_ORG
 
                 ifgt    *-1024
                 fail    "the bootblock is over 1024 bytes"

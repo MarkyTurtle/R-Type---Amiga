@@ -2,13 +2,15 @@
 """Run the enhanced disk code in a 68000 emulator (Unicorn) against the built disk
 (enhanced/build/rtype.adf, tools/build.py), with tools/floppy.py as the drive:
 
-  1. the bootblock (src/boot.s): Kickstart's call with exec stubbed (AvailMem,
-     AllocMem, OpenDevice, DoIO as Python hooks): the boot file at $6EFA0, the
+  1. the bootblock (src/boot.s): first what Kickstart 1.3 checks before it
+     runs one (DOS\\0 - it boots no other - and the checksum), then the call
+     itself with exec stubbed (AvailMem, AllocMem, OpenDevice, DoIO as Python
+     hooks): the boot file's blocks read and squeezed to end at $7A7A0, the
      jump to stage 2 with MemBase / MemLimit / the drive (booted from DF0 and
      from DF1);
-  2. stage 2's LoadFile (src/stage2.s): the music, the engine and the $6000
-     block, each unpacked in place, with stage 2 and the title picture in memory
-     around them;
+  2. stage 2 (src/stage2.s): the title picture unpacked; LoadFile for the
+     music, the engine and the $6000 block, each unpacked in place with stage
+     2 intact;
   3. the engine's LoadFile (src/disk.s): every file, with and without extra
      memory (the second load of a file then comes from the cache, no disk read);
   4. LoadHighScores / SaveHighScores: the default table read back; a changed
@@ -32,6 +34,14 @@ FILES = os.path.join(os.path.dirname(ENH), 'original', 'files')
 SLOW = 0xC00000
 RET = 0x400                     # a 'stop' the routines return to
 fails = 0
+
+
+def layout():
+    v = {}
+    for line in open(os.path.join(BUILD, 'layout.i')):
+        k, _, x = line.split()
+        v[k] = int(x[1:], 16) if x.startswith('$') else int(x)
+    return v
 
 
 def syms(lst):
@@ -153,13 +163,21 @@ def main():
     adf = open(os.path.join(BUILD, 'rtype.adf'), 'rb').read()
     boot = open(os.path.join(BUILD, 'boot.bin'), 'rb').read()
     g, s2 = syms('game_low.bin.lst'), syms('stage2.bin.lst')
-    table = boot[s2['S2FileTable'] - 0x6EFA0:][:22 * 12]
+    table = boot[s2['S2FileTable'] - layout()['PIC_PACKED']:][:22 * 12]
     exp = expected()
 
     # 1. the bootblock -------------------------------------------------------------
+    lay = layout()
+    base = lay['PIC_PACKED']                                   # the boot file's first byte
+    bb = adf[:1024]
+    ck = 0
+    for (v,) in struct.iter_unpack('>L', bb):
+        ck += v
+        if ck > 0xFFFFFFFF:
+            ck = (ck & 0xFFFFFFFF) + 1
+    check(bb[:4] == b'DOS\0' and ck == 0xFFFFFFFF, 'bootblock: DOS\\0 and its checksum right (Kickstart 1.3 boots it)')
     for unit in (0, 1):
         m = Machine(adf, unit=unit)
-        bb = adf[:1024]
         m.u.mem_write(0x20000, bb)
         EXEC, BOOTREQ, NAME, DEVICE = 0x1000, 0x1300, 0x1200, 0x1100
         UNITS = [0x1400 + 0x40 * k for k in range(4)]
@@ -170,13 +188,12 @@ def main():
         m.u.mem_write(NAME, b'trackdisk.device\0')
         m.w32(DEVICE + 0xA, NAME)
         m.w32(BOOTREQ + 0x14, DEVICE); m.w32(BOOTREQ + 0x18, UNITS[unit])
-        calls = []
+        reads = []
         def hook(uc, addr, size, ud):
             name = stubs.get(addr)
             if not name:
                 return
             d0, d1, a1 = (uc.reg_read(r) for r in (UC_M68K_REG_D0, UC_M68K_REG_D1, UC_M68K_REG_A1))
-            calls.append(name)
             if name == 'AvailMem': uc.reg_write(UC_M68K_REG_D0, 0x80000)
             if name == 'AllocMem': uc.reg_write(UC_M68K_REG_D0, 0xC01230)
             if name == 'OpenDevice':
@@ -186,33 +203,41 @@ def main():
             if name == 'DoIO':
                 cmd, ln, data, off = m.r16(a1 + 0x1C), m.r32(a1 + 0x24), m.r32(a1 + 0x28), m.r32(a1 + 0x2C)
                 if cmd == 2:
+                    reads.append((data, ln))
                     m.u.mem_write(data, adf[off:off + ln])
                 uc.reg_write(UC_M68K_REG_D0, 0)
-        h = m.u.hook_add(UC_HOOK_CODE, hook)
-        m.w16(0x79360, 0x4E72); m.w16(0x79362, 0x2700)             # stop at stage 2's entry
+        m.u.hook_add(UC_HOOK_CODE, hook)
+        org = lay['STAGE2_ORG']
+        stop = bytes(m.mem(org, 4))
         m.u.reg_write(UC_M68K_REG_A1, BOOTREQ); m.u.reg_write(UC_M68K_REG_A6, EXEC)
         m.u.reg_write(UC_M68K_REG_A7, 0x7FF00)
-        m.u.emu_start(0x2000C, 0x79360, count=2_000_000)
+        m.u.emu_start(0x2000C, org, count=5_000_000)
         r = [m.u.reg_read(x) for x in (UC_M68K_REG_PC, UC_M68K_REG_D0, UC_M68K_REG_D1, UC_M68K_REG_D2)]
-        loaded = m.mem(0x6EFA0, len(boot))
-        check(r[0] == 0x79360 and r[1] == 0xC00000 and r[2] == 0xC81230 and r[3] == unit
-              and loaded[:0x79360 - 0x6EFA0] == boot[:0x79360 - 0x6EFA0],
-              'bootblock from DF%d: boot file at $6EFA0, stage 2 entered with MemBase $%X, MemLimit $%X, drive %d'
-              % (unit, r[1], r[2], r[3]))
+        check(r[0] == org and r[1] == 0xC00000 and r[2] == 0xC81230 and r[3] == unit
+              and m.mem(base, len(boot)) == boot and base + len(boot) == 0x7A7A0
+              and reads and min(a for a, _ in reads) >= 0x6EFA0 and max(a + n for a, n in reads) <= 0x7A7A0,
+              'bootblock from DF%d: boot file read within $6EFA0-$7A7A0 and squeezed to $%X-$7A7A0, '
+              'stage 2 entered with MemBase $%X, MemLimit $%X, drive %d' % (unit, base, r[1], r[2], r[3]))
 
     # 2. stage 2 ------------------------------------------------------------------
     m = Machine(adf)
-    m.u.mem_write(0x6EFA0, boot)
+    m.u.mem_write(base, boot)
     m.w16(s2['BootDrive'], 0)
-    lo, hi = s2['ByteLoader'], s2['zx0_decompress']
-    m.fd.ranges = [(lo, hi)]
+    m.u.reg_write(UC_M68K_REG_A1, 0x35FA0)
+    m.u.reg_write(UC_M68K_REG_A6, 0)
+    from unicorn.m68k_const import UC_M68K_REG_A0
+    m.u.reg_write(UC_M68K_REG_A0, base)
+    m.call(s2['zx0_decompress'], [(UC_M68K_REG_A0, base), (UC_M68K_REG_A1, 0x35FA0)], sp=0x40B60)
+    picture = open(os.path.join(FILES, 'boot_6efa0.bin'), 'rb').read()[:0xA3C0]
+    check(m.mem(0x35FA0, 0xA3C0) == picture, 'stage 2: the title picture + font unpacked to $35FA0')
+    m.fd.ranges = [(s2['ByteLoader'], s2['zx0_decompress'])]
+    s2start = lay['STAGE2_ORG'] - base
     for fid in (1, 2, 3):
         dest, data = exp[fid]
         m.call(s2['LoadFile'], [(UC_M68K_REG_D0, fid), (UC_M68K_REG_D2, dest)], sp=0x40B60)
-        now = m.mem(0x79360, len(boot) - 0xA3C0)
-        state = s2['zx0_decompress'] - 2 - 0x79360           # the byteloader's own state word
-        changed = [k for k in range(len(now)) if now[k] != boot[0xA3C0 + k] and k not in (state, state + 1)
-                   and not s2['BootDrive'] - 0x79360 <= k < s2['BootDrive'] - 0x79360 + 2]
+        now = m.mem(lay['STAGE2_ORG'], len(boot) - s2start)
+        state = s2['zx0_decompress'] - 2 - lay['STAGE2_ORG']   # the byteloader's own state word
+        changed = [k for k in range(len(now)) if now[k] != boot[s2start + k] and k not in (state, state + 1)]
         check(m.mem(dest, len(data)) == data, 'stage 2 LoadFile %d -> $%X: unpacked in place' % (fid, dest))
         check(not changed, '... stage 2 intact%s' % ('' if not changed else ' (changed at +$%X)' % changed[0]))
 
@@ -240,9 +265,9 @@ def main():
                     check(ok, 'engine LoadFile %d -> $%X%s%s' % (fid, dest, ' (extra memory)' if slow else '',
                                                                 ', from the cache' if cached else ''))
         if slow:
-            check(m.r32(g['CacheNext']) - SLOW == sum(struct.unpack_from('>L', table, k * 12 + 4)[0]
-                                                      for k in exp if k not in (1, 2, 3)),
-                  'the cache holds every packed file once')
+            blocks = lambda k: (struct.unpack_from('>L', table, k * 12 + 4)[0] + 487) // 488 * 512
+            check(m.r32(g['CacheNext']) - SLOW == sum(blocks(k) for k in exp if k not in (1, 2, 3)),
+                  'the cache holds every packed file once (its blocks)')
 
     # 3b. LoadLevel's loads, from LevelTable, for every level -----------------------
     m = Machine(adf)
@@ -274,19 +299,22 @@ def main():
     check(m.mem(hs, 360) == default[:360], 'LoadHighScores: the default table from the disk')
     new = bytes((i * 7 + 3) & 0xFF for i in range(400))
     m.u.mem_write(hs, new)
-    hs_off = struct.unpack_from('>L', table, 5 * 12)[0]
+    hs_off = struct.unpack_from('>L', table, 5 * 12)[0]       # its (one) OFS block
     trk = hs_off // 5632
     before = bytes(m.adf[trk * 5632:(trk + 1) * 5632])
     m.call(g['SaveHighScores'])
     after = bytes(m.adf[trk * 5632:(trk + 1) * 5632])
     blk = hs_off - trk * 5632
-    check(m.fd.writes == [(trk, list(range(11)))] and after[blk:blk + 400] == new
-          and after[:blk] == before[:blk] and after[blk + 512:] == before[blk + 512:],
-          'SaveHighScores: track %d written (11 sectors, checksums right), only the block changed' % trk)
+    block = after[blk:blk + 512]
+    ofs_ok = sum(struct.unpack('>128L', block)) & 0xFFFFFFFF == 0 and block[:24] [:20] == before[blk:blk + 20]
+    check(m.fd.writes == [(trk, list(range(11)))] and block[24:24 + 400] == new
+          and after[:blk] == before[:blk] and after[blk + 512:] == before[blk + 512:] and ofs_ok,
+          'SaveHighScores: track %d written (11 sectors, checksums right), only the block changed, '
+          'its OFS header and checksum valid' % trk)
     m.u.mem_write(hs, bytes(400))
     m.call(g['LoadHighScores'])
     check(m.mem(hs, 360) == new[:360], 'LoadHighScores: the saved table read back')
-    m.adf[hs_off + 10] ^= 0xFF                                   # a damaged block
+    m.adf[hs_off + 24 + 10] ^= 0xFF                              # a damaged block
     m.fd.cache.clear()
     m.u.mem_write(hs, default)
     m.call(g['LoadHighScores'])

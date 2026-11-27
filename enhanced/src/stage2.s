@@ -1,6 +1,6 @@
 ;==============================================================================
 ; R-Type (Amiga, Electric Dreams 1989 - Factor 5 / Rainbow Arts)
-; Stage-2 loader / credits sequence  -  loaded by the bootblock to $79360
+; Stage-2 loader / credits sequence  -  ENHANCED: in the boot file, run by the bootblock
 ;
 ; ENHANCED: the files are read from the AmigaDOS disk with the 4489_byteloader
 ; and unpacked (ZX0) in place, in place of the original's LoadTracks; the
@@ -15,7 +15,10 @@
 ;
 ; Overview
 ; --------
-;  * Copies the title picture + font from $6EFA0 to $35FA0 ($A3C0 bytes).
+;  * Unpacks the title picture + font ($A3C0 bytes, ZX0-packed in the boot
+;    file just before stage 2) to $35FA0.  (Enhanced: the boot file is the
+;    packed picture then stage 2, ending at $7A7A0 as the original's boot
+;    read did; STAGE2_ORG and PIC_PACKED come from build/layout.i.)
 ;  * Enters supervisor mode via TRAP #0 and takes over the machine:
 ;    all DMA/interrupts off, own level-2 (keyboard) and level-3 (VBL) handlers,
 ;    stack at $40B60, a copper list showing a 320x200x5 screen at $35FA0.
@@ -114,7 +117,7 @@ TRACK_BYTES     equ     $1750
                 include "files.i"
                 include "layout.i"      ; (build/: GAME_FILETABLE)
 
-                org     $79360
+                org     STAGE2_ORG      ; (build/layout.i: so that it ends at $7A7A0)
 
 ;------------------------------------------------------------------------------
 ; Stage2Entry - from the bootblock (still in user mode, OS running)
@@ -126,13 +129,11 @@ Stage2Entry:
                 addi.l  #MUSIC_SIZE,d0          ; free memory after the music
 .nofast:        move.l  d0,CacheBase            ; -> game track cache start
                 move.l  d1,MemLimit
-        ; copy title picture + font out of the way of the disk data
-                lea     (BOOT_LOAD).l,a0
+        ; unpack the title picture + font (packed in the boot file, just
+        ; before stage 2) to the screen, out of the way of the disk data
+                lea     (PIC_PACKED).l,a0
                 lea     (SCREEN).l,a1
-                lea     (SCREEN_END).l,a2
-.copy:          move.l  (a0)+,(a1)+
-                cmpa.l  a1,a2
-                bhi.b   .copy
+                bsr.w   zx0_decompress
                 move.w  #$FF00,(CUSTOM+POTGO).l ; joystick button 2 lines as outputs
                 move.l  #Supervisor,($80).l     ; TRAP #0 vector
                 trap    #0                      ; never returns
@@ -645,44 +646,83 @@ DrawChar:       movem.l a0-a1,-(a7)
 ; Track loader
 ;==============================================================================
 ;------------------------------------------------------------------------------
-; LoadFile - d0 = file id, d2 = destination: the file as it is, or (packed)
-;   loaded to end at dest + its unpacked end and unpacked forwards to dest.
-;   A read that fails is tried again; after 8 failures COLOR00 turns red
-;   while it keeps trying.
+; LoadFile - d0 = file id, d2 = destination.  The file's blocks (OFS: a
+;   24-byte header and 488 bytes of the file each) are read so that they end
+;   where the file must end - dest + its length, or for a packed file dest +
+;   its unpacked end - and the headers squeezed out (OFSCompact); a packed
+;   file is then unpacked forwards to dest.  A read that fails is tried
+;   again; after 8 failures COLOR00 turns red while it keeps trying.
 ;------------------------------------------------------------------------------
 LoadFile:       movem.l d0-d7/a0-a6,-(a7)
                 lea     S2FileTable,a2
                 mulu.w  #FT_SIZE,d0
                 adda.w  d0,a2
                 movea.l d2,a3                   ; destination
-                movea.l a3,a4                   ; where it is read to
-                move.l  8(a2),d0                ; packed?
-                beq.b   .read
-                adda.l  d0,a4                   ; ending at dest + margin
-                suba.l  4(a2),a4
-.read:          moveq   #0,d7                   ; failures
-.try:           movem.l d7/a2-a4,-(a7)
+                move.l  4(a2),d4                ; its length
+                move.l  8(a2),d5                ; packed: where it must end
+                bne.b   .end
+                move.l  d4,d5                   ; stored: dest + length
+.end:           lea     (a3,d5.l),a4            ; a4 = where its bytes end
+                move.l  d4,d0                   ; its blocks
+                add.l   #487,d0
+                divu.w  #488,d0
+                moveq   #0,d6
+                move.w  d0,d6                   ; d6 = blocks
+                move.l  d6,d1
+                lsl.l   #8,d1
+                add.l   d1,d1                   ; d1 = their size on the disk
+                movea.l a4,a5
+                suba.l  d1,a5                   ; a5 = where they are read to
+                moveq   #0,d7                   ; failures
+.try:           movem.l d1/d4/d6-d7/a2-a5,-(a7)
                 move.l  (a2),d0                 ; offset
-                move.l  4(a2),d1                ; length
                 moveq   #0,d2
                 move.w  BootDrive,d2
-                movea.l a4,a0
+                movea.l a5,a0
                 lea     (TRACK_BUFFER).l,a1     ; $1760 words of MFM buffer
-                bsr.b   ByteLoader
-                movem.l (a7)+,d7/a2-a4
-                tst.l   d0
+                bsr.w   ByteLoader
+                move.l  d0,d3
+                movem.l (a7)+,d1/d4/d6-d7/a2-a5
+                tst.l   d3
                 beq.b   .ok
                 addq.w  #1,d7
                 cmp.w   #8,d7
                 bcs.b   .try
                 move.w  #$F00,(CUSTOM+$180).l
                 bra.b   .try
-.ok:            tst.l   8(a2)
+.ok:            subq.w  #1,d6                   ; blocks - 1
+                move.w  d6,d0
+                mulu.w  #488,d6
+                move.l  d4,d2
+                sub.l   d6,d2                   ; d2 = bytes in the last block
+                moveq   #0,d1
+                move.w  d0,d1
+                lsl.l   #8,d1
+                add.l   d1,d1
+                lea     24(a5,d1.l),a0          ; the end of the last block's data
+                adda.l  d2,a0
+                movea.l a4,a1
+                move.w  d2,d1
+                bsr.b   OFSCompact
+                tst.l   8(a2)                   ; packed?
                 beq.b   .done
-                movea.l a4,a0                   ; unpack
+                movea.l a4,a0                   ; unpack from its start
+                suba.l  d4,a0
                 movea.l a3,a1
                 bsr.w   zx0_decompress
 .done:          movem.l (a7)+,d0-d7/a0-a6
+                rts
+
+; OFSCompact: a0 = the end of the last block's data, a1 = where the file
+; must end, d0.w = blocks - 1, d1.w = bytes in the last block: each block's
+; bytes moved up, from the last back, to lie together ending at a1.
+OFSCompact:
+.blk:           subq.w  #1,d1
+.cp:            move.b  -(a0),-(a1)
+                dbra    d1,.cp
+                lea     -24(a0),a0              ; skip the block's header
+                move.w  #488,d1
+                dbra    d0,.blk
                 rts
 
 ; the 4489_byteloader: d0 = offset, d1 = length, d2 = drive, a0 = destination,
@@ -792,12 +832,10 @@ BlackPalette:   dcb.w   32,0
 TextPalette:    dc.w    $0000,$0227,$055A,$077D,$09BF,$0FFF,$0530,$0950
                 dc.w    $0B90,$0FD0,$0050,$0590,$09D0,$0700,$0B03,$0F35
 
-                dcb.b   $7A7A0-*,0              ; unused to end of boot read
-
 ;==============================================================================
 ; The file table: written here by tools/build.py once the disk is laid out
 ; (NFILES entries of FT_SIZE: offset, length on the disk, unpacked end or 0).
 ;==============================================================================
-                cnop    0,4
+                even
 S2FileTable:
                 dcb.b   NFILES*FT_SIZE,0

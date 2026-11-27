@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """Build the enhanced R-Type disk: enhanced/build/rtype.adf, an ordinary AmigaDOS
-(FFS) disk with every file stored in one piece.
+disk (OFS, DOS\\0 - Kickstart 1.3 boots and reads only that) with every file
+stored in one run of blocks.
 
   python3 -I enhanced/tools/build.py            (VASM = vasmm68k_mot, SALVADOR = salvador)
 
 1. Assembles the enhanced engine (src/game.s, with src/disk.s) and reads where
-   its FileTable is (build/layout.i), then stage 2 (src/stage2.s).
+   its FileTable is, then stage 2 (src/stage2.s), placed so that it ends at
+   $7A7A0 with the packed title picture just before it (build/layout.i).
 2. Takes the other files from original/files/ (byte-identical to the original
    sources): the music, the $6000 block, the shared title file, the level
    files (level A trimmed to the $281C bytes that survive the level B load;
@@ -15,16 +17,18 @@
    format here (unzx0), how far past its destination each one must be loaded
    to be unpacked in place: the packed data ends at dest + unpacked + margin.
    Each in-place load is checked against what must survive it.
-4. Lays the disk out (tools/ffs.py): the boot file from block 2 (the bootblock
+4. Lays the disk out (tools/ofs.py): the boot file from block 2 (the bootblock
    reads it with trackdisk), then the rest; writes the file table into stage 2
-   inside the boot file, assembles the bootblock (src/boot.s) with the boot
-   file's length, and writes the image.
+   inside the boot file, assembles the bootblock (src/boot.s) with where the
+   boot file's blocks go, and writes the image.  Every file's blocks are read
+   to end where its bytes must end and the 24-byte OFS headers squeezed out
+   (moving up), so each load is checked for its blocks too.
 5. Checks the image: every file read back from its offset (and through the
    file system with amitools' xdftool, if installed) and unpacked again.
 """
 import os, re, struct, subprocess, sys, tempfile
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import ffs
+import ofs
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ENH = os.path.dirname(HERE)
@@ -149,26 +153,50 @@ def pack(data, name):
 
 
 # ---------------------------------------------------------------------------
+def read_ofs(adf, offset, length):
+    """a file's bytes from its run of OFS blocks, as the loaders take them"""
+    n = ofs.OFSDisk.nblocks(length)
+    run = adf[offset:offset + 512 * n]
+    return b''.join(run[k * 512 + 24:k * 512 + 512] for k in range(n))[:length]
+
+
 def main():
     os.makedirs(BUILD, exist_ok=True)
     fid = equates(os.path.join(SRC, 'files.i'))
-    # 1. the engine, then stage 2 with the engine's FileTable address
+    # 1. the engine, then stage 2 placed to end at $7A7A0 after the packed picture
     game, gsyms = assemble(os.path.join(SRC, 'game.s'), os.path.join(BUILD, 'game_low.bin'))
-    open(os.path.join(BUILD, 'layout.i'), 'w').write(
-        'GAME_FILETABLE  equ     $%X\nBOOT_LEN        equ     0\n' % gsyms['FileTable'])
-    stage2, ssyms = assemble(os.path.join(SRC, 'stage2.s'), os.path.join(BUILD, 'stage2.bin'))
+    rd = lambda n: open(os.path.join(FILES, n), 'rb').read()
+    picture = rd('boot_6efa0.bin')[:0xA3C0]                         # title picture + font
+    pic_packed, _ = pack(picture, 'picture')
+    BOOT_END = 0x7A7A0
+
+    def layout(org, boot_blocks=1, boot_last=0):
+        open(os.path.join(BUILD, 'layout.i'), 'w').write(
+            'GAME_FILETABLE  equ     $%X\nSTAGE2_ORG      equ     $%X\nPIC_PACKED      equ     $%X\n'
+            'BOOT_RAW        equ     $%X\nBOOT_BLOCKS     equ     %d\nBOOT_LAST       equ     %d\n'
+            % (gsyms['FileTable'], org, org - len(pic_packed), BOOT_END - 512 * boot_blocks,
+               boot_blocks, boot_last))
+
+    org = 0x79360
+    for _ in range(4):                                              # until its size settles
+        layout(org)
+        stage2, ssyms = assemble(os.path.join(SRC, 'stage2.s'), os.path.join(BUILD, 'stage2.bin'))
+        new_org = BOOT_END - len(stage2)
+        if new_org == org:
+            break
+        org = new_org & ~1
+    assert org + len(stage2) == BOOT_END, 'stage 2 does not end at $7A7A0'
 
     # 2. the files: id -> (name, data, destination, packed?)
-    rd = lambda n: open(os.path.join(FILES, n), 'rb').read()
-    boot = bytearray(rd('boot_6efa0.bin')[:0x79360 - 0x6EFA0] + stage2)
-    hs = bytearray(512)
-    hs[0:0x190] = game[0x575C - 0xA4:0x575C - 0xA4 + 0x190]          # the default table
+    boot = bytearray(pic_packed + stage2)
+    hs = bytearray(0x194)                                           # the default table + checksum
+    hs[0:0x190] = game[0x575C - 0xA4:0x575C - 0xA4 + 0x190]
     ck = 0x12345678
     for (v,) in struct.iter_unpack('>L', bytes(hs[0:0x190])):
         ck ^= v
     struct.pack_into('>L', hs, 0x190, ck)
     files = {
-        fid['FID_BOOT']: ('boot', bytes(boot), 0x6EFA0, False),
+        fid['FID_BOOT']: ('boot', bytes(boot), org - len(pic_packed), False),
         fid['FID_MUSIC']: ('music', rd('music_52300.bin'), 0x52300, True),
         fid['FID_GAMELOW']: ('game', game, 0xA4, True),
         fid['FID_GAMEMAIN']: ('graphics', rd('game_main_06000.bin'), 0x6000, True),
@@ -195,16 +223,19 @@ def main():
         p, end = stored[i]
         if packed:
             top = dest + end
-            limits = {'music': 0x79360,          # stage 2 runs above it
-                      'game': 0x6000,            # the $6000 block follows
-                      'graphics': 0x32000,       # stage 2's MFM buffer
+            limits = {'music': org,                # stage 2 runs above it
+                      'game': 0x6000,              # the $6000 block follows
+                      'graphics': 0x32000,         # stage 2's MFM buffer
                       'title': 0x52300}.get(name, 0x7C400 if name.endswith('b') else 0x4D300)
             if top > limits:
                 sys.exit('%s: the packed data would end at $%X, over $%X' % (name, top, limits))
+            raw = top - 512 * ofs.OFSDisk.nblocks(len(p))
+            if raw < dest:                         # its blocks are read below its end
+                sys.exit('%s: its blocks would start at $%X, below $%X' % (name, raw, dest))
         report.append((i, name, len(data), len(p), end - len(data) if end else None, dest))
 
     # 4. the disk
-    disk = ffs.FFSDisk('R-Type')
+    disk = ofs.OFSDisk('R-Type')
     offsets = {}
     offsets[fid['FID_BOOT']] = disk.add('boot', stored[fid['FID_BOOT']][0], block=2)
     for i in sorted(files):
@@ -212,17 +243,15 @@ def main():
             offsets[i] = disk.add(files[i][0], stored[i][0])
     table = b''.join(struct.pack('>3L', offsets[i], len(stored[i][0]), stored[i][1])
                      for i in sorted(files))
-    t = ssyms['S2FileTable'] - 0x6EFA0
+    t = ssyms['S2FileTable'] - (org - len(pic_packed))
     boot[t:t + len(table)] = table
-    # the boot file is read again in its final form (same length)
-    disk.blocks.update({2 + k: bytes(boot[k * 512:(k + 1) * 512]).ljust(512, b'\0')
-                        for k in range((len(boot) + 511) // 512)})
-    boot_len = (len(boot) + 511) // 512 * 512
-    open(os.path.join(BUILD, 'layout.i'), 'w').write(
-        'GAME_FILETABLE  equ     $%X\nBOOT_LEN        equ     $%X\n' % (gsyms['FileTable'], boot_len))
+    # the boot file again in its final form (the same length), then the bootblock
+    disk.rewrite('boot', bytes(boot))
+    n = ofs.OFSDisk.nblocks(len(boot))
+    layout(org, n, len(boot) - 488 * (n - 1))
+    if BOOT_END - 512 * n < 0x6EFA0:
+        sys.exit("the boot file's blocks start at $%X, below the original's boot read" % (BOOT_END - 512 * n))
     bootblock, _ = assemble(os.path.join(SRC, 'boot.s'), os.path.join(BUILD, 'bootblock.bin'))
-    if 0x6EFA0 + boot_len > 0x7C400:
-        sys.exit('the boot file reaches $%X' % (0x6EFA0 + boot_len))
     adf = disk.image(bootblock)
     out = os.path.join(BUILD, 'rtype.adf')
     open(out, 'wb').write(adf)
@@ -232,7 +261,7 @@ def main():
     for i in sorted(files):
         name, data, dest, packed = files[i]
         p, end = stored[i]
-        got = adf[offsets[i]:offsets[i] + len(p)]
+        got = read_ofs(adf, offsets[i], len(p))
         if i == fid['FID_BOOT']:
             assert got == bytes(boot), 'boot file'
             continue

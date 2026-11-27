@@ -9,7 +9,7 @@ Reverse-engineering and annotated disassembly of the Amiga **R-Type** (Electric 
 | Folder | Contents |
 |---|---|
 | [`original/`](original/) | Byte-identical, annotated disassembly of the original disk, the extraction tools and documentation |
-| [`enhanced/`](enhanced/README.md) | The game on an ordinary AmigaDOS (FFS) disk: files read with the 4489_byteloader, ZX0-packed, high scores saved to a block of their own. Next: a title menu, cheats, CD32 pad |
+| [`enhanced/`](enhanced/README.md) | The game on an ordinary AmigaDOS (OFS) disk, bootable on Kickstart 1.3: files read with the 4489_byteloader, ZX0-packed, high scores saved to a block of their own. Next: a title menu, cheats, CD32 pad |
 
 Documentation is in [`original/docs/`](original/docs/README.md):
 

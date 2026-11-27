@@ -71,7 +71,7 @@ State on 27 Nov 2026. All 13 sources reassemble byte-identical (`tools/verify.py
 The `original/` sources stay byte-identical; changes go in a separate `enhanced/` tree.
 
 **Order (decided 27 Nov 2026):**
-1. **The AmigaDOS disk** (below): the 4489 byte loader, ZX0-packed files on an FFS disk, the patched load calls, high-score saving.
+1. **The AmigaDOS disk** (below): the 4489 byte loader, ZX0-packed files on an OFS disk, the patched load calls, high-score saving.
 2. **A title menu** in the style of the GnG and NZS enhanced versions: `START GAME`, `OPTIONS` (input, cheat, sound test, `EXIT`). The title file is reloaded every time the title comes back, so the menu can live there; only the settings and the in-game input code stay resident.
 3. **The cheats**, on the options page: infinite lives (keeping the score), invincibility, level select (stages 1-8), full weapons (the Force, both Bits, a chosen laser).
 4. **CD32 pad support** as the enhanced controller option. The original already reads button 2 (or Space) for the Force, as the arcade does, so the option adds the pad's extra buttons (read through the CD32 pad's serial protocol on port 2) for a third function, such as charging the beam or autofire.
@@ -102,17 +102,17 @@ Replace the custom-track loader with one that reads a standard AmigaDOS (11-sect
     | level B files (8; now ByteKiller) | 511,056 | 334,246 |
     | **total** | **986,872** | **576,213** |
 
-  - The total of about 576K leaves roughly 300K free on an FFS disk (about 869K of file space). ZX0 also beats the original ByteKiller packing of the level B files by about 35%.
+  - The files take about 580K on the OFS disk, leaving about 260K free. ZX0 also beats the original ByteKiller packing of the level B files by about 35%.
   - **Where to unpack.** ZX0 unpacks forwards, the opposite of the original's backwards `Decrunch`, so the in-place trick changes:
     - Load the packed data at the *end* of the destination area plus salvador's safety margin and unpack forwards. Or use salvador's backwards mode (`-b`, which needs the backwards 68000 decompressor) to keep the original's layout.
     - Check memory per file. Level B now loads at `$4CB00` and unpacks to `$4D300`, ending at up to `$7975B`, close to `TRACK_BUFFER` at `$7C400`.
   - Time how long the 68000 takes to unpack the largest files (`$6000` block, level B) on an A500 against the original load times.
-- [x] **File-system layout**: an **FFS** disk (`DOS\1`) with each file in **contiguous** blocks (`enhanced/tools/ffs.py`; `xdftool fsck` finds it clean).
-  - FFS data blocks hold 512 bytes of plain data, with no 24-byte header as on OFS. A contiguous file can therefore be read directly by the byte loader at a known disk offset, with no file-system code in the game.
+- [x] **File-system layout**: an **OFS** disk (`DOS\0`) with each file in **contiguous** blocks (`enhanced/tools/ofs.py`; `xdftool fsck` finds it clean).
+  - It was FFS (`DOS\1`) first, but Kickstart 1.3 only boots (and reads) `DOS\0` floppies. OFS data blocks carry a 24-byte header, so the loaders read a file's run of blocks and squeeze the headers out (`OFSCompact`) - still no file-system code in the game.
   - Have the build tool write the disk and an offset/length table that the loader assembles in.
   - Optionally add a small root-directory/file-header lookup instead, so the files can be replaced without rebuilding.
 - [x] **Patch the load calls** in the bootblock, stage 2 (title, music, game program, `$6000` block, shared file) and `LevelTable`/`LoadLevel` (level A/B by track) to use file offsets instead of track numbers.
-- [x] **Bootblock**: a standard `DOS\1` bootblock that loads stage 2 with the byte loader (or through trackdisk.device before taking over the machine).
+- [x] **Bootblock**: a standard `DOS\0` bootblock that loads stage 2 with the byte loader (or through trackdisk.device before taking over the machine).
 - [x] **Saving high scores**: written in `enhanced/src/disk.s` (read the track, replace the block, MFM-encode the 11 sectors, write the track); no Rob Northen code was to hand. Still to try on the new disk in WinUAE.
   - The byte loader is read-only.
   - Writing to an AmigaDOS disk means MFM-encoding and writing a whole 11-sector track, or reading, modifying and rewriting the sector.
