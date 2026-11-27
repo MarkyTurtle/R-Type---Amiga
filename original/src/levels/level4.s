@@ -1076,47 +1076,47 @@ Spawn_Cytron:
                 move.w  $4(a1),d1
                 move.w  $8(a2),d2
                 jsr     (jt_ObjCreate).w
-                clr.b   $22(a0)
+                clr.b   $22(a0)                 ; frame set from the direction
                 moveq   #0,d4
-                move.w  $6(a1),$32(a0)
+                move.w  $6(a1),$32(a0)          ; entry $06: dx
                 beq.b   .4B3F6
-                bpl.b   .4B3F4
+                bpl.b   .4B3F4                  ; left: frame 12
                 moveq   #12,d4
                 bra.b   .4B3F6
 .4B3F4:
-                moveq   #4,d4
+                moveq   #4,d4                   ; right: frame 4
 .4B3F6:
-                move.w  $8(a1),$34(a0)
+                move.w  $8(a1),$34(a0)          ; entry $08: dy
                 beq.b   .4B406
-                bpl.b   .4B404
+                bpl.b   .4B404                  ; up: frame 0
                 moveq   #0,d4
                 bra.b   .4B406
 .4B404:
-                moveq   #8,d4
+                moveq   #8,d4                   ; down: frame 8
 .4B406:
                 move.w  d4,$1E(a0)
-                clr.w   $3A(a0)
-                move.l  $A(a1),$36(a0)
+                clr.w   $3A(a0)                 ; path step
+                move.l  $A(a1),$36(a0)          ; entry $0A: a path (0 = fly straight)
                 jmp     (jt_ObjInsert).w
 Upd_Cytron:
-                movem.w $A(a0),d0-d1
+                movem.w $A(a0),d0-d1            ; its middle
                 add.w   #$C,d0
                 add.w   #$C,d1
-                cmp.w   #$20,d1
+                cmp.w   #$20,d1                 ; inside the play area
                 bls.b   .4B43C
                 cmp.w   #$DF,d1
                 bcc.b   .4B43C
-                jsr     (jt_GetMapCell).w
+                jsr     (jt_GetMapCell).w       ; and the map cell empty:
                 bne.b   .4B43C
-                move.w  #$9013,(a4)
+                move.w  #$9013,(a4)             ; put a wall cell there (solid, destructible)
 .4B43C:
-                move.l  $36(a0),d0
+                move.l  $36(a0),d0              ; on a path?
                 bne.b   .4B46E
-                movem.w $32(a0),d2-d3
+                movem.w $32(a0),d2-d3           ; no: fly straight
                 add.w   d2,$A(a0)
                 add.w   d3,$C(a0)
 .4B450:
-                move.w  $A(a0),d0
+                move.w  $A(a0),d0               ; off the screen:
                 bmi.b   .4B468
                 cmp.w   #$170,d0
                 bhi.b   .4B468
@@ -1125,30 +1125,30 @@ Upd_Cytron:
                 cmp.w   #$E0,d0
                 bcs.b   .4B46C
 .4B468:
-                jmp     (jt_ObjKillSelf).w
+                jmp     (jt_ObjKillSelf).w      ; remove
 .4B46C:
                 rts
 .4B46E:
-                tst.w   $32(a0)
+                tst.w   $32(a0)                 ; with a dx as well:
                 beq.b   .4B478
-                subq.w  #$1,$A(a0)
+                subq.w  #$1,$A(a0)              ; scroll with the map
 .4B478:
                 movea.l d0,a1
-                move.w  $3A(a0),d0
-                move.w  (a1)+,d1
-                bsr.b   .4B49C
+                move.w  $3A(a0),d0              ; path step
+                move.w  (a1)+,d1                ; number of steps
+                bsr.b   .4B49C                  ; dx
                 add.w   d2,$A(a0)
-                bsr.b   .4B49C
+                bsr.b   .4B49C                  ; dy
                 add.w   d2,$C(a0)
-                bsr.b   .4B49C
+                bsr.b   .4B49C                  ; frame
                 move.b  d2,$1F(a0)
-                cmp.w   d1,d0
+                cmp.w   d1,d0                   ; end of the path: keep the last step
                 bcc.b   .4B450
                 addq.w  #$1,$3A(a0)
                 bra.b   .4B450
 .4B49C:
-                movea.l (a1)+,a2
-                move.b  (a2,d0.w),d2
+                movea.l (a1)+,a2                ; table
+                move.b  (a2,d0.w),d2            ; entry for this step
                 ext.w   d2
                 rts
 Spawn_Geld:
@@ -1156,56 +1156,56 @@ Spawn_Geld:
                 move.w  $4(a1),d1
                 move.w  $8(a2),d2
                 jsr     (jt_ObjCreate).w
-                st.b    $22(a0)
-                move.w  $6(a1),d0
+                st.b    $22(a0)                 ; animate
+                move.w  $6(a1),d0               ; entry $06: direction 0-3
                 lsl.w   #$2,d0
                 lea.l   (GeldStates).l,a3
-                move.l  (a3,d0.w),$34(a0)
-                move.l  $10(a3,d0.w),$2A(a0)
-                move.w  $8(a1),$3A(a0)
-                clr.b   $3C(a0)
-                move.w  #$12,$32(a0)
+                move.l  (a3,d0.w),$34(a0)       ; its state routine
+                move.l  $10(a3,d0.w),$2A(a0)    ; and animation
+                move.w  $8(a1),$3A(a0)          ; entry $08: scroll x after which it stops turning
+                clr.b   $3C(a0)                 ; not pausing
+                move.w  #$12,$32(a0)            ; no turn for 18 frames
                 jmp     (jt_ObjInsert).w
 GeldStates:
                 dc.l    Geld_Up
                 dc.l    Geld_Right,Geld_Down,Geld_Left          ; up, right, down, left
                 dc.l    GeldAnimUp,GeldAnimRight,GeldAnimDown,GeldAnimLeft    ; their animations
 Upd_Geld:
-                subq.w  #$1,$A(a0)
-                movem.w $A(a0),d0-d1
+                subq.w  #$1,$A(a0)              ; scroll with the map
+                movem.w $A(a0),d0-d1            ; its middle
                 add.w   #$10,d0
                 add.w   #$10,d1
-                jsr     (jt_GetMapCell).w
+                jsr     (jt_GetMapCell).w       ; a cell there
                 beq.b   .4B526
-                btst.b  #$4,(a4)
+                btst.b  #$4,(a4)                ; that is destructible (bit 12):
                 beq.b   .4B526
-                clr.w   (a4)
+                clr.w   (a4)                    ; eat it
 .4B526:
-                tst.b   $3C(a0)
+                tst.b   $3C(a0)                 ; pausing after a turn?
                 beq.b   .4B540
                 subq.b  #$1,$3C(a0)
-                bne.b   .4B53E
-                st.b    $22(a0)
+                bne.b   .4B53E                  ; pause over:
+                st.b    $22(a0)                 ; animate again
                 clr.b   $20(a0)
                 clr.w   $1E(a0)
 .4B53E:
                 rts
 .4B540:
-                move.w  $3A(a0),d0
+                move.w  $3A(a0),d0              ; past its scroll x:
                 cmp.w   (ScrollX).w,d0
                 bhi.b   .4B550
-                move.w  #$7FFF,$32(a0)
+                move.w  #$7FFF,$32(a0)          ; no more turns
 .4B550:
-                movem.w (ShipPos).w,d0-d1
+                movem.w (ShipPos).w,d0-d1       ; d0, d1 = the ship's position (adjusted)
                 addq.w  #$5,d0
                 subq.w  #$8,d1
-                tst.w   $32(a0)
+                tst.w   $32(a0)                 ; turn timer (state routines test Z)
                 beq.b   .4B564
                 subq.w  #$1,$32(a0)
 .4B564:
-                movea.l $34(a0),a1
+                movea.l $34(a0),a1              ; move in the current direction
                 jsr     (a1)
-                move.w  $A(a0),d0
+                move.w  $A(a0),d0               ; off the screen:
                 bmi.b   .4B582
                 cmp.w   #$170,d0
                 bhi.b   .4B582
@@ -1214,26 +1214,26 @@ Upd_Geld:
                 cmp.w   #$F2,d0
                 bcs.b   .4B586
 .4B582:
-                jmp     (jt_ObjKillSelf).w
+                jmp     (jt_ObjKillSelf).w      ; remove
 .4B586:
                 rts
 Geld_Up:
-                bne.b   .4B5C4
-                cmp.w   $C(a0),d1
+                bne.b   .4B5C4                  ; may not turn yet: keep going
+                cmp.w   $C(a0),d1               ; ship not yet level with it:
                 bcs.b   .4B5C4
-                bsr.w   Geld_Turn
-                move.w  #$5,$1E(a0)
-                cmp.w   $A(a0),d0
+                bsr.w   Geld_Turn               ; turn (pause 6 frames, no turn for 18)
+                move.w  #$5,$1E(a0)             ; frame 5
+                cmp.w   $A(a0),d0               ; ship to the right?
                 bcs.b   .4B5B2
-                move.l  #GeldAnimRight,$2A(a0)
+                move.l  #GeldAnimRight,$2A(a0)  ; go right
                 move.l  #Geld_Right,$34(a0)
                 rts
 .4B5B2:
-                move.l  #GeldAnimLeft,$2A(a0)
+                move.l  #GeldAnimLeft,$2A(a0)   ; go left
                 move.l  #Geld_Left,$34(a0)
                 rts
 .4B5C4:
-                subq.w  #$2,$C(a0)
+                subq.w  #$2,$C(a0)              ; up 2 pixels a frame
                 rts
 Geld_Down:
                 bne.b   .Geld_Down_move                ; still in the turn delay
