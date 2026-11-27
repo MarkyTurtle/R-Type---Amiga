@@ -16,7 +16,8 @@
 ; $4D300-$5AF7F: tiles 0-440 (used by the map)
 LvTiles:
                 incbin  "level3_b_4d300.bin",$0,$DC80
-; $5AF80-$626FF: (not used by the code that is known)
+; $5AF80-$626FF: tiles 441-679, written into the map by PatchMap (the battleship's
+;   changing parts: CoreOpenFrames, EngineGoneCells, FlameCells, RearTowerBase...)
                 incbin  "level3_b_4d300.bin",$DC80,$7780
 ; $62700-$634CF: map 68x26
 LvMap:

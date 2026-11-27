@@ -16,8 +16,12 @@
 ; $4D300-$5AAFF: tiles 0-431 (used by the map)
 LvTiles:
                 incbin  "level8_b_4d300.bin",$0,$D800
-; $5AB00-$5AEFF: (not used by the code that is known)
-                incbin  "level8_b_4d300.bin",$D800,$400
+; $5AB00-$5ACFF: tiles 432-435 (written into the map by PatchMap)
+                incbin  "level8_b_4d300.bin",$D800,$200
+; $5AD00-$5AEFF: tiles 436-439, never shown: the map uses tiles up to 431, the PatchMap blocks up to 435
+                ifnd    LEVEL_TRIM              ; (the enhanced build leaves them out)
+                incbin  "level8_b_4d300.bin",$DA00,$200
+                endc
 ; $5AF00-$5C1FD: map 187x13
 LvMap:
                 incbin  "level8_b_4d300.bin",$DC00,$12FE

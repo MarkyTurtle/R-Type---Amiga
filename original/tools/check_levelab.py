@@ -79,6 +79,21 @@ def check(n):
     if bad or other:
         print('  FAIL: A differs outside its pointers into B' if other else '  FAIL: a pointer not moved')
         ok = False
+    # 3. together, without the blocks marked LEVEL_TRIM (tiles nothing shows): B is the
+    #    original without them, and A's pointers follow
+    trim = [tuple(int(x, 16) for x in m.groups()) for m in re.finditer(
+        r'ifnd\s+LEVEL_TRIM[^\n]*\n\s+incbin\s+"[^"]+",\$([0-9A-F]+),\$([0-9A-F]+)',
+        open(os.path.join(ROOT, 'src', 'levels', 'level%d_b.s' % n)).read())]
+    if trim:
+        t, tsyms = asm('LEVEL_AB        equ     1\nLEVEL_TRIM      equ     1\n                include "level%d.s"\n'
+                       '                include "level%d_b.s"\n' % (n, n), tmp, 'abt')
+        want = bytearray(orig_b)
+        for off, ln in sorted(trim, reverse=True):
+            del want[off:off + ln]
+        b0 = tsyms['LvTiles'] - 0x4A2E4
+        same_t = t[b0:] == bytes(want) and t[:aend - 0x4A2E4] != b'' and tsyms['LevelAEnd'] == aend
+        print('  trimmed: %d bytes of tiles left out%s' % (sum(l for _, l in trim), '' if same_t else '  FAIL'))
+        ok &= same_t
     return ok and same_b
 
 

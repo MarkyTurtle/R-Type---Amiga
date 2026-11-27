@@ -16,8 +16,10 @@
 ; $4D300-$59D7F: tiles 0-404 (used by the map)
 LvTiles:
                 incbin  "level6_b_4d300.bin",$0,$CA80
-; $59D80-$5B8FF: (not used by the code that is known)
+; $59D80-$5B8FF: tiles 405-459, never shown: the map uses tiles up to 404 and nothing else writes cells
+                ifnd    LEVEL_TRIM              ; (the enhanced build leaves them out)
                 incbin  "level6_b_4d300.bin",$CA80,$1B80
+                endc
 ; $5B900-$5C9A7: map 164x13
 LvMap:
                 incbin  "level6_b_4d300.bin",$E600,$10A8

@@ -47,7 +47,9 @@ ZX0 packs the level data about 35% smaller than the original's ByteKiller.
 music and graphics) together, with `LEVEL_AB` set, so B starts straight after A's code and
 data (`LevelAEnd`) instead of at `$4D300`. Level A refers to B by label, so its pointers follow
 (`original/tools/check_levelab.py` checks that). B now starts 3.9–9.1K lower, and the space
-the original kept for its packed level B is gone. `LoadLevel` loads the one file; its
+the original kept for its packed level B is gone. The build also sets `LEVEL_TRIM`, which
+leaves out the tiles no level shows: 55 on stage 6 (7K), and 2–6 on stages 2, 5, 7 and 8 (the
+level B sources mark them; see `original/docs/DATA_FORMATS.md`). `LoadLevel` loads the one file; its
 `LevelTable` entries keep their size (the second file id is 0).
 
 **Unpacking in place.** ZX0 unpacks forwards, so a packed file is loaded to end just past where
@@ -185,8 +187,8 @@ Free above each level in play (`build.py` prints it):
 
 | Stage | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
 |---|---|---|---|---|---|---|---|---|
-| from | `$78639` | `$7090A` | `$6ED70` | `$6E772` | `$66C1E` | `$64CC0` | `$6FF21` | `$66020` |
-| free | 30.4K | 61.7K | 68.6K | 70.1K | 101.0K | 108.8K | 64.2K | 104.0K |
+| from | `$78639` | `$7070A` | `$6ED70` | `$6E772` | `$66B1E` | `$63140` | `$6FC21` | `$65E20` |
+| free | 30.4K | 62.2K | 68.6K | 70.1K | 101.2K | 115.7K | 65.0K | 104.5K |
 
 On the title the top block holds the title music, the high-score save buffers, the byte
 loader's MFM buffer (`$7C400–$7F3FF`, while loading) and the title menu (`$7F600`). In play all

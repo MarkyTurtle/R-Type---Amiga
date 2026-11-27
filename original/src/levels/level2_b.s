@@ -16,8 +16,10 @@
 ; $4D300-$5D4FF: tiles 0-515 (used by the map)
 LvTiles:
                 incbin  "level2_b_4d300.bin",$0,$10200
-; $5D500-$5D6FF: (not used by the code that is known)
+; $5D500-$5D6FF: tiles 516-519, never shown: nothing writes them: the map, Brood1Cells/Brood2Cells and BossEyeFrames use tiles up to 515
+                ifnd    LEVEL_TRIM              ; (the enhanced build leaves them out)
                 incbin  "level2_b_4d300.bin",$10200,$200
+                endc
 ; $5D700-$5E947: map 180x13
 LvMap:
                 incbin  "level2_b_4d300.bin",$10400,$1248

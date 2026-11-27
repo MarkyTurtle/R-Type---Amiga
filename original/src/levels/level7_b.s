@@ -16,8 +16,10 @@
 ; $4D300-$56FFF: tiles 0-313 (used by the map)
 LvTiles:
                 incbin  "level7_b_4d300.bin",$0,$9D00
-; $57000-$572FF: (not used by the code that is known)
+; $57000-$572FF: tiles 314-319, never shown: the map uses tiles up to 313; the chute and Collapse blocks up to 291
+                ifnd    LEVEL_TRIM              ; (the enhanced build leaves them out)
                 incbin  "level7_b_4d300.bin",$9D00,$300
+                endc
 ; $57300-$582A3: map 154x13
 LvMap:
                 incbin  "level7_b_4d300.bin",$A000,$FA4

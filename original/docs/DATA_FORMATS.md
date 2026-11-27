@@ -150,6 +150,12 @@ Level A's pointers into B, found by `tools/gen_levelb.py`:
 - every object definition's graphics field (`+$0C`, two words in the data);
 - longs in the data that point into the map or a table: `PatchMap` blocks (levels 3, 7, 8), the Brood's places (level 2), the Worm's paths (level 2).
 
+**What the levels don't use.** Checked against every place a tile number comes from: the map, the map patches, the `PatchMap` blocks, the cell lists the level code writes (level 2's Brood and boss eye, level 7's chutes and Collapses), and the engine (it only ever clears a cell to 0; tile animations are level 1's only, on cells in its map patches).
+- **Never shown:** tiles 516–519 of level 2, 98–99 of level 5, 405–459 of level 6, 314–319 of level 7 and 436–439 of level 8: 9,088 bytes. The B sources put them inside `ifnd LEVEL_TRIM`, so the enhanced build can leave them out.
+- **Used after all:** level 3's 239 tiles after the map's (30K) are the battleship's changing parts, which `PatchMap` writes into the map; level 8's tiles 432–435 likewise.
+- **BOB frames beyond each object's first animation** (about 130K in all) are chosen by the objects' code: directions, corners, turns, aiming (the Gouger's four corners, the Zoid's and Mikun's directions, the P-Staff's aim). Trimming them would need each object's code checked.
+- **Unknown:** 18 bytes after level 1's samples and 192 bytes between two BOB blocks in level 3: left as they are.
+
 Everything else in A that falls in B's address range was checked and is something else: code words, wave parameters, hit boxes, step tables. Pointers per level: 36, 41, 76, 47, 14, 6, 41, 22.
 
 

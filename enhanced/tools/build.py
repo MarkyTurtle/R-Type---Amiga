@@ -59,12 +59,14 @@ def assemble(src, out, extra=()):
 
 def level_file(n):
     """level n, parts A and B assembled together from the original sources (LEVEL_AB):
-    A at $4A2E4 up to LevelAEnd, then B -> (bytes, symbols)"""
+    A at $4A2E4 up to LevelAEnd, then B without the tiles nothing shows (LEVEL_TRIM)
+    -> (bytes, symbols)"""
     lv = os.path.join(ORIG, 'src', 'levels')
     src = os.path.join(BUILD, 'level%d_ab.s' % n)
     with open(src, 'w') as f:
         f.write('; level %d, parts A and B together (written by tools/build.py)\n'
                 'LEVEL_AB        equ     1\n'
+                'LEVEL_TRIM      equ     1               ; (leave out the tiles nothing shows)\n'
                 '                include "level%d.s"\n'
                 '                include "level%d_b.s"\n' % (n, n, n))
     data, syms = assemble(src, os.path.join(BUILD, 'level%d.bin' % n),
