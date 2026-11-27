@@ -189,8 +189,8 @@ LevelPalette:
                 dc.w    $0555,$0BBB,$0777,$0500,$005F,$00F0,$0050,$0955
                 dc.w    $0B00,$09BF,$000B,$0F77,$0B70,$0FF0,$0FFF
 Spawn_Cancer:
-                movea.l $A(a1),a3
-                move.w  $8(a1),d7
+                movea.l $A(a1),a3               ; list of x, y
+                move.w  $8(a1),d7               ; frames between them
                 clr.w   d6
 .4A812:
                 move.w  (a3)+,d0
@@ -198,9 +198,9 @@ Spawn_Cancer:
                 move.w  (a3)+,d1
                 move.w  $8(a2),d2
                 jsr     (jt_ObjCreate).w
-                move.w  $6(a1),$3A(a0)
+                move.w  $6(a1),$3A(a0)          ; scroll x at which it gives up
                 clr.w   $38(a0)
-                move.w  d6,$32(a0)
+                move.w  d6,$32(a0)              ; start delay
                 add.w   d7,d6
                 jsr     (jt_ObjInsert).w
                 bra.b   .4A812

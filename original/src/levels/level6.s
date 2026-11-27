@@ -365,10 +365,10 @@ Spawn_Bink:
                 move.w  $4(a1),d1
                 move.w  $8(a2),d2
                 jsr     (jt_ObjCreate).w
-                move.l  #BinkWalkRight,$2A(a0)
-                move.w  $6(a1),$32(a0)
+                move.l  #BinkWalkRight,$2A(a0)  ; walking right,
+                move.w  $6(a1),$32(a0)          ; step (entry $06)
                 bpl.b   .4AAEE
-                move.l  #BinkWalkLeft,$2A(a0)
+                move.l  #BinkWalkLeft,$2A(a0)   ; negative: walking left
 .4AAEE:
                 move.w  $32(a0),d2
                 bsr.w   Bink_Jump

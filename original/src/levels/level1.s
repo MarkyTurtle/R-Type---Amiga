@@ -270,50 +270,50 @@ Spawn_PStaff:
                 move.b  #$1,$4(a0)
                 jmp     (jt_ObjInsert).w
 Upd_PStaff:
-                cmpi.w  #$10,$A(a0)
+                cmpi.w  #$10,$A(a0)             ; off the left edge?
                 bhi.b   .4A872
-                jmp     (jt_ObjKillSelf).w
+                jmp     (jt_ObjKillSelf).w      ; yes: remove
 .4A872:
-                tst.b   $36(a0)
+                tst.b   $36(a0)                 ; state 0: walking
                 beq.b   .4A890
                 cmpi.b  #$1,$36(a0)
-                beq.b   .4A8BE
-                subq.w  #$1,$A(a0)
-                subq.b  #$1,$37(a0)
+                beq.b   .4A8BE                  ; state 1: firing a volley
+                subq.w  #$1,$A(a0)              ; state 2, paused: scroll with the map
+                subq.b  #$1,$37(a0)             ; count down the pause
                 bpl.b   .4A8F4
-                bsr.w   PStaff_TryFire
+                bsr.w   PStaff_TryFire          ; then fire if the ship is in range, otherwise walk
                 rts
 .4A890:
-                bsr.w   PStaff_Approach
-                movem.w $A(a0),d0-d1
+                bsr.w   PStaff_Approach         ; head for 60-79 pixels from the ship
+                movem.w $A(a0),d0-d1            ; probe the map ahead at foot level
                 add.w   #$B,d1
                 tst.w   $32(a0)
-                bpl.b   .4A8AA
-                sub.w   #$10,d0
+                bpl.b   .4A8AA                  ; walking right?
+                sub.w   #$10,d0                 ; left: probe 16 pixels ahead
                 bra.b   .4A8AE
 .4A8AA:
-                add.w   #$21,d0
+                add.w   #$21,d0                 ; right: probe just past the body
 .4A8AE:
-                jsr     (jt_GetMapCell).w
-                bne.b   PStaff_Halt
+                jsr     (jt_GetMapCell).w       ; wall ahead?
+                bne.b   PStaff_Halt             ; yes: stop
                 move.w  $32(a0),d0
-                add.w   d0,$A(a0)
+                add.w   d0,$A(a0)               ; take a step
                 rts
 .4A8BE:
-                subq.w  #$1,$A(a0)
-                subq.w  #$1,$34(a0)
+                subq.w  #$1,$A(a0)              ; state 1: scroll with the map
+                subq.w  #$1,$34(a0)             ; frames to the next shot
                 bmi.b   .4A8CA
                 rts
 .4A8CA:
-                move.w  #$A,$34(a0)
-                subq.b  #$1,$37(a0)
-                bpl.b   .4A8F6
-                bsr.w   PStaff_Approach
-                move.l  #PStaffFireAnimEnd,d0
+                move.w  #$A,$34(a0)             ; 10 frames between shots
+                subq.b  #$1,$37(a0)             ; shots left in the volley
+                bpl.b   .4A8F6                  ; more: fire one
+                bsr.w   PStaff_Approach         ; volley done: face the ship again
+                move.l  #PStaffFireAnimEnd,d0   ; animation index = end of the fire animation
                 sub.l   $2A(a0),d0
                 move.w  d0,$1E(a0)
-                move.b  #$2,$36(a0)
-                move.b  #$A,$37(a0)
+                move.b  #$2,$36(a0)             ; then pause (state 2)
+                move.b  #$A,$37(a0)             ; for 10 frames
 .4A8F4:
                 rts
 .4A8F6:
@@ -323,45 +323,45 @@ Upd_PStaff:
 ; (PStaff_TryFire, PStaff_Fire: a PStaffMissile on a ballistic path from
 ; tables at $790D0-$7918C, chosen by the ship's distance plus a random part).
 PStaff_Halt:
-                move.b  #$2,$36(a0)
-                move.b  #$14,$37(a0)
-                clr.b   $22(a0)
-                move.w  #$3,$1E(a0)
+                move.b  #$2,$36(a0)             ; pause (state 2)
+                move.b  #$14,$37(a0)            ; for 20 frames
+                clr.b   $22(a0)                 ; hold the animation
+                move.w  #$3,$1E(a0)             ; on the standing frame
                 rts
 PStaff_TryFire:
                 bsr.w   ShipDistX
-                cmp.w   #$37,d0
-                blt.b   PStaff_Approach
-                cmp.w   #$55,d0
-                bgt.b   PStaff_Approach
-                bsr.w   PStaff_Approach
-                move.b  #$1,$36(a0)
-                move.b  $3B(a0),$37(a0)
-                move.w  $38(a0),$34(a0)
-                st.b    $22(a0)
-                move.l  #PStaffFireAnim,$2A(a0)
+                cmp.w   #$37,d0                 ; closer than 55 pixels:
+                blt.b   PStaff_Approach         ; keep walking
+                cmp.w   #$55,d0                 ; further than 85 pixels:
+                bgt.b   PStaff_Approach         ; keep walking
+                bsr.w   PStaff_Approach         ; face the ship
+                move.b  #$1,$36(a0)             ; start a volley (state 1)
+                move.b  $3B(a0),$37(a0)         ; shots per volley (spawn parameter)
+                move.w  $38(a0),$34(a0)         ; delay before the first shot (spawn parameter)
+                st.b    $22(a0)                 ; animate
+                move.l  #PStaffFireAnim,$2A(a0) ; with the fire animation
                 move.w  #$3,$1E(a0)
                 clr.b   $20(a0)
                 bsr.w   ShipDistX
-                move.w  d2,$3C(a0)
+                move.w  d2,$3C(a0)              ; remember which side the ship is on
                 rts
 ; ShipDistX / ShipDistY: d0 = distance to the ship in x (+30 when the ship
 ; is to the left) / y, d2 = direction (1 / -1).
 ShipDistX:
                 moveq   #1,d2
-                move.w  (ShipPos).w,d0
-                sub.w   $A(a0),d0
-                bpl.b   .4A96C
-                neg.w   d0
+                move.w  (ShipPos).w,d0          ; ship x
+                sub.w   $A(a0),d0               ; minus our x
+                bpl.b   .4A96C                  ; ship to the right: d2 = 1
+                neg.w   d0                      ; ship to the left: d0 = |dx|, d2 = -1
                 neg.w   d2
-                add.w   #$1E,d0
+                add.w   #$1E,d0                 ; and allow 30 pixels for the ship's width
 .4A96C:
                 rts
 ShipDistY:
                 moveq   #1,d2
-                move.w  ($F0).w,d0
-                sub.w   #$1F,d0
-                sub.w   $C(a0),d0
+                move.w  ($F0).w,d0              ; ship y
+                sub.w   #$1F,d0                 ; to its top edge
+                sub.w   $C(a0),d0               ; minus our y
                 bpl.b   .4A982
                 neg.w   d0
                 neg.w   d2
@@ -369,45 +369,45 @@ ShipDistY:
                 rts
 PStaff_Approach:
                 bsr.b   ShipDistX
-                cmp.w   #$3C,d0
+                cmp.w   #$3C,d0                 ; 60-79 pixels away:
                 blt.b   .4A994
                 cmp.w   #$50,d0
-                bcs.w   PStaff_Halt
+                bcs.w   PStaff_Halt             ; stop here
 .4A994:
-                clr.b   $36(a0)
-                moveq   #70,d1
+                clr.b   $36(a0)                 ; otherwise walk (state 0)
+                moveq   #70,d1                  ; 70 - distance
                 sub.w   d0,d1
-                bpl.b   .4A9B0
-                move.w  #$FFFE,$32(a0)
+                bpl.b   .4A9B0                  ; closer than 70: walk away
+                move.w  #$FFFE,$32(a0)          ; further: walk towards the ship
                 tst.w   d2
                 bmi.b   .4A9AE
                 move.w  #$2,$32(a0)
 .4A9AE:
                 bra.b   .4A9C0
 .4A9B0:
-                move.w  #$2,$32(a0)
+                move.w  #$2,$32(a0)             ; walk away from the ship
                 tst.w   d2
                 bmi.b   .4A9C0
                 move.w  #$FFFE,$32(a0)
 .4A9C0:
                 move.b  #$0,$36(a0)
-                lea.l   (PStaffWalkLeft).l,a1
+                lea.l   (PStaffWalkLeft).l,a1   ; walking animation for the direction
                 tst.w   $32(a0)
                 bmi.b   .4A9D8
                 lea.l   (PStaffWalkRight).l,a1
 .4A9D8:
-                move.l  a1,$2A(a0)
-                st.b    $22(a0)
+                move.l  a1,$2A(a0)              ; set it
+                st.b    $22(a0)                 ; and animate
                 rts
 PStaff_Fire:
-                movea.l a0,a4
+                movea.l a0,a4                   ; a4 = the P-Staff
                 movem.w $A(a0),d0-d1
                 moveq   #1,d2
-                subq.w  #$8,d1
+                subq.w  #$8,d1                  ; launch from the gun barrel
                 add.w   #$14,d0
-                lea.l   (Def_PStaffMissile).l,a2
+                lea.l   (Def_PStaffMissile).l,a2 ; create the missile (a0)
                 jsr     (jt_ObjCreate).w
-                bsr.w   ShipDistY
+                bsr.w   ShipDistY               ; y table start = 16 + random(15) - dy/8,
                 lsr.w   #$3,d0
                 moveq   #16,d1
                 move.w  d0,-(a7)
@@ -416,10 +416,10 @@ PStaff_Fire:
                 add.w   d0,d1
                 sub.w   (a7)+,d1
                 bpl.b   .4AA14
-                clr.w   d1
+                clr.w   d1                      ; not below 0
 .4AA14:
-                move.w  d1,$32(a0)
-                bsr.w   ShipDistX
+                move.w  d1,$32(a0)              ; y index into the up-speed table
+                bsr.w   ShipDistX               ; x table start = 19 + random(10) - dx/8,
                 lsr.w   #$3,d0
                 moveq   #19,d1
                 move.w  d0,-(a7)
@@ -428,67 +428,67 @@ PStaff_Fire:
                 add.w   d0,d1
                 sub.w   (a7)+,d1
                 bpl.b   .4AA30
-                clr.w   d1
+                clr.w   d1                      ; not below 0
 .4AA30:
-                move.w  d1,$34(a0)
-                move.w  $3C(a4),$36(a0)
-                clr.b   $22(a0)
+                move.w  d1,$34(a0)              ; x index into the side-speed table
+                move.w  $3C(a4),$36(a0)         ; direction: towards the ship
+                clr.b   $22(a0)                 ; frame is set by the update routine
                 move.b  #$1,$21(a0)
-                jsr     (jt_ObjInsert).w
-                movea.l a4,a0
+                jsr     (jt_ObjInsert).w        ; link it in
+                movea.l a4,a0                   ; back to the P-Staff
                 rts
 Upd_PStaffMissile:
-                lea.l   ($7912E).l,a3
-                lea.l   ($790D0).l,a1
-                lea.l   ($7918C).l,a2
-                movem.w $32(a0),d0-d2
+                lea.l   ($7912E).l,a3           ; up speeds, by y index ($7F ends)
+                lea.l   ($790D0).l,a1           ; side speeds, by x index ($7F ends)
+                lea.l   ($7918C).l,a2           ; frame per y index (the arc's angle)
+                movem.w $32(a0),d0-d2           ; d0 y index, d1 x index, d2 direction
                 move.b  (a3,d0.w),d3
-                cmp.b   #$7F,d3
-                beq.b   .4AAE0
-                neg.b   d3
+                cmp.b   #$7F,d3                 ; end of the arc:
+                beq.b   .4AAE0                  ; explode
+                neg.b   d3                      ; table is upward speed
                 move.b  (a1,d1.w),d4
-                bne.b   .4AA78
+                bne.b   .4AA78                  ; side speed is at least 1
                 addq.b  #$1,d4
 .4AA78:
                 cmp.b   #$7F,d4
                 beq.b   .4AAE0
-                addq.w  #$1,$32(a0)
+                addq.w  #$1,$32(a0)             ; step along both tables
                 addq.w  #$1,$34(a0)
                 ext.w   d3
                 ext.w   d4
-                asl.w   #$1,d4
+                asl.w   #$1,d4                  ; side speed doubled
                 tst.w   d2
                 bpl.b   .4AA92
-                neg.w   d4
+                neg.w   d4                      ; fired to the left
 .4AA92:
-                add.w   d3,$C(a0)
+                add.w   d3,$C(a0)               ; move
                 add.w   d4,$A(a0)
-                cmpi.w  #$20,$A(a0)
+                cmpi.w  #$20,$A(a0)             ; off the left edge,
                 bcs.b   .4AABA
-                cmpi.w  #$170,$A(a0)
+                cmpi.w  #$170,$A(a0)            ; or right of x $170,
                 bhi.b   .4AABE
-                cmpi.w  #$E0,$C(a0)
+                cmpi.w  #$E0,$C(a0)             ; or off the bottom or top:
                 bhi.b   .4AABA
                 cmpi.w  #$10,$C(a0)
                 bhi.b   .4AABE
 .4AABA:
-                jmp     (jt_ObjKillSelf).w
+                jmp     (jt_ObjKillSelf).w      ; remove
 .4AABE:
-                move.b  (a2,d0.w),d3
+                move.b  (a2,d0.w),d3            ; frame for this point of the arc
                 ext.w   d3
                 tst.w   d2
                 bpl.b   .4AACC
-                add.w   #$9,d3
+                add.w   #$9,d3                  ; left-facing frames start at 9
 .4AACC:
                 move.w  d3,$1E(a0)
-                movem.w $A(a0),d0-d1
+                movem.w $A(a0),d0-d1            ; centre of the missile
                 addq.w  #$8,d0
                 addq.w  #$6,d1
-                jsr     (jt_GetMapCell).w
-                beq.b   .4AAEA
+                jsr     (jt_GetMapCell).w       ; hit the map?
+                beq.b   .4AAEA                  ; no: carry on
 .4AAE0:
-                move.b  #$1,$5(a0)
-                clr.l   $6(a0)
+                move.b  #$1,$5(a0)              ; yes: explode
+                clr.l   $6(a0)                  ; and stop updating
 .4AAEA:
                 rts
 TileAnim_BlasterFloor:
