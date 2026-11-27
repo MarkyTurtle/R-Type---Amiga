@@ -78,7 +78,11 @@ The `original/` sources stay byte-identical; changes go in a separate `enhanced/
    - [ ] The music players disassembled (variants of `shared.s`'s player; they are PC-relative, so the `incbin` already moves).
    - [x] `enhanced/`: one file per level (A and B together, B straight after A), one load. In play, 30.4K (stage 1) to 108.8K (stage 6) free in one block at the top.
    - [x] Trim what the levels don't use: the tiles nothing shows (9K, 7K of it on stage 6; `LEVEL_TRIM`). Level 3's 30K of extra tiles turned out to be used (`PatchMap`). See `docs/DATA_FORMATS.md`.
-   - [ ] Maybe: BOB frames no code picks (each object's code to check; up to ~130K are beyond the first animations, but most are directions and turns).
+   - [ ] **Future optimisations** (stage 1 is the tightest: 176.8K of level data, 30.4K free in play; for later, not planned yet):
+     - **One-plane BOB masks**: every mask row is the same in all 4 planes (stages 1, 2, 4-8; some stage 3 objects differ). Stored once: 32.7K, 23.4K, 13.1K, 34.9K, 28.7K, 10.1K, 31.2K, 10.1K saved (stages 1-8). Needs a drawing routine with one blit per plane (4 instead of 1) via a hook, and a speed check on busy scenes.
+     - **Merge duplicate tiles**: stage 1 has 36 (4.5K), stage 6 228 (28.5K, 124 of them blank), others 3-48. Renumber the map, map patches, `PatchMap` blocks, level code's cell lists and stage 1's tile animations.
+     - **Resample stage 1's music samples** to 3/4 rate (~2.5K; adjust the period table).
+     - **BOB frames no animation or code uses**: union of each object's animations and the frames its code sets; probably a few K.
 3. [x] **The cheats**, on the options page: infinite lives, invincibility, start stage (1-8), full weapons (the Force at full strength, both Bits, the missiles, a chosen laser), the stage-skip key. A game with cheats gets no high-score place.
 4. **CD32 pad support** as the enhanced controller option. The original already reads button 2 (or Space) for the Force, as the arcade does, so the option adds the pad's extra buttons (read through the CD32 pad's serial protocol on port 2) for a third function, such as charging the beam or autofire.
 
