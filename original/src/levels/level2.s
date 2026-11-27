@@ -295,77 +295,78 @@ LevelInit:
 ; LevelFrame: at scroll x $A0A the scroll stops, the music fades and
 ; Gomander's core is created.  Then the eye opens and closes (EyeState:
 ; Eye_Wait, open in 3 steps of 2x4 map cells from BossEyeFrames, stay
-; open, close), the wait shortening by 10 frames each time from 100.
+; open 21 frames, close), the wait shortening by 10 frames each time
+; from 100 (down to 10; a hit on the core puts it back to 100).
 ; After the boss dies, random explosions.  Before that it runs the
 ; Broods (UpdateBroods).
 LevelFrame:
-                tst.b   (BossStarted).l
+                tst.b   (BossStarted).l         ; boss started?
                 bne.b   .4A7D6
-                cmpi.w  #$A0A,(ScrollX).w
-                bcs.w   UpdateBroods
+                cmpi.w  #$A0A,(ScrollX).w       ; no: reached it yet?
+                bcs.w   UpdateBroods            ; before then, the Broods
                 st.b    (BossStarted).l
-                clr.b   (ScrollActive).w
-                move.w  #$B3,d0
+                clr.b   (ScrollActive).w        ; stop the scroll
+                move.w  #$B3,d0                 ; the core, at the eye
                 move.w  #$80,d1
-                moveq   #-1,d2
+                moveq   #-1,d2                  ; indestructible: hits counted by its update
                 lea.l   (Def_GomanderCore).l,a2
                 jsr     (jt_ObjCreate).w
-                clr.w   $32(a0)
+                clr.w   $32(a0)                 ; damage seen
                 jsr     (jt_ObjInsert).w
-                move.w  #$64,(EyeInterval).l
-                clr.w   (EyeTimer).l
-                clr.w   (EyeFrame).l
-                st.b    (MusicFadeReq).w
+                move.w  #$64,(EyeInterval).l    ; 100 frames between eye openings,
+                clr.w   (EyeTimer).l            ; the first at once
+                clr.w   (EyeFrame).l            ; eye closed
+                st.b    (MusicFadeReq).w        ; fade the level music out
                 rts
 .4A7D6:
                 tst.b   (BossDead).l
-                bne.w   BossExplosions
-                movea.l (EyeState).l,a1
+                bne.w   BossExplosions          ; dead: explosions
+                movea.l (EyeState).l,a1         ; eye state routine
                 jmp     (a1)
 Eye_Wait:
-                subq.w  #$1,(EyeTimer).l
+                subq.w  #$1,(EyeTimer).l        ; waiting:
                 bpl.b   .4A802
-                move.l  #.4A804,(EyeState).l
-                move.b  #$3,(EyeSteps).l
+                move.l  #.4A804,(EyeState).l    ; then open
+                move.b  #$3,(EyeSteps).l        ; in 3 steps
 .4A802:
                 rts
 .4A804:
                 subq.w  #$1,(EyeTimer).l
                 bpl.b   .4A85A
-                tst.b   (EyeSteps).l
+                tst.b   (EyeSteps).l            ; opened?
                 bne.b   .4A828
-                move.l  #.4A85C,(EyeState).l
-                move.b  #$3,(EyeSteps).l
+                move.l  #.4A85C,(EyeState).l    ; then close
+                move.b  #$3,(EyeSteps).l        ; in 3 steps
                 rts
 .4A828:
-                move.w  #$2,(EyeTimer).l
-                addi.l  #$10,(EyeFramePtr).l
-                addq.w  #$1,(EyeFrame).l
+                move.w  #$2,(EyeTimer).l        ; a step every 3 frames
+                addi.l  #$10,(EyeFramePtr).l    ; next 2x4 cells
+                addq.w  #$1,(EyeFrame).l        ; and core frame
                 movea.l (EyeFramePtr).l,a0
-                bsr.w   Eye_Draw
+                bsr.w   Eye_Draw                ; write them into the map
                 subq.b  #$1,(EyeSteps).l
                 bne.b   .4A85A
-                move.w  #$14,(EyeTimer).l
+                move.w  #$14,(EyeTimer).l       ; fully open: stay 21 frames
 .4A85A:
                 rts
 .4A85C:
                 subq.w  #$1,(EyeTimer).l
                 bpl.b   .4A8B4
-                move.w  #$2,(EyeTimer).l
-                subi.l  #$10,(EyeFramePtr).l
+                move.w  #$2,(EyeTimer).l        ; a step every 3 frames
+                subi.l  #$10,(EyeFramePtr).l    ; previous cells
                 subq.w  #$1,(EyeFrame).l
                 movea.l (EyeFramePtr).l,a0
-                bsr.w   Eye_Draw
+                bsr.w   Eye_Draw                ; write them into the map
                 subq.b  #$1,(EyeSteps).l
-                bne.b   .4A8B4
-                move.w  (EyeInterval).l,d0
-                cmp.w   #$A,d0
+                bne.b   .4A8B4                  ; closed:
+                move.w  (EyeInterval).l,d0      ; next wait 10 frames shorter,
+                cmp.w   #$A,d0                  ; down to 10
                 bls.b   .4A8A4
                 sub.w   #$A,d0
                 move.w  d0,(EyeInterval).l
 .4A8A4:
                 move.w  d0,(EyeTimer).l
-                move.l  #Eye_Wait,(EyeState).l
+                move.l  #Eye_Wait,(EyeState).l  ; then wait again
 .4A8B4:
                 rts
 Eye_Draw:
@@ -378,56 +379,56 @@ Eye_Draw:
                 rts
 BossExplosions:
                 move.l  a0,-(a7)
-                moveq   #100,d0
+                moveq   #100,d0                 ; y = 100 + random(100)
                 jsr     (jt_Random).w
                 move.w  d0,d1
                 add.w   #$64,d1
-                moveq   #126,d0
+                moveq   #126,d0                 ; x = 120 + random(126)
                 jsr     (jt_Random).w
                 add.w   #$78,d0
                 moveq   #-1,d2
-                lea.l   (Def_GomanderCore).l,a2
+                lea.l   (Def_GomanderCore).l,a2 ; as a plain explosion
                 jsr     (jt_ObjCreate).w
-                move.b  #$1,$5(a0)
+                move.b  #$1,$5(a0)              ; exploding at once
                 clr.l   $6(a0)
-                moveq   #3,d0
+                moveq   #3,d0                   ; type 0-2
                 jsr     (jt_Random).w
                 move.b  d0,$21(a0)
                 jsr     (jt_ObjInsert).w
                 movea.l (a7)+,a0
                 rts
 Upd_GomanderCore:
-                movea.l (PalettePtr).w,a1
-                tst.b   (BossFlash).l
+                movea.l (PalettePtr).w,a1       ; colour table in the copper list
+                tst.b   (BossFlash).l           ; flashed last frame:
                 beq.b   .4A922
                 clr.b   (BossFlash).l
-                bsr.b   .4A982
+                bsr.b   .4A982                  ; restore the colours
 .4A922:
-                move.w  (EyeFrame).l,$1E(a0)
+                move.w  (EyeFrame).l,$1E(a0)    ; frame (and hit box) follows the eye
                 clr.b   $20(a0)
-                move.w  $26(a0),d0
+                move.w  $26(a0),d0              ; hit?
                 cmp.w   $32(a0),d0
                 beq.b   .4A980
                 move.w  d0,$32(a0)
-                move.w  #$64,(EyeInterval).l
-                move.w  #$FFF,d1
+                move.w  #$64,(EyeInterval).l    ; the eye opens slowly again: 100 frames
+                move.w  #$FFF,d1                ; flash colours 0, 1, 2 and 13 white
                 move.w  d1,$2(a1)
                 move.w  d1,$6(a1)
                 move.w  d1,$A(a1)
                 move.w  d1,$36(a1)
-                st.b    (BossFlash).l
-                move.b  #$3,$28(a0)
-                cmp.w   #$1E,d0
+                st.b    (BossFlash).l           ; for one frame
+                move.b  #$3,$28(a0)             ; and the core itself for 3
+                cmp.w   #$1E,d0                 ; 30 hits:
                 bcs.b   .4A980
-                bsr.b   .4A982
+                bsr.b   .4A982                  ; dead
                 st.b    (BossDead).l
                 st.b    (LevelComplete).w
-                move.l  #$9000,d0
+                move.l  #$9000,d0               ; 9000 points
                 jmp     (jt_AddScore).w
 .4A980:
                 rts
 .4A982:
-                move.w  #$555,$2(a1)
+                move.w  #$555,$2(a1)            ; the eye's colours
                 move.w  #$BBB,$6(a1)
                 move.w  #$777,$A(a1)
                 move.w  #$FF0,$36(a1)
@@ -926,8 +927,9 @@ BossEyeFrames:
                 dc.w    $00C0,$00C1,$00C2,$00C3,$80D4,$80D5,$80D6,$80D7
                 dc.w    $00C4,$00C5,$00C6,$00C7,$80D8,$80D9,$80DA,$80DB
 ; Gomander's core (the stage 2 boss; the FAQ calls it Cyst): an invisible
-; target at the boss's eye.  Each hit flashes four palette colours
-; (PalettePtr) white and resets the eye timer; after 30 hits the boss
+; target at the boss's eye, its frame (and hit box) following the eye.
+; Each hit flashes colours 0, 1, 2 and 13 (PalettePtr) white for a frame
+; and resets the eye's interval to 100 frames; after 30 hits the boss
 ; dies: BossDead, LevelComplete, 9000 points.
 Def_GomanderCore:
                 dc.w    $0101,$0032,$0000,$0000,$0000,$0000,$0004,$B0C2
