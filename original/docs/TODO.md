@@ -119,7 +119,8 @@ Replace the custom-track loader with one that reads a standard AmigaDOS (11-sect
   - Keep the high-score table as a one-block file in a fixed place, so the save never touches the file system's bitmap or directory.
   - Keep the checksum check so a bad or missing table falls back to the default.
 - [x] **Build**: `enhanced/tools/build.py` writes `enhanced/build/rtype.adf` and checks it; `enhanced/tools/test_disk.py` runs the bootblock, stage 2's and the engine's loads and the high-score save in a 68000 emulator; CI builds and tests it.
-- [ ] **Test it in WinUAE** on a 512K A500, with 512K slow RAM (the file cache) and on an A1200, from DF0 and (Kickstart 2.0+) DF1; then merge `enhanced/disk` to main.
+- [x] **Tested in WinUAE**: boots, all 8 stages load (using the stage skip), high scores save and load back. Merged to main.
+- [ ] Still to try: 512K slow RAM (the file cache), an A1200, booting from DF1 (Kickstart 2.0+).
 
 ### Cheat mode
 

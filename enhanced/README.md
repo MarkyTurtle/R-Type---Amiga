@@ -130,9 +130,11 @@ decoded back into the disk image with its MFM and checksums checked. It runs:
 
 It doesn't run stage 2's display or the game itself: that is for WinUAE.
 
+## Checked in WinUAE
+
+Boots from DF0 on Kickstart 1.3, all 8 stages load (using the stage skip), and the high scores
+save and load back.
+
 ## Still to check in WinUAE
 
-- Booting on A500 512K (Kickstart 1.3), A500 with 512K slow RAM (the cache), and A1200; from DF1
-  with Kickstart 2.0+.
-- Saving the high scores on the new disk.
-- Every stage loading and playing, using N to skip through them.
+- A500 with 512K slow RAM (the file cache), an A1200, and booting from DF1 with Kickstart 2.0+.
