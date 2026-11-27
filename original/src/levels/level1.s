@@ -1117,178 +1117,178 @@ Spawn_Tabrok:
                 move.w  $4(a1),d1
                 move.w  $8(a2),d2
                 jsr     (jt_ObjCreate).w
-                move.b  #$2,$21(a0)
-                move.b  #$1,$4(a0)
-                clr.w   $32(a0)
-                clr.w   $34(a0)
-                move.w  #$64,$36(a0)
-                clr.w   $3C(a0)
+                move.b  #$2,$21(a0)             ; explosion type 2
+                move.b  #$1,$4(a0)              ; priority 1
+                clr.w   $32(a0)                 ; phase 0: walk in
+                clr.w   $34(a0)                 ; no pause
+                move.w  #$64,$36(a0)            ; for up to 100 frames
+                clr.w   $3C(a0)                 ; fire at once
                 jmp     (jt_ObjInsert).w
 Upd_Tabrok:
-                bsr.w   .4B346
-                tst.w   $A(a0)
+                bsr.w   .4B346                  ; fire missiles and homers
+                tst.w   $A(a0)                  ; off the left edge: remove
                 bpl.b   .4B23C
                 jmp     (jt_ObjKillSelf).w
 .4B23C:
-                tst.w   $34(a0)
+                tst.w   $34(a0)                 ; pausing between phases?
                 bmi.b   .4B254
-                subq.w  #$1,$34(a0)
-                cmpi.b  #$1,$32(a0)
+                subq.w  #$1,$34(a0)             ; count the pause down
+                cmpi.b  #$1,$32(a0)             ; in phase 1 it scrolls with the map;
                 bne.b   .4B252
-                subq.w  #$1,$A(a0)
+                subq.w  #$1,$A(a0)              ; otherwise it holds its screen position
 .4B252:
                 rts
 .4B254:
-                move.b  $32(a0),d0
+                move.b  $32(a0),d0              ; phase 0: walk in
                 beq.b   .4B276
                 cmp.b   #$1,d0
-                beq.b   .4B2B8
+                beq.b   .4B2B8                  ; 1: rise
                 cmp.b   #$2,d0
-                beq.w   .4B2E8
+                beq.w   .4B2E8                  ; 2: move forward
                 cmp.b   #$3,d0
-                beq.w   .4B30C
+                beq.w   .4B30C                  ; 3: drop to the ground
                 subq.w  #$1,$A(a0)
-                rts
+                rts                             ; 4: stand, scrolling with the map
 .4B276:
-                movem.w $A(a0),d0-d1
+                movem.w $A(a0),d0-d1            ; probe the ground ahead at its feet
                 add.w   #$22,d1
                 subq.w  #$6,d0
                 jsr     (jt_GetMapCell).w
-                bne.b   .4B298
-                tst.w   $36(a0)
-                bmi.b   .4B298
+                bne.b   .4B298                  ; blocked:
+                tst.w   $36(a0)                 ; or walked 100 frames:
+                bmi.b   .4B298                  ; stop
                 subq.w  #$1,$36(a0)
-                subq.w  #$3,$A(a0)
+                subq.w  #$3,$A(a0)              ; walk 3 pixels a frame
                 rts
 .4B298:
-                move.b  #$1,$32(a0)
-                move.w  #$32,$34(a0)
-                move.w  #$1B,$36(a0)
-                clr.w   $1E(a0)
+                move.b  #$1,$32(a0)             ; phase 1
+                move.w  #$32,$34(a0)            ; after a 50-frame pause
+                move.w  #$1B,$36(a0)            ; for 28 frames
+                clr.w   $1E(a0)                 ; standing frame, still
                 clr.b   $22(a0)
                 clr.b   $20(a0)
                 rts
 .4B2B8:
-                move.l  #TabrokFireAnim,$2A(a0)
+                move.l  #TabrokFireAnim,$2A(a0) ; phase 1: fire animation (legs fold up)
                 st.b    $22(a0)
-                tst.w   $36(a0)
+                tst.w   $36(a0)                 ; 28 frames:
                 bmi.b   .4B2D4
-                subq.w  #$1,$36(a0)
+                subq.w  #$1,$36(a0)             ; rise 2 pixels a frame
                 subq.w  #$2,$C(a0)
                 rts
 .4B2D4:
-                move.b  #$2,$32(a0)
-                move.w  #$32,$34(a0)
-                move.w  #$41,$36(a0)
+                move.b  #$2,$32(a0)             ; phase 2
+                move.w  #$32,$34(a0)            ; after a 50-frame pause
+                move.w  #$41,$36(a0)            ; for 66 frames
                 rts
 .4B2E8:
-                tst.w   $36(a0)
+                tst.w   $36(a0)                 ; 66 frames:
                 bmi.b   .4B2F8
-                subq.w  #$1,$36(a0)
+                subq.w  #$1,$36(a0)             ; 2 pixels a frame to the right
                 addq.w  #$2,$A(a0)
                 rts
 .4B2F8:
-                move.b  #$3,$32(a0)
-                move.w  #$14,$34(a0)
+                move.b  #$3,$32(a0)             ; phase 3
+                move.w  #$14,$34(a0)            ; after a 20-frame pause
                 move.w  #$28,$36(a0)
                 rts
 .4B30C:
-                movem.w $A(a0),d0-d1
+                movem.w $A(a0),d0-d1            ; probe below its feet
                 add.w   #$2C,d1
                 add.w   #$16,d0
                 jsr     (jt_GetMapCell).w
-                bne.b   .4B32A
-                addq.w  #$2,$C(a0)
+                bne.b   .4B32A                  ; ground?
+                addq.w  #$2,$C(a0)              ; no: drop 2 down, 1 right
                 addq.w  #$1,$A(a0)
                 rts
 .4B32A:
-                move.b  #$4,$32(a0)
-                move.l  #TabrokWalkAnim,$2A(a0)
+                move.b  #$4,$32(a0)             ; landed: phase 4
+                move.l  #TabrokWalkAnim,$2A(a0) ; walking animation, still
                 clr.w   $1E(a0)
                 clr.b   $22(a0)
                 clr.b   $20(a0)
                 rts
 .4B346:
-                bsr.b   .4B398
-                tst.b   $3C(a0)
+                bsr.b   .4B398                  ; homers every 116 frames
+                tst.b   $3C(a0)                 ; missile cooldown
                 beq.b   .4B352
                 subq.b  #$1,$3C(a0)
 .4B352:
-                move.w  $C(a0),d0
+                move.w  $C(a0),d0               ; y distance from the ship
                 addq.w  #$8,d0
                 move.w  d0,d1
-                sub.w   ($F0).w,d0
+                sub.w   ($F0).w,d0              ; d1 = launch y
                 bpl.b   .4B362
                 neg.w   d0
 .4B362:
-                cmp.w   #$12,d0
+                cmp.w   #$12,d0                 ; within 18 pixels
                 bhi.b   .4B396
-                tst.b   $3C(a0)
+                tst.b   $3C(a0)                 ; and not cooling down:
                 bne.b   .4B396
                 move.l  a0,-(a7)
-                move.w  $A(a0),d0
+                move.w  $A(a0),d0               ; launch x
                 moveq   #1,d2
-                lea.l   (Def_TabrokMissile).l,a2
+                lea.l   (Def_TabrokMissile).l,a2 ; the missile
                 jsr     (jt_ObjCreate).w
-                move.b  #$1,$21(a0)
-                clr.b   $22(a0)
+                move.b  #$1,$21(a0)             ; explosion type 1
+                clr.b   $22(a0)                 ; no animation
                 jsr     (jt_ObjInsert).w
                 movea.l (a7)+,a0
-                move.b  #$12,$3C(a0)
+                move.b  #$12,$3C(a0)            ; 18 frames to the next one
 .4B396:
                 rts
 .4B398:
-                subq.b  #$1,$3D(a0)
+                subq.b  #$1,$3D(a0)             ; time for homers?
                 bmi.b   .4B3A0
                 rts
 .4B3A0:
-                move.b  #$73,$3D(a0)
+                move.b  #$73,$3D(a0)            ; 116 frames to the next salvo
                 move.l  a0,-(a7)
                 movem.w $A(a0),d0-d1
-                add.w   #$F,d0
+                add.w   #$F,d0                  ; launch point
                 add.w   #$A,d1
                 moveq   #1,d2
                 moveq   #3,d7
-                lea.l   (TabrokHomerDirs).l,a4
-                lea.l   (Def_TabrokHomer).l,a2
+                lea.l   (TabrokHomerDirs).l,a4  ; 4 homers
+                lea.l   (Def_TabrokHomer).l,a2  ; starting directions (of 16)
 .4B3C6:
                 jsr     (jt_ObjCreate).w
                 move.b  #$1,$21(a0)
                 clr.b   $22(a0)
-                move.w  (a4)+,$1E(a0)
-                move.w  #$16,$36(a0)
-                move.w  #$5,$34(a0)
+                move.w  (a4)+,$1E(a0)           ; start direction
+                move.w  #$16,$36(a0)            ; steer 22 times
+                move.w  #$5,$34(a0)             ; every 6 frames
                 jsr     (jt_ObjInsert).w
                 dbra    d7,.4B3C6
                 movea.l (a7)+,a0
                 rts
 Upd_TabrokHomer:
-                subq.w  #$1,$34(a0)
+                subq.w  #$1,$34(a0)             ; time to steer?
                 bpl.b   .4B434
-                move.w  #$5,$34(a0)
-                tst.w   $36(a0)
-                beq.b   .4B434
+                move.w  #$5,$34(a0)             ; every 6 frames
+                tst.w   $36(a0)                 ; steering over:
+                beq.b   .4B434                  ; fly straight on
                 subq.w  #$1,$36(a0)
                 movem.w $A(a0),d0-d1
                 movem.w d0-d1,-(a7)
                 addq.w  #$8,d0
-                addq.w  #$8,d1
+                addq.w  #$8,d1                  ; hit the map?
                 jsr     (jt_GetMapCell).w
-                movem.w (a7)+,d0-d1
-                bne.b   .4B474
+                movem.w (a7)+,d0-d1             ; yes: explode
+                bne.b   .4B474                  ; direction to the ship
                 movem.w (ShipPos).w,d2-d3
-                jsr     (jt_DirectionTo).w
+                jsr     (jt_DirectionTo).w      ; turn one step towards it
                 move.w  $1E(a0),d1
                 jsr     (jt_TurnTowards).w
                 move.w  d1,$1E(a0)
 .4B434:
-                move.w  $1E(a0),d0
+                move.w  $1E(a0),d0              ; direction (frame) 0-15
                 lsl.w   #$2,d0
                 movem.w $A(a0),d1-d2
-                lea.l   (TabrokHomerSteps).l,a1
+                lea.l   (TabrokHomerSteps).l,a1 ; x, y step for the direction
                 add.w   (a1,d0.w),d1
                 add.w   $2(a1,d0.w),d2
-                cmp.w   #$10,d1
+                cmp.w   #$10,d1                 ; off the screen:
                 bcs.b   .4B466
                 cmp.w   #$170,d1
                 bhi.b   .4B466
@@ -1297,23 +1297,23 @@ Upd_TabrokHomer:
                 cmp.w   #$E0,d2
                 bcs.b   .4B46A
 .4B466:
-                jmp     (jt_ObjKillSelf).w
+                jmp     (jt_ObjKillSelf).w      ; remove
 .4B46A:
                 move.w  d1,$A(a0)
                 move.w  d2,$C(a0)
                 rts
 .4B474:
-                move.b  #$1,$5(a0)
+                move.b  #$1,$5(a0)              ; explode
                 clr.l   $6(a0)
                 rts
 Upd_TabrokMissile:
-                movem.w $A(a0),d0-d1
+                movem.w $A(a0),d0-d1            ; probe ahead of the nose
                 sub.w   #$10,d0
                 subq.w  #$4,d1
                 jsr     (jt_GetMapCell).w
-                bne.w   .4B4A6
-                subq.w  #$6,$A(a0)
-                cmpi.w  #$10,$A(a0)
+                bne.w   .4B4A6                  ; hit the map: explode
+                subq.w  #$6,$A(a0)              ; 6 pixels a frame left
+                cmpi.w  #$10,$A(a0)             ; off the left edge: remove
                 bhi.b   .4B4A4
                 jmp     (jt_ObjKillSelf).w
 .4B4A4:
@@ -1954,8 +1954,11 @@ ShellControlAnim:
                 dc.b    $17,$00,$15,$00,$02,$00,$03,$00,$17,$00,$15,$00,$02,$00,$03,$00
                 dc.b    $17,$00,$15,$00,$02,$00,$03,$00,$17,$00,$15,$00,$02,$00,$03,$00
                 dc.b    $17,$00,$15
-; Tabrok: big interceptor, 30 hit points; fires TabrokMissile and
-;   TabrokHomer
+; Tabrok: big interceptor, 30 hit points.  It walks in (up to 100 frames,
+;   3 px a frame) until blocked, rises 56 px, moves 132 px right, then
+;   drops to the ground and stands.  Level with the ship (18 px) it fires a
+;   TabrokMissile (18 frames apart), and every 116 frames 4 TabrokHomers
+;   that steer towards the ship every 6 frames, 22 times.
 ; (48x43, 5 frames, gfx $727B8, 30 hit points, score 800, update Upd_Tabrok, spawn Spawn_Tabrok)
 Def_Tabrok:
                 dc.b    $2B,$04,$00,$2C,$08,$10,$00,$01,$00,$1E,$00,$00,$00
