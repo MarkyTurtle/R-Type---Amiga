@@ -307,38 +307,42 @@ LevelFrame:
 .4A926:
                 rts
 ; Slither: a multi-jointed crustacean - a head, entry $06 body segments
-; and a tail, 4 frames apart on the head's path.  When the head is
-; destroyed (10 hits) the body breaks apart: the segments fly off in
-; their own directions (SlitherScatter).
+; and a tail, 4 frames apart on the head's path ($67FC8: dx, dy, frame).
+; When the head takes 10 damage it explodes (1100 points) and the body
+; breaks apart: the segments fly off in their own directions
+; (SlitherScatter).  When a body segment takes 10 the chain splits
+; there: that segment and the ones behind it follow the path to where it
+; was hit, then lead off on the path section for its direction
+; (SlitherHeadFrames) - a new, shorter Slither.
 Spawn_Slither:
                 movem.w $2(a1),d0-d1
-                move.w  #$3E8,d2
+                move.w  #$3E8,d2                ; 1000 hit points: 10 damage decides
                 lea.l   (Def_SlitherHead).l,a2
                 jsr     (jt_ObjCreate).w
-                move.w  #$FF00,$32(a0)
-                move.w  $8(a1),$34(a0)
-                clr.w   $3A(a0)
+                move.w  #$FF00,$32(a0)          ; head: waiting (0 frames), segment 0
+                move.w  $8(a1),$34(a0)          ; entry $08: start position in the path
+                clr.w   $3A(a0)                 ; nothing in front
                 clr.w   $36(a0)
-                clr.b   $22(a0)
-                move.b  #$14,$4(a0)
+                clr.b   $22(a0)                 ; frame from the path
+                move.b  #$14,$4(a0)             ; priority 20
                 jsr     (jt_ObjInsert).w
-                move.w  $6(a1),d7
-                moveq   #0,d6
-                moveq   #0,d5
+                move.w  $6(a1),d7               ; entry $06: body segments - 1
+                moveq   #0,d6                   ; d6 = segment number
+                moveq   #0,d5                   ; d5 = start delay, 4 frames apart
                 lea.l   (Def_SlitherBody).l,a2
                 bra.b   .4A9A4
 .4A96E:
-                movea.l a0,a3
+                movea.l a0,a3                   ; a3 = the segment in front
                 movem.w $2(a1),d0-d1
                 move.w  #$3E8,d2
                 jsr     (jt_ObjCreate).w
-                st.b    $32(a0)
-                move.b  d6,$33(a0)
-                move.w  d5,$36(a0)
-                move.w  $8(a1),$34(a0)
+                st.b    $32(a0)                 ; waiting
+                move.b  d6,$33(a0)              ; segment number
+                move.w  d5,$36(a0)              ; start delay
+                move.w  $8(a1),$34(a0)          ; same path position as the head
                 clr.b   $22(a0)
                 jsr     (jt_ObjInsert).w
-                move.l  a0,d0
+                move.l  a0,d0                   ; link the two
                 sub.l   a3,d0
                 move.w  d0,$3C(a3)
                 move.w  d0,$3A(a0)
@@ -346,17 +350,17 @@ Spawn_Slither:
                 addq.w  #$1,d6
                 addq.w  #$4,d5
                 dbra    d7,.4A96E
-                movea.l a0,a3
+                movea.l a0,a3                   ; then the tail
                 movem.w $2(a1),d0-d1
                 addq.w  #$2,d1
-                move.w  #$7D0,d2
+                move.w  #$7D0,d2                ; 2000 hit points
                 lea.l   (Def_SlitherTail).l,a2
                 jsr     (jt_ObjCreate).w
                 st.b    $32(a0)
                 move.b  d6,$33(a0)
                 move.w  $8(a1),$34(a0)
                 move.w  d5,$36(a0)
-                clr.w   $3C(a0)
+                clr.w   $3C(a0)                 ; nothing behind it
                 clr.b   $22(a0)
                 jsr     (jt_ObjInsert).w
                 move.l  a0,d0
@@ -365,27 +369,27 @@ Spawn_Slither:
                 move.w  d0,$3A(a0)
                 rts
 Upd_Slither:
-                move.b  $32(a0),d0
+                move.b  $32(a0),d0              ; state 0: leading on the path
                 beq.b   .4AA50
-                cmp.b   #$1,d0
+                cmp.b   #$1,d0                  ; 1: following to a turn point
                 beq.w   .4AB28
-                cmp.b   #$2,d0
+                cmp.b   #$2,d0                  ; 2: scattering
                 beq.b   .4AA10
-                subq.w  #$1,$36(a0)
+                subq.w  #$1,$36(a0)             ; -1: waiting to start
                 bpl.b   .4AA0E
                 clr.b   $32(a0)
 .4AA0E:
                 rts
 .4AA10:
                 moveq   #0,d0
-                move.b  $33(a0),d0
+                move.b  $33(a0),d0              ; segment number picks
                 lsl.w   #$2,d0
-                lea.l   (SlitherScatter).l,a1
+                lea.l   (SlitherScatter).l,a1   ; its own scatter direction
                 movem.w (a1,d0.w),d0-d1
                 add.w   d0,$A(a0)
                 add.w   d1,$C(a0)
 .4AA2C:
-                movem.w $A(a0),d0-d1
+                movem.w $A(a0),d0-d1            ; off the screen:
                 cmp.w   #$10,d0
                 bcs.b   .4AA4C
                 cmp.w   #$10,d1
@@ -396,78 +400,78 @@ Upd_Slither:
                 bhi.b   .4AA4C
                 rts
 .4AA4C:
-                jmp     (jt_ObjKillSelf).w
+                jmp     (jt_ObjKillSelf).w      ; remove
 .4AA50:
-                cmpi.w  #$A,$26(a0)
+                cmpi.w  #$A,$26(a0)             ; 10 damage?
                 blt.w   .4AAEA
-                tst.b   $33(a0)
+                tst.b   $33(a0)                 ; the head?
                 beq.b   .4AAB2
-                move.w  $3A(a0),d0
+                move.w  $3A(a0),d0              ; a body segment: the chain breaks here
                 neg.w   d0
                 lea.l   (a0,d0.w),a1
-                clr.w   $3C(a1)
+                clr.w   $3C(a1)                 ; the segment in front loses its tail
                 movea.l a0,a1
-                clr.w   $3A(a0)
-                move.w  $1E(a0),d0
-                lea.l   (SlitherHeadFrames).l,a2
+                clr.w   $3A(a0)                 ; this one now leads its part of the chain
+                move.w  $1E(a0),d0              ; its frame (direction)
+                lea.l   (SlitherHeadFrames).l,a2 ; picks the path section going that way
                 lsl.w   #$1,d0
                 move.w  (a2,d0.w),d1
-                move.w  $34(a0),d2
+                move.w  $34(a0),d2              ; d2 = where on the path it is now
 .4AA88:
-                move.w  d1,$38(a1)
-                clr.w   $26(a1)
-                tst.b   $32(a1)
+                move.w  d1,$38(a1)              ; every segment from here back: turn point section
+                clr.w   $26(a1)                 ; damage reset
+                tst.b   $32(a1)                 ; one that has not started yet:
                 bpl.b   .4AA9A
-                move.w  d1,$34(a0)
+                move.w  d1,$34(a0)              ; writes $34 of a0 (the hit segment), probably meant a1
 .4AA9A:
-                move.w  d2,$36(a1)
-                move.b  #$1,$32(a1)
-                move.w  $3C(a1),d0
+                move.w  d2,$36(a1)              ; follow the path to this point,
+                move.b  #$1,$32(a1)             ; state 1
+                move.w  $3C(a1),d0              ; next segment back
                 beq.b   .4AAB0
                 lea.l   (a1,d0.w),a1
                 bra.b   .4AA88
 .4AAB0:
                 rts
 .4AAB2:
-                move.b  #$1,$5(a0)
+                move.b  #$1,$5(a0)              ; the head: explode
                 clr.l   $6(a0)
-                move.l  #$1100,d0
+                move.l  #$1100,d0               ; 1100 points
                 jsr     (jt_AddScore).w
                 movea.l a0,a1
 .4AAC8:
-                move.b  #$2,$32(a1)
+                move.b  #$2,$32(a1)             ; every segment scatters
                 st.b    $22(a1)
-                move.w  #$3,$24(a1)
+                move.w  #$3,$24(a1)             ; 3 hit points each
                 clr.w   $26(a1)
-                move.w  $3C(a1),d0
+                move.w  $3C(a1),d0              ; next segment back
                 beq.w   .4AA10
                 lea.l   (a1,d0.w),a1
                 bra.b   .4AAC8
 .4AAEA:
-                lea.l   ($67FC8).l,a1
+                lea.l   ($67FC8).l,a1           ; the path: dx, dy, frame bytes (level B)
                 move.w  $34(a0),d0
                 lea.l   (a1,d0.w),a1
-                addq.w  #$3,$34(a0)
+                addq.w  #$3,$34(a0)             ; next step
                 move.b  (a1)+,d0
                 move.b  (a1)+,d1
                 move.b  (a1)+,d2
-                cmp.b   #$7F,d0
+                cmp.b   #$7F,d0                 ; $7F at the end:
                 bne.w   .4AB10
-                subq.w  #$6,$34(a0)
+                subq.w  #$6,$34(a0)             ; repeat the last step
                 bra.b   .4AAEA
 .4AB10:
                 ext.w   d0
                 ext.w   d1
                 add.w   d0,$A(a0)
                 add.w   d1,$C(a0)
-                and.w   #$F,d2
+                and.w   #$F,d2                  ; 16 frames (directions)
                 move.w  d2,$1E(a0)
                 bra.w   .4AA2C
 .4AB28:
-                cmpi.w  #$A,$26(a0)
+                cmpi.w  #$A,$26(a0)             ; (the compare is not used)
                 bra.b   .4AB58
 .4AB30:
-                movea.l a0,a1
+                movea.l a0,a1                   ; (not reached: nothing branches here)
 .4AB32:
                 move.w  $3A(a1),d0
                 neg.w   d0
@@ -482,12 +486,12 @@ Upd_Slither:
                 lea.l   (a1,d0.w),a1
                 bra.b   .4AB40
 .4AB58:
-                move.w  $36(a0),d0
+                move.w  $36(a0),d0              ; reached the turn point?
                 cmp.w   $34(a0),d0
                 bhi.b   .4AAEA
-                move.w  $38(a0),$34(a0)
+                move.w  $38(a0),$34(a0)         ; jump to the section for its direction
                 move.w  #$7FFF,$36(a0)
-                clr.b   $32(a0)
+                clr.b   $32(a0)                 ; and lead (state 0)
                 bra.w   .4AAEA
 ; Pursuer (probably): fast and homing - for 100 steps it turns towards the
 ; ship every 5 frames (16 directions, PursuerSteps), then flies straight
