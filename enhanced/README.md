@@ -79,8 +79,9 @@ after loading the engine.
    - `LoadFile` (still answering to `LoadTracksCached`): d0 = file id, d2 = destination.
    - The byte loader (MFM buffer at `TRACK_BUFFER`, `$7C400`) and the ZX0 unpacker.
    - `LoadHighScores` / `SaveHighScores`.
+   - The cheat code (`cheats.s`, see below).
 
-   It fits with 72 bytes to spare. The rest is padded, so nothing after it moves: the level
+   It fits with 20 bytes to spare. The rest is padded, so nothing after it moves: the level
    files use the engine's addresses and are unchanged. `LevelTable` holds file ids instead of
    tracks.
    - **File cache:** with extra memory, each packed file is kept there after its first read, and
@@ -98,6 +99,17 @@ after loading the engine.
 
      The block never moves, so the file system's bitmap and directories are never touched.
 
+## Cheats
+
+`CheatFlags` (in `cheats.s`, at a fixed address in the engine) has one bit per cheat. The
+title menu will set them. Until it exists, the one cheat so far is on from the start:
+
+- **N skips the stage.** In normal play it sets `LevelComplete`, as killing the boss does: the
+  ship flies off, the stage bonus is counted and the next stage loads. It does nothing during a
+  stage's intro or ending, after a death, or on stage 8 (whose ending is its own code). Scores
+  are kept and saved as usual. Level2Int calls `CheatKeys` in place of its `cmp.b #$19,d0` for
+  P, and `CheatKeys` ends with that compare, so no byte of the engine moves.
+
 ## The test
 
 `tools/test_disk.py` runs the real 68000 code in Unicorn, against the disk that was built. The
@@ -111,6 +123,8 @@ decoded back into the disk image with its MFM and checksums checked. It runs:
 - every file through the engine's `LoadFile`, without and with extra memory (the second loads
   must come from the cache, with no disk reads)
 - `LoadLevel` for all 8 levels
+- the N key through Level2Int: the stage skip, the cases where it must do nothing, and P still
+  pausing
 - reading the high scores, saving a changed table (only its block may change on the track),
   reading it back (the OFS block stays valid), and checking that a damaged block is ignored
 
@@ -121,3 +135,4 @@ It doesn't run stage 2's display or the game itself: that is for WinUAE.
 - Booting on A500 512K (Kickstart 1.3), A500 with 512K slow RAM (the cache), and A1200; from DF1
   with Kickstart 2.0+.
 - Saving the high scores on the new disk.
+- Every stage loading and playing, using N to skip through them.

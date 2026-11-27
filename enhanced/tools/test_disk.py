@@ -299,6 +299,27 @@ def main():
               and m.r32(g['LevelTablePtr']) == g['LevelTable'] + 10 * (n + 1),
               'LoadLevel, level %d: part A at $4A2E4, part B at $4D300, MapWidth $%X' % (n + 1, row))
 
+    # 3c. the stage-skip key (CheatKeys, from Level2Int) ---------------------------
+    m = Machine(adf)
+    m.u.mem_write(0xA4, exp[2][1])
+    lc, lst = g['LevelComplete'], open(os.path.join(BUILD, 'game_low.bin.lst'), errors='replace').read()
+    site = int(re.search(r'00:([0-9A-F]{8}) [0-9A-F]+\s+\d+:\s+bsr\.w\s+CheatKeys', lst).group(1), 16)
+    def key(code, state, level, flags=1):
+        """Level2Int from its CheatKeys call to the end of its key tests:
+        -> (LevelComplete, Paused)"""
+        m.w8(lc, 0); m.w8(g['Paused'], 0); m.w8(g['Level'], level); m.w8(g['CheatFlags'], flags)
+        m.w32(g['GameState'], state)
+        m.u.reg_write(UC_M68K_REG_D0, code); m.u.reg_write(UC_M68K_REG_A7, 0x7FF00)
+        m.u.emu_start(site, site + 22, count=1000)
+        return m.r8(lc), m.r8(g['Paused'])
+    check(key(0x36, g['St_Playing'], 0) == (0xFF, 0), 'N in play sets LevelComplete (stage skip)')
+    check(all(key(0x36, *c)[0] == 0 for c in ((g['St_Playing'], 7), (g['St_LevelFadeIn'], 0),
+                                              (g['St_StageClear'], 2), (g['St_Playing'], 0, 0))),
+          'N does nothing on stage 8, outside play, or with the skip off')
+    check(key(0x19, g['St_Playing'], 0) == (0, 0xFF) and key(0xB6, g['St_Playing'], 0) == (0, 0)
+          and key(0x99, g['St_Playing'], 0) == (0, 0), 'P still pauses; key releases do nothing')
+    check(g['LevelTable'] == 0x41B4, 'the engine data after the cheat code has not moved (LevelTable at $41B4)')
+
     # 4. high scores ----------------------------------------------------------------
     m = Machine(adf)
     m.u.mem_write(0xA4, exp[2][1])

@@ -1147,7 +1147,8 @@ WaitTodTick:
                 rts
 
 ;==============================================================================
-; Keyboard interrupt: Space = fire 2, P = pause
+; Keyboard interrupt: Space = fire 2, P = pause (enhanced: N = stage skip,
+; see cheats.s)
 ;==============================================================================
 Level2Int:
                 move.l  d0,-(a7)
@@ -1173,8 +1174,8 @@ Level2Int:
                 clr.b   (SpaceKey).l
                 bra.b   .00e44
 .00e2e:
-                cmp.b   #$19,d0
-                bne.b   .00e44
+                bsr.w   CheatKeys                   ; (enhanced: N = stage skip; it
+                bne.b   .00e44                      ;  ends with the cmp.b #$19 for P)
                 eori.b  #$FF,(Paused).l
                 bne.b   .00e44
                 clr.w   (FlipCountdown).l
@@ -5229,6 +5230,7 @@ AudioIntChannel:
 ; so that nothing after it moves.
 ;==============================================================================
                 include "disk.s"
+                include "cheats.s"
 DiskCodeEnd:
                 ifgt    DiskCodeEnd-$41B4
                 fail    "the disk code is over its space ($41B4)"

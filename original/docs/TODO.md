@@ -132,6 +132,7 @@ The original already has a hidden trainer: entering **`sumita.`** as a high-scor
   - Keep the score: drop the `CheatMode` test in `AddScore` (and don't save those scores).
   - Level select: start at any of the 8 levels (`Level`, `LoadLevel`), and maybe at any checkpoint.
   - Full weapons: start with the Force, both Bits and a chosen laser.
+- [x] **Stage skip (enhanced, for testing)**: N in play ends the stage (`enhanced/src/cheats.s`); `CheatFlags` holds a bit per cheat for the menu to set.
 - [ ] **Keys**: the keyboard interrupt (`Level2Int`) only reads Space (fire 2) and P (pause); cheat toggles can be added there.  The ship itself is steered by the joystick in port 2 (`JOY1DAT`), so keyboard play in an emulator goes through its joystick mapping.
 
 ### Display and drawing speed-ups (as in GnG and NZS)
