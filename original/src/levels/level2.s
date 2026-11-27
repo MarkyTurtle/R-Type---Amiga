@@ -583,144 +583,144 @@ Brood_DrawCells:
                 rts
 UpdateBroods:
                 lea.l   (Brood1).l,a0
-                bsr.b   .4AB9E
+                bsr.b   .4AB9E                  ; run Brood1, then fall through for Brood2
                 lea.l   (Brood2).l,a0
 .4AB9E:
-                tst.b   $4(a0)
+                tst.b   $4(a0)                  ; destroyed?
                 beq.b   .4ABAC
-                movea.l $18(a0),a1
-                clr.l   (a0)
+                movea.l $18(a0),a1              ; yes: draw the destroyed cells
+                clr.l   (a0)                    ; and stop
                 bra.b   Brood_DrawCells
 .4ABAC:
-                move.l  (a0),d0
+                move.l  (a0),d0                 ; current state routine
                 beq.b   BroodRts
                 movea.l d0,a1
                 jmp     (a1)
 Brood_Wait:
-                move.w  $8(a0),d0
+                move.w  $8(a0),d0               ; appear at this scroll x
                 cmp.w   (ScrollX).w,d0
                 bne.b   BroodRts
-                move.w  $E(a0),d1
-                move.w  #$16B,d0
-                move.w  #$1388,d2
-                lea.l   (Def_Brood).l,a2
+                move.w  $E(a0),d1               ; the Brood's y
+                move.w  #$16B,d0                ; at the right edge
+                move.w  #$1388,d2               ; 5000 hit points: only the 35-hit check counts
+                lea.l   (Def_Brood).l,a2        ; the invisible target
                 movea.l a0,a3
                 jsr     (jt_ObjCreate).w
-                clr.b   $22(a0)
-                move.b  #$2,$21(a0)
-                move.l  a3,$32(a0)
-                move.w  $10(a3),$1E(a0)
-                move.w  #$7D,$3A(a0)
-                move.w  #$AF,$3C(a0)
+                clr.b   $22(a0)                 ; no animation
+                move.b  #$2,$21(a0)             ; explosion type 2
+                move.l  a3,$32(a0)              ; its record
+                move.w  $10(a3),$1E(a0)         ; frame
+                move.w  #$7D,$3A(a0)            ; a Zoid after 125 frames
+                move.w  #$AF,$3C(a0)            ; and another after 175
                 jsr     (jt_ObjInsert).w
                 movea.l a3,a0
-                move.l  #Brood_Open,(a0)
+                move.l  #Brood_Open,(a0)        ; next: open
 BroodRts:
                 rts
 Brood_Open:
-                move.w  $A(a0),d0
+                move.w  $A(a0),d0               ; open at this scroll x
                 cmp.w   (ScrollX).w,d0
                 bne.b   BroodRts
-                clr.b   $6(a0)
+                clr.b   $6(a0)                  ; in 4 steps
                 move.b  #$4,$7(a0)
-                move.l  #.4AC20,(a0)
+                move.l  #.4AC20,(a0)            ; then opening
                 rts
 .4AC20:
-                subq.b  #$1,$6(a0)
+                subq.b  #$1,$6(a0)              ; every 6 frames
                 bpl.b   .4AC50
                 move.b  #$5,$6(a0)
-                addi.l  #$18,$1C(a0)
-                addq.w  #$1,$12(a0)
+                addi.l  #$18,$1C(a0)            ; next cell frame
+                addq.w  #$1,$12(a0)             ; and target frame
                 movea.l a0,a3
-                movea.l $1C(a0),a1
+                movea.l $1C(a0),a1              ; write its cells into the map
                 bsr.w   Brood_DrawCells
                 movea.l a3,a0
-                subq.b  #$1,$7(a0)
+                subq.b  #$1,$7(a0)              ; 4 steps:
                 bne.b   .4AC50
-                move.l  #.4AC52,(a0)
+                move.l  #.4AC52,(a0)            ; then wait to close
 .4AC50:
                 rts
 .4AC52:
-                move.w  $C(a0),d0
+                move.w  $C(a0),d0               ; close at this scroll x
                 cmp.w   (ScrollX).w,d0
                 bne.b   .4AC50
-                clr.b   $6(a0)
+                clr.b   $6(a0)                  ; in 4 steps
                 move.b  #$4,$7(a0)
-                move.l  #.4AC6E,(a0)
+                move.l  #.4AC6E,(a0)            ; then closing
                 rts
 .4AC6E:
-                subq.b  #$1,$6(a0)
+                subq.b  #$1,$6(a0)              ; every 6 frames
                 bpl.b   .4AC9A
                 move.b  #$5,$6(a0)
-                subi.l  #$18,$1C(a0)
+                subi.l  #$18,$1C(a0)            ; previous cell frame
                 subq.w  #$1,$12(a0)
                 movea.l a0,a3
                 movea.l $1C(a0),a1
-                bsr.w   Brood_DrawCells
+                bsr.w   Brood_DrawCells         ; write its cells into the map
                 movea.l a3,a0
                 subq.b  #$1,$7(a0)
                 bne.b   .4AC9A
-                clr.l   (a0)
+                clr.l   (a0)                    ; closed: done
 .4AC9A:
                 rts
 Upd_Brood:
-                tst.w   $3A(a0)
+                tst.w   $3A(a0)                 ; first Zoid due?
                 beq.b   .4ACAE
                 subq.w  #$1,$3A(a0)
                 bne.b   .4ACAE
                 nop
-                bsr.w   .4AD0E
+                bsr.w   .4AD0E                  ; release it
 .4ACAE:
-                tst.w   $3C(a0)
+                tst.w   $3C(a0)                 ; second Zoid due?
                 beq.b   .4ACC0
                 subq.w  #$1,$3C(a0)
                 bne.b   .4ACC0
                 nop
-                bsr.w   .4AD0E
+                bsr.w   .4AD0E                  ; release it
 .4ACC0:
-                move.w  $A(a0),d0
+                move.w  $A(a0),d0               ; scroll with the map
                 subq.w  #$1,d0
-                cmp.w   #$10,d0
+                cmp.w   #$10,d0                 ; off the left edge: remove
                 bhi.b   .4ACD0
                 jmp     (jt_ObjKillSelf).w
 .4ACD0:
                 move.w  d0,$A(a0)
-                movea.l $32(a0),a1
-                move.w  $12(a1),d0
+                movea.l $32(a0),a1              ; its record
+                move.w  $12(a1),d0              ; frame follows the cells
                 move.w  d0,$1E(a0)
-                cmpi.w  #$23,$26(a0)
+                cmpi.w  #$23,$26(a0)            ; 35 hits:
                 bcs.b   .4AD0C
-                st.b    $4(a1)
-                move.b  #$1,$5(a0)
+                st.b    $4(a1)                  ; destroyed (UpdateBroods draws the wreck)
+                move.b  #$1,$5(a0)              ; explode
                 clr.l   $6(a0)
-                cmp.w   #$5,d0
+                cmp.w   #$5,d0                  ; open (frame 5+):
                 bcs.b   .4AD02
-                subi.w  #$2B,$C(a0)
+                subi.w  #$2B,$C(a0)             ; the explosion 43 pixels higher
 .4AD02:
-                move.l  #$700,d0
+                move.l  #$700,d0                ; 700 points
                 jmp     (jt_AddScore).w
 .4AD0C:
                 rts
 .4AD0E:
-                movea.l a0,a1
+                movea.l a0,a1                   ; a1 = the Brood
                 movem.w $A(a1),d0-d1
-                add.w   #$A,d0
+                add.w   #$A,d0                  ; from its middle
                 addq.w  #$8,d1
-                cmp.w   #$64,d1
+                cmp.w   #$64,d1                 ; upper Brood:
                 bhi.b   .4AD26
-                sub.w   #$18,d1
+                sub.w   #$18,d1                 ; 24 pixels higher
 .4AD26:
-                moveq   #5,d2
+                moveq   #5,d2                   ; 5 hit points
                 lea.l   (Def_Zoid).l,a2
                 jsr     (jt_ObjCreate).w
-                cmpi.w  #$5A,$C(a0)
+                cmpi.w  #$5A,$C(a0)             ; upper half of the screen:
                 bhi.b   .4AD40
-                st.b    $32(a0)
+                st.b    $32(a0)                 ; $32 = -1: paths mirrored for the ceiling
                 bra.b   .4AD44
 .4AD40:
-                clr.b   $32(a0)
+                clr.b   $32(a0)                 ; lower half: 0
 .4AD44:
-                moveq   #100,d0
+                moveq   #100,d0                 ; path: 71% the 37-step one, 29% the 78-step one
                 jsr     (jt_Random).w
                 moveq   #0,d2
                 cmp.w   #$46,d0
@@ -728,134 +728,134 @@ Upd_Brood:
                 moveq   #1,d2
 .4AD54:
                 moveq   #37,d1
-                move.b  d2,$33(a0)
+                move.b  d2,$33(a0)              ; path number
                 bne.b   .4AD5E
                 moveq   #78,d1
 .4AD5E:
-                clr.w   $34(a0)
-                move.w  d1,$38(a0)
+                clr.w   $34(a0)                 ; path step
+                move.w  d1,$38(a0)              ; steps on the path
                 clr.b   $36(a0)
                 clr.w   $3C(a0)
-                move.w  $26(a0),$3A(a0)
+                move.w  $26(a0),$3A(a0)         ; damage so far: a hit ends the path early
                 jsr     (jt_ObjInsert).w
                 movea.l a1,a0
                 rts
 Upd_Zoid:
-                tst.b   $36(a0)
+                tst.b   $36(a0)                 ; off its path?
                 bne.w   .4AE1A
-                move.w  $26(a0),d0
+                move.w  $26(a0),d0              ; hit:
                 cmp.w   $3A(a0),d0
-                bne.b   .4ADE8
-                lea.l   ($7252F).l,a1
+                bne.b   .4ADE8                  ; leave the path
+                lea.l   ($7252F).l,a1           ; path 1: dx table, dy 38 bytes on
                 lea.l   $26(a1),a2
-                tst.b   $33(a0)
+                tst.b   $33(a0)                 ; path 1?
                 bne.b   .4ADA8
-                lea.l   ($72496).l,a1
+                lea.l   ($72496).l,a1           ; path 0: dx table, dy 78 bytes on
                 lea.l   $4E(a1),a2
 .4ADA8:
-                move.w  $34(a0),d2
+                move.w  $34(a0),d2              ; step
                 addq.w  #$1,$34(a0)
                 movem.w $A(a0),d0-d1
                 move.b  (a1,d2.w),d3
                 move.b  (a2,d2.w),d4
-                cmp.b   #$7F,d4
-                beq.b   .4ADE8
+                cmp.b   #$7F,d4                 ; end of the path:
+                beq.b   .4ADE8                  ; go free
                 ext.w   d3
                 ext.w   d4
-                tst.b   $32(a0)
+                tst.b   $32(a0)                 ; lower Brood:
                 bmi.b   .4ADD0
-                neg.w   d4
+                neg.w   d4                      ; mirror dy (the tables are for the ceiling)
 .4ADD0:
                 add.w   d3,d0
                 add.w   d4,d1
-                cmp.w   #$20,d0
-                bcs.b   .4ADE8
+                cmp.w   #$20,d0                 ; outside x $20-$12E:
+                bcs.b   .4ADE8                  ; go free
                 cmp.w   #$12E,d0
                 bhi.b   .4ADE8
                 movem.w d0-d1,$A(a0)
                 rts
 .4ADE8:
-                move.b  #$1,$36(a0)
-                move.l  #ZoidAnim,$2A(a0)
+                move.b  #$1,$36(a0)             ; free
+                move.l  #ZoidAnim,$2A(a0)       ; animate
                 st.b    $22(a0)
                 clr.b   $20(a0)
-                move.w  #$5,$1E(a0)
-                clr.w   $32(a0)
+                move.w  #$5,$1E(a0)             ; from frame 5
+                clr.w   $32(a0)                 ; hover
                 clr.w   $34(a0)
-                move.w  #$F,$38(a0)
-                move.w  $26(a0),$3A(a0)
+                move.w  #$F,$38(a0)             ; for 15 frames
+                move.w  $26(a0),$3A(a0)         ; damage seen
                 rts
 .4AE1A:
-                subq.w  #$1,$38(a0)
+                subq.w  #$1,$38(a0)             ; time for a new heading?
                 bmi.w   .4AEB0
-                tst.b   $3D(a0)
-                beq.b   .4AE7E
-                move.w  $26(a0),d0
+                tst.b   $3D(a0)                 ; still hovering:
+                beq.b   .4AE7E                  ; wait
+                move.w  $26(a0),d0              ; hit?
                 cmp.w   $3A(a0),d0
                 beq.b   .4AE50
-                move.w  d0,$3A(a0)
-                clr.w   $32(a0)
-                move.w  #$8,$34(a0)
-                move.w  #$C0,d0
+                move.w  d0,$3A(a0)              ; yes:
+                clr.w   $32(a0)                 ; drop straight down
+                move.w  #$8,$34(a0)             ; 8 pixels a frame
+                move.w  #$C0,d0                 ; to 16 pixels above y $C0
                 sub.w   $C(a0),d0
                 lsr.w   #$3,d0
                 subq.w  #$2,d0
                 move.w  d0,$38(a0)
 .4AE50:
-                movem.w $32(a0),d0-d1
+                movem.w $32(a0),d0-d1           ; dx, dy
                 movem.w $A(a0),d2-d3
                 add.w   d0,d2
                 add.w   d1,d3
-                cmp.w   #$30,d2
+                cmp.w   #$30,d2                 ; would leave x $30-$12E
                 blt.b   .4AE80
                 cmp.w   #$12E,d2
                 bhi.b   .4AE80
-                cmp.w   #$30,d3
+                cmp.w   #$30,d3                 ; or y $30-$C0:
                 blt.b   .4AE80
                 cmp.w   #$C0,d3
                 bhi.b   .4AE80
-                movem.w d2-d3,$A(a0)
+                movem.w d2-d3,$A(a0)            ; no: move
 .4AE7E:
                 rts
 .4AE80:
-                lsr.w   $38(a0)
+                lsr.w   $38(a0)                 ; bounce: halve the time left
                 moveq   #0,d0
                 moveq   #0,d1
-                move.b  $37(a0),d1
-                lea.l   (ZoidTurns).l,a1
+                move.b  $37(a0),d1              ; direction
+                lea.l   (ZoidTurns).l,a1        ; turned direction for a bounce
                 move.b  (a1,d1.w),d0
                 move.b  d0,$37(a0)
-                lsl.w   #$2,d0
+                lsl.w   #$2,d0                  ; its dx, dy
                 lea.l   (ZoidSteps).l,a1
                 movem.w (a1,d0.w),d2-d3
                 movem.w d2-d3,$32(a0)
                 bra.b   .4AE50
 .4AEB0:
-                st.b    $3D(a0)
-                subq.b  #$1,$3C(a0)
+                st.b    $3D(a0)                 ; moving
+                subq.b  #$1,$3C(a0)             ; every 5th heading
                 bpl.b   .4AED2
-                move.b  #$4,$3C(a0)
+                move.b  #$4,$3C(a0)             ; aims at the ship
                 movem.w $A(a0),d0-d1
                 movem.w (ShipPos).w,d2-d3
                 jsr     (jt_DirectionTo).w
                 bra.b   .4AED8
 .4AED2:
-                moveq   #16,d0
+                moveq   #16,d0                  ; the others: a random direction
                 jsr     (jt_Random).w
 .4AED8:
-                move.b  d0,$37(a0)
+                move.b  d0,$37(a0)              ; direction 0-15
                 move.w  d0,d1
-                moveq   #100,d0
+                moveq   #100,d0                 ; 91%: slow (2 pixels a frame), 9% fast (4)
                 jsr     (jt_Random).w
                 cmp.w   #$5A,d0
                 bhi.b   .4AEEE
                 add.w   #$10,d1
 .4AEEE:
-                lsl.w   #$2,d1
+                lsl.w   #$2,d1                  ; dx, dy for it
                 lea.l   (ZoidSteps).l,a1
                 movem.w (a1,d1.w),d2-d3
                 movem.w d2-d3,$32(a0)
-                moveq   #100,d0
+                moveq   #100,d0                 ; for 20-119 frames
                 jsr     (jt_Random).w
                 add.w   #$14,d0
                 move.w  d0,$38(a0)
@@ -1071,9 +1071,12 @@ ZoidSteps:
                 dc.w    $0000,$0002,$FFFF,$0002,$FFFE,$0002,$FFFE,$0001
                 dc.w    $FFFE,$0000,$FFFE,$FFFF,$FFFE,$FFFE,$FFFF,$FFFE
 ; Zoid: born from a Brood.  It drifts out on one of two paths (tables at
-; $72496/$7252F), then flies around in short random straight lines, now
-; and then aiming at the ship (ZoidSteps: 16 directions at 4 and at 2
-; pixels a frame).  When hit it turns away.
+; $72496/$7252F; mirrored for the lower Brood), hovers 15 frames, then
+; flies in straight lines of 20-119 frames, every 5th aimed at the ship,
+; the others random (ZoidSteps: 16 directions at 4 and at 2 pixels a
+; frame, mostly 2), bouncing off x $30-$12E / y $30-$C0 (ZoidTurns).  A
+; hit knocks it off its path, and when free drops it 8 pixels a frame
+; towards the floor.
 ; (32x26, 2 frames, gfx $67C66, score 500, update Upd_Zoid)
 Def_Zoid:
                 dc.w    $1A03,$002E,$0340,$0002,$0000,$0000,$0006,$7C66
