@@ -48,7 +48,7 @@
 TfmxBase:
                 bra.w   TfmxCommand                             ; 52320
 TfmxPlay:
-                bra.w   L_52344                             ; 52324
+                bra.w   TfmxPlayBody                             ; 52324
 TfmxEntry2:
                 bra.w   TfmxStop                             ; 52328
 TfmxStartSong:
@@ -63,31 +63,32 @@ TfmxEntry7:
                 bra.w   TfmxIrqOff                             ; 5233C
 TfmxEntry8:
                 bra.w   TfmxChannelOff                             ; 52340
-L_52344:
+; TfmxPlayBody - one tick: start a queued song, step the track and patterns, then run the macros
+TfmxPlayBody:
                 movem.l d0-d7/a0-a7,-(a7)                   ; 52344
                 lea.l   TfmxVars(pc),a6                      ; 52348
                 tst.w   $C(a6)                              ; 5234C
-                bmi.w   L_5235C                             ; 52350
+                bmi.w   .5235C                             ; 52350
                 bsr.w   Tfmx_SongStart                             ; 52354
-                bra.w   L_52374                             ; 52358
-L_5235C:
+                bra.w   .52374                             ; 52358
+.5235C:
                 tst.w   $8(a6)                              ; 5235C
-                beq.w   L_52374                             ; 52360
+                beq.w   .52374                             ; 52360
                 tst.w   $2E(a6)                             ; 52364
-                beq.w   L_52374                             ; 52368
-                bsr.w   L_5237A                             ; 5236C
-                bsr.w   L_527CE                             ; 52370
-L_52374:
+                beq.w   .52374                             ; 52368
+                bsr.w   .5237A                             ; 5236C
+                bsr.w   TfmxMacros                             ; 52370
+.52374:
                 movem.l (a7)+,d0-d7/a0-a7                   ; 52374
                 rts                                         ; 52378
-L_5237A:
+.5237A:
                 movea.l $0(a6),a4                           ; 5237A
                 lea.l   TfmxTrack(pc),a5                      ; 5237E
                 tst.w   $2C(a6)                             ; 52382
-                beq.w   L_52392                             ; 52386
+                beq.w   .52392                             ; 52386
                 subi.w  #$1,$2C(a6)                         ; 5238A
                 rts                                         ; 52390
-L_52392:
+.52392:
                 move.w  $6(a5),$2C(a6)                      ; 52392
                 move.w  $1C0(a4),$8(a5)                     ; 52398
                 move.w  $1C2(a4),$C(a5)                     ; 5239E
@@ -97,46 +98,47 @@ L_52392:
                 move.w  $1CA(a4),$1C(a5)                    ; 523B6
                 move.w  $1CC(a4),$20(a5)                    ; 523BC
                 move.w  $1CE(a4),$24(a5)                    ; 523C2
-                bsr.w   L_523CE                             ; 523C8
+                bsr.w   .523CE                             ; 523C8
                 rts                                         ; 523CC
-L_523CE:
+.523CE:
                 tst.w   $2E(a6)                             ; 523CE
-                beq.w   L_5282C                             ; 523D2
+                beq.w   TfmxRts                             ; 523D2
                 movea.l a5,a0                               ; 523D6
                 clr.w   $A(a6)                              ; 523D8
-                bsr.w   L_52636                             ; 523DC
+                bsr.w   TfmxPatternChannel                             ; 523DC
                 tst.w   $A(a6)                              ; 523E0
-                bne.w   L_523CE                             ; 523E4
+                bne.w   .523CE                             ; 523E4
                 adda.l  #$4,a0                              ; 523E8
-                bsr.w   L_52636                             ; 523EE
+                bsr.w   TfmxPatternChannel                             ; 523EE
                 tst.w   $A(a6)                              ; 523F2
-                bne.w   L_523CE                             ; 523F6
+                bne.w   .523CE                             ; 523F6
                 adda.l  #$4,a0                              ; 523FA
-                bsr.w   L_52636                             ; 52400
+                bsr.w   TfmxPatternChannel                             ; 52400
                 tst.w   $A(a6)                              ; 52404
-                bne.w   L_523CE                             ; 52408
+                bne.w   .523CE                             ; 52408
                 adda.l  #$4,a0                              ; 5240C
-                bsr.w   L_52636                             ; 52412
+                bsr.w   TfmxPatternChannel                             ; 52412
                 tst.w   $A(a6)                              ; 52416
-                bne.w   L_523CE                             ; 5241A
+                bne.w   .523CE                             ; 5241A
                 adda.l  #$4,a0                              ; 5241E
-                bsr.w   L_52636                             ; 52424
+                bsr.w   TfmxPatternChannel                             ; 52424
                 tst.w   $A(a6)                              ; 52428
-                bne.w   L_523CE                             ; 5242C
+                bne.w   .523CE                             ; 5242C
                 adda.l  #$4,a0                              ; 52430
-                bsr.w   L_52636                             ; 52436
+                bsr.w   TfmxPatternChannel                             ; 52436
                 tst.w   $A(a6)                              ; 5243A
-                bne.w   L_523CE                             ; 5243E
+                bne.w   .523CE                             ; 5243E
                 adda.l  #$4,a0                              ; 52442
-                bsr.w   L_52636                             ; 52448
+                bsr.w   TfmxPatternChannel                             ; 52448
                 tst.w   $A(a6)                              ; 5244C
-                bne.w   L_523CE                             ; 52450
+                bne.w   .523CE                             ; 52450
                 adda.l  #$4,a0                              ; 52454
-                bsr.w   L_52636                             ; 5245A
+                bsr.w   TfmxPatternChannel                             ; 5245A
                 tst.w   $A(a6)                              ; 5245E
-                bne.w   L_523CE                             ; 52462
+                bne.w   .523CE                             ; 52462
                 rts                                         ; 52466
-L_52468:
+; TfmxReadTrackStep - clear the per-channel state and read the current track step
+TfmxReadTrackStep:
                 movem.l d0-d7/a0-a7,-(a7)                   ; 52468
                 clr.l   $68(a5)                             ; 5246C
                 clr.l   $6C(a5)                             ; 52470
@@ -154,7 +156,8 @@ L_52468:
                 move.w  #$FFFF,$5E(a5)                      ; 524AA
                 move.w  #$FFFF,$62(a5)                      ; 524B0
                 move.w  #$FFFF,$66(a5)                      ; 524B6
-L_524BC:
+; TfmxTrackStep - decode a track step: point each channel at its pattern (track commands loop back here)
+TfmxTrackStep:
                 move.w  $4(a5),d0                           ; 524BC
                 andi.l  #$1FF,d0                            ; 524C0
                 asl.w   #$4,d0                              ; 524C6
@@ -165,99 +168,99 @@ L_524BC:
                 adda.l  #$400,a1                            ; 524D4
                 move.w  (a0),d0                             ; 524DA
                 cmp.w   #$F9FF,d0                           ; 524DC
-                bcs.w   L_5250E                             ; 524E0
+                bcs.w   .5250E                             ; 524E0
                 cmp.w   #$FA02,d0                           ; 524E4
-                bcc.w   L_5250E                             ; 524E8
+                bcc.w   .5250E                             ; 524E8
                 subi.w  #$FA00,d0                           ; 524EC
                 asl.w   #$2,d0                              ; 524F0
                 lea.l   TrackCmds(pc),a1                      ; 524F2
                 move.l  (a1,d0.w),d0                        ; 524F6
                 lea.l   TfmxBase(pc),a1                      ; 524FA
                 add.l   a1,d0                               ; 524FE
-                lea.l   L_52508(pc),a1                      ; 52500
+                lea.l   .52508(pc),a1                      ; 52500
                 move.l  d0,$2(a1)                           ; 52504
-L_52508:
+.52508:
                 jmp     ($0).l                              ; 52508
-L_5250E:
+.5250E:
                 move.w  d0,$48(a5)                          ; 5250E
-                bmi.w   L_52528                             ; 52512
+                bmi.w   .52528                             ; 52512
                 ror.w   #$8,d0                              ; 52516
                 andi.w  #$7F,d0                             ; 52518
                 asl.w   #$2,d0                              ; 5251C
                 move.l  (a1,d0.w),d0                        ; 5251E
                 add.l   a4,d0                               ; 52522
                 move.l  d0,$28(a5)                          ; 52524
-L_52528:
+.52528:
                 move.w  $2(a0),d0                           ; 52528
                 move.w  d0,$4C(a5)                          ; 5252C
-                bmi.w   L_52546                             ; 52530
+                bmi.w   .52546                             ; 52530
                 ror.w   #$8,d0                              ; 52534
                 andi.w  #$7F,d0                             ; 52536
                 asl.w   #$2,d0                              ; 5253A
                 move.l  (a1,d0.w),d0                        ; 5253C
                 add.l   a4,d0                               ; 52540
                 move.l  d0,$2C(a5)                          ; 52542
-L_52546:
+.52546:
                 move.w  $4(a0),d0                           ; 52546
                 move.w  d0,$50(a5)                          ; 5254A
-                bmi.w   L_52564                             ; 5254E
+                bmi.w   .52564                             ; 5254E
                 ror.w   #$8,d0                              ; 52552
                 andi.w  #$7F,d0                             ; 52554
                 asl.w   #$2,d0                              ; 52558
                 move.l  (a1,d0.w),d0                        ; 5255A
                 add.l   a4,d0                               ; 5255E
                 move.l  d0,$30(a5)                          ; 52560
-L_52564:
+.52564:
                 move.w  $6(a0),d0                           ; 52564
                 move.w  d0,$54(a5)                          ; 52568
-                bmi.w   L_52582                             ; 5256C
+                bmi.w   .52582                             ; 5256C
                 ror.w   #$8,d0                              ; 52570
                 andi.w  #$7F,d0                             ; 52572
                 asl.w   #$2,d0                              ; 52576
                 move.l  (a1,d0.w),d0                        ; 52578
                 add.l   a4,d0                               ; 5257C
                 move.l  d0,$34(a5)                          ; 5257E
-L_52582:
+.52582:
                 move.w  $8(a0),d0                           ; 52582
                 move.w  d0,$58(a5)                          ; 52586
-                bmi.w   L_525A0                             ; 5258A
+                bmi.w   .525A0                             ; 5258A
                 ror.w   #$8,d0                              ; 5258E
                 andi.w  #$7F,d0                             ; 52590
                 asl.w   #$2,d0                              ; 52594
                 move.l  (a1,d0.w),d0                        ; 52596
                 add.l   a4,d0                               ; 5259A
                 move.l  d0,$38(a5)                          ; 5259C
-L_525A0:
+.525A0:
                 move.w  $A(a0),d0                           ; 525A0
                 move.w  d0,$5C(a5)                          ; 525A4
-                bmi.w   L_525BE                             ; 525A8
+                bmi.w   .525BE                             ; 525A8
                 ror.w   #$8,d0                              ; 525AC
                 andi.w  #$7F,d0                             ; 525AE
                 asl.w   #$2,d0                              ; 525B2
                 move.l  (a1,d0.w),d0                        ; 525B4
                 add.l   a4,d0                               ; 525B8
                 move.l  d0,$3C(a5)                          ; 525BA
-L_525BE:
+.525BE:
                 move.w  $C(a0),d0                           ; 525BE
                 move.w  d0,$60(a5)                          ; 525C2
-                bmi.w   L_525DC                             ; 525C6
+                bmi.w   .525DC                             ; 525C6
                 ror.w   #$8,d0                              ; 525CA
                 andi.w  #$7F,d0                             ; 525CC
                 asl.w   #$2,d0                              ; 525D0
                 move.l  (a1,d0.w),d0                        ; 525D2
                 add.l   a4,d0                               ; 525D6
                 move.l  d0,$40(a5)                          ; 525D8
-L_525DC:
+.525DC:
                 move.w  $E(a0),d0                           ; 525DC
                 move.w  d0,$64(a5)                          ; 525E0
-                bmi.w   L_525FA                             ; 525E4
+                bmi.w   .525FA                             ; 525E4
                 ror.w   #$8,d0                              ; 525E8
                 andi.w  #$7F,d0                             ; 525EA
                 asl.w   #$2,d0                              ; 525EE
                 move.l  (a1,d0.w),d0                        ; 525F0
                 add.l   a4,d0                               ; 525F4
                 move.l  d0,$44(a5)                          ; 525F6
-L_525FA:
+.525FA:
                 movem.l (a7)+,d0-d7/a0-a7                   ; 525FA
                 rts                                         ; 525FE
 Track_Stop:
@@ -266,54 +269,56 @@ Track_Stop:
                 rts                                         ; 52608
 Track_Loop:
                 move.w  $2(a0),$4(a5)                       ; 5260A
-                bra.w   L_524BC                             ; 52610
+                bra.w   TfmxTrackStep                             ; 52610
 Track_Speed:
                 move.w  $2(a0),$6(a5)                       ; 52614
                 move.w  $2(a0),$2C(a6)                      ; 5261A
                 addi.w  #$1,$4(a5)                          ; 52620
-                bra.w   L_524BC                             ; 52626
+                bra.w   TfmxTrackStep                             ; 52626
 TrackCmds:
                 dc.l    Track_Stop-TfmxBase
                 dc.l    Track_Loop-TfmxBase
                 dc.l    Track_Speed-TfmxBase
-L_52636:
+; TfmxPatternChannel - one channel of pattern playback ($48: $80 off, $FF stopped, $FE waiting)
+TfmxPatternChannel:
                 cmpi.b  #$80,$48(a0)                        ; 52636
-                beq.w   L_52674                             ; 5263C
+                beq.w   .52674                             ; 5263C
                 cmpi.b  #$FF,$48(a0)                        ; 52640
-                beq.w   L_5282C                             ; 52646
+                beq.w   TfmxRts                             ; 52646
                 cmpi.b  #$FE,$48(a0)                        ; 5264A
-                bne.w   L_5266A                             ; 52650
+                bne.w   .5266A                             ; 52650
                 tst.w   $68(a0)                             ; 52654
-                bne.w   L_5282C                             ; 52658
+                bne.w   TfmxRts                             ; 52658
                 move.w  #$1,$68(a0)                         ; 5265C
                 move.b  $49(a0),d0                          ; 52662
                 bra.w   TfmxChannelOff                             ; 52666
-L_5266A:
+.5266A:
                 cmpi.b  #$FD,$48(a0)                        ; 5266A
-                bne.w   L_52674                             ; 52670
-L_52674:
+                bne.w   .52674                             ; 52670
+.52674:
                 tst.w   $6A(a0)                             ; 52674
-                beq.w   L_52684                             ; 52678
+                beq.w   PatternStep                             ; 52678
                 subi.w  #$1,$6A(a0)                         ; 5267C
                 rts                                         ; 52682
-L_52684:
+; PatternStep - fetch and act on the next pattern note or command
+PatternStep:
                 move.w  $68(a0),d0                          ; 52684
                 asl.w   #$2,d0                              ; 52688
                 movea.l $28(a0),a1                          ; 5268A
                 move.l  (a1,d0.w),$28(a6)                   ; 5268E
                 cmpi.b  #$EF,$28(a6)                        ; 52694
-                bcc.w   L_526BA                             ; 5269A
+                bcc.w   .526BA                             ; 5269A
                 move.b  $49(a0),d0                          ; 5269E
                 add.b   d0,$28(a6)                          ; 526A2
                 move.l  $28(a6),d0                          ; 526A6
                 tst.w   $8(a0)                              ; 526AA
-                bne.w   L_526B6                             ; 526AE
+                bne.w   .526B6                             ; 526AE
                 bsr.w   TfmxNote                             ; 526B2
-L_526B6:
-                bra.w   L_526F0                             ; 526B6
-L_526BA:
+.526B6:
+                bra.w   PatternNext                             ; 526B6
+.526BA:
                 cmpi.b  #$F5,$28(a6)                        ; 526BA
-                bcc.w   L_526F0                             ; 526C0
+                bcc.w   PatternNext                             ; 526C0
                 move.b  $28(a6),d0                          ; 526C4
                 subi.b  #$F0,d0                             ; 526C8
                 andi.l  #$FF,d0                             ; 526CC
@@ -322,45 +327,47 @@ L_526BA:
                 move.l  (a1,d0.w),d1                        ; 526D8
                 lea.l   TfmxBase(pc),a1                      ; 526DC
                 add.l   a1,d1                               ; 526E0
-                lea.l   L_526EA(pc),a1                      ; 526E2
+                lea.l   .526EA(pc),a1                      ; 526E2
                 move.l  d1,$2(a1)                           ; 526E6
-L_526EA:
+.526EA:
                 jmp     ($0).l                              ; 526EA
-L_526F0:
+; PatternNext - advance the pattern position and fetch again
+PatternNext:
                 addi.w  #$1,$68(a0)                         ; 526F0
-                bra.w   L_52684                             ; 526F6
-L_526FA:
+                bra.w   PatternStep                             ; 526F6
+; PatternAdvance - advance the pattern position and stop for this tick
+PatternAdvance:
                 addi.w  #$1,$68(a0)                         ; 526FA
                 rts                                         ; 52700
 Pat_End:
                 move.w  $4(a5),d0                           ; 52702
                 cmp.w   $2(a5),d0                           ; 52706
-                bne.w   L_52718                             ; 5270A
+                bne.w   .52718                             ; 5270A
                 move.w  $0(a5),$4(a5)                       ; 5270E
-                bra.w   L_5271E                             ; 52714
-L_52718:
+                bra.w   .5271E                             ; 52714
+.52718:
                 addi.w  #$1,$4(a5)                          ; 52718
-L_5271E:
-                bsr.w   L_52468                             ; 5271E
+.5271E:
+                bsr.w   TfmxReadTrackStep                             ; 5271E
                 move.w  #$1,$A(a6)                          ; 52722
                 rts                                         ; 52728
 Pat_Loop:
                 tst.b   $4A(a0)                             ; 5272A
-                beq.w   L_52746                             ; 5272E
+                beq.w   .52746                             ; 5272E
                 cmpi.b  #$FF,$4A(a0)                        ; 52732
-                beq.w   L_52750                             ; 52738
+                beq.w   .52750                             ; 52738
                 subi.b  #$1,$4A(a0)                         ; 5273C
-                bra.w   L_5275C                             ; 52742
-L_52746:
+                bra.w   .5275C                             ; 52742
+.52746:
                 move.b  #$FF,$4A(a0)                        ; 52746
-                bra.w   L_526F0                             ; 5274C
-L_52750:
+                bra.w   PatternNext                             ; 5274C
+.52750:
                 move.b  $29(a6),d0                          ; 52750
                 subi.b  #$1,d0                              ; 52754
                 move.b  d0,$4A(a0)                          ; 52758
-L_5275C:
+.5275C:
                 move.w  $2A(a6),$68(a0)                     ; 5275C
-                bra.w   L_52684                             ; 52762
+                bra.w   PatternStep                             ; 52762
 Pat_Cont:
                 move.b  $29(a6),d0                          ; 52766
                 andi.w  #$7F,d0                             ; 5276A
@@ -372,20 +379,20 @@ Pat_Cont:
                 add.l   a4,d0                               ; 52780
                 move.l  d0,$28(a5)                          ; 52782
                 move.w  $2A(a6),$68(a0)                     ; 52786
-                bra.w   L_52684                             ; 5278C
+                bra.w   PatternStep                             ; 5278C
 Pat_Wait:
                 move.b  $29(a6),$6B(a0)                     ; 52790
-                bra.w   L_526FA                             ; 52796
+                bra.w   PatternAdvance                             ; 52796
 Pat_Stop:
                 move.b  #$FF,$48(a0)                        ; 5279A
                 rts                                         ; 527A0
 Pat_KeyUp:
                 move.l  $28(a6),d0                          ; 527A2
                 tst.w   $8(a0)                              ; 527A6
-                bne.w   L_527B2                             ; 527AA
+                bne.w   .527B2                             ; 527AA
                 bsr.w   TfmxNote                             ; 527AE
-L_527B2:
-                bra.w   L_526F0                             ; 527B2
+.527B2:
+                bra.w   PatternNext                             ; 527B2
 PatternCmds:
                 dc.l    Pat_End-TfmxBase
                 dc.l    Pat_Loop-TfmxBase
@@ -393,46 +400,51 @@ PatternCmds:
                 dc.l    Pat_Wait-TfmxBase
                 dc.l    Pat_Stop-TfmxBase
                 dc.l    Pat_KeyUp-TfmxBase
-L_527CE:
+; TfmxMacros - run the macro, vibrato, portamento and envelope for all four channels
+TfmxMacros:
                 lea.l   TfmxVars(pc),a6                      ; 527CE
                 lea.l   TfmxChannels(pc),a5                      ; 527D2
                 lea.l   ($DFF0A0).l,a4                      ; 527D6
-                bsr.w   L_52810                             ; 527DC
+                bsr.w   .52810                             ; 527DC
                 adda.l  #$4,a5                              ; 527E0
                 adda.l  #$10,a4                             ; 527E6
-                bsr.w   L_52810                             ; 527EC
+                bsr.w   .52810                             ; 527EC
                 adda.l  #$4,a5                              ; 527F0
                 adda.l  #$10,a4                             ; 527F6
-                bsr.w   L_52810                             ; 527FC
+                bsr.w   .52810                             ; 527FC
                 adda.l  #$4,a5                              ; 52800
                 adda.l  #$10,a4                             ; 52806
-                bra.w   L_52810                             ; 5280C
-L_52810:
+                bra.w   .52810                             ; 5280C
+.52810:
                 tst.w   $2(a5)                              ; 52810
-                beq.w   L_5281C                             ; 52814
-                bpl.w   L_52828                             ; 52818
-L_5281C:
-                bsr.w   L_52B1E                             ; 5281C
-                bsr.w   L_52B62                             ; 52820
-                bsr.w   L_52BBE                             ; 52824
-L_52828:
-                bsr.w   L_5282E                             ; 52828
-L_5282C:
+                beq.w   .5281C                             ; 52814
+                bpl.w   .52828                             ; 52818
+.5281C:
+                bsr.w   TfmxVibrato                             ; 5281C
+                bsr.w   TfmxPortamento                             ; 52820
+                bsr.w   TfmxEnvelope                             ; 52824
+.52828:
+                bsr.w   TfmxMacroChannel                             ; 52828
+; TfmxRts - shared rts for early exits
+TfmxRts:
                 rts                                         ; 5282C
-L_5282E:
+; TfmxMacroChannel - one channel of macro playback (a5 channel, a4 Paula registers)
+TfmxMacroChannel:
                 tst.w   $2(a5)                              ; 5282E
-                beq.w   L_5282C                             ; 52832
-                bmi.w   L_5284E                             ; 52836
+                beq.w   TfmxRts                             ; 52832
+                bmi.w   MacroWait                             ; 52836
                 clr.w   $40(a5)                             ; 5283A
                 clr.w   $42(a5)                             ; 5283E
                 move.w  #$FFFF,$2(a5)                       ; 52842
                 move.w  #$FFFF,$62(a5)                      ; 52848
-L_5284E:
+; MacroWait - count down a macro wait before running the next step
+MacroWait:
                 tst.w   $42(a5)                             ; 5284E
-                beq.w   L_5285E                             ; 52852
+                beq.w   MacroStep                             ; 52852
                 subi.w  #$1,$42(a5)                         ; 52856
                 rts                                         ; 5285C
-L_5285E:
+; MacroStep - fetch the next macro command and jump through MacroCmds
+MacroStep:
                 movea.l $30(a5),a0                          ; 5285E
                 move.w  $40(a5),d0                          ; 52862
                 asl.w   #$2,d0                              ; 52866
@@ -440,62 +452,64 @@ L_5285E:
                 move.b  $28(a6),d0                          ; 5286E
                 andi.w  #$FF,d0                             ; 52872
                 cmp.w   #$15,d0                             ; 52876
-                bcc.w   L_5289C                             ; 5287A
+                bcc.w   MacroAdvance                             ; 5287A
                 asl.w   #$2,d0                              ; 5287E
                 lea.l   MacroCmds(pc),a0                      ; 52880
                 move.l  (a0,d0.w),d1                        ; 52884
                 lea.l   TfmxBase(pc),a0                      ; 52888
                 add.l   a0,d1                               ; 5288C
-                lea.l   L_52896(pc),a0                      ; 5288E
+                lea.l   .52896(pc),a0                      ; 5288E
                 move.l  d1,$2(a0)                           ; 52892
-L_52896:
+.52896:
                 jmp     ($0).l                              ; 52896
-L_5289C:
+; MacroAdvance - advance the macro position and stop for this tick
+MacroAdvance:
                 addi.w  #$1,$40(a5)                         ; 5289C
                 rts                                         ; 528A2
-L_528A4:
+; MacroNext - advance the macro position and run the next command now
+MacroNext:
                 addi.w  #$1,$40(a5)                         ; 528A4
-                bra.w   L_5284E                             ; 528AA
+                bra.w   MacroWait                             ; 528AA
 Mac_DmaOffReset:
                 move.w  $52(a5),($DFF096).l                 ; 528AE
                 clr.b   $70(a5)                             ; 528B6
                 clr.b   $92(a5)                             ; 528BA
                 clr.w   $C0(a5)                             ; 528BE
-                bra.w   L_528A4                             ; 528C2
+                bra.w   MacroNext                             ; 528C2
 Mac_DmaOn:
                 move.w  $50(a5),($DFF096).l                 ; 528C6
-                bra.w   L_528A4                             ; 528CE
+                bra.w   MacroNext                             ; 528CE
 Mac_SetBegin:
                 move.l  $28(a6),d0                          ; 528D2
                 andi.l  #$FFFFFF,d0                         ; 528D6
                 add.l   $4(a6),d0                           ; 528DC
                 move.l  d0,$B0(a5)                          ; 528E0
                 move.l  d0,$0(a4)                           ; 528E4
-                bra.w   L_528A4                             ; 528E8
+                bra.w   MacroNext                             ; 528E8
 Mac_SetLen:
                 move.w  $2A(a6),$D0(a5)                     ; 528EC
                 move.w  $2A(a6),$4(a4)                      ; 528F2
-                bra.w   L_528A4                             ; 528F8
+                bra.w   MacroNext                             ; 528F8
 Mac_Wait:
                 move.w  $2A(a6),$42(a5)                     ; 528FC
-                bra.w   L_5289C                             ; 52902
+                bra.w   MacroAdvance                             ; 52902
 Mac_Loop:
                 tst.b   $62(a5)                             ; 52906
-                beq.w   L_52922                             ; 5290A
+                beq.w   .52922                             ; 5290A
                 cmpi.b  #$FF,$62(a5)                        ; 5290E
-                beq.w   L_5292C                             ; 52914
+                beq.w   .5292C                             ; 52914
                 subi.b  #$1,$62(a5)                         ; 52918
-                bra.w   L_52938                             ; 5291E
-L_52922:
+                bra.w   .52938                             ; 5291E
+.52922:
                 move.b  #$FF,$62(a5)                        ; 52922
-                bra.w   L_5289C                             ; 52928
-L_5292C:
+                bra.w   MacroAdvance                             ; 52928
+.5292C:
                 move.b  $29(a6),d0                          ; 5292C
                 subi.b  #$1,d0                              ; 52930
                 move.b  d0,$62(a5)                          ; 52934
-L_52938:
+.52938:
                 move.w  $2A(a6),$40(a5)                     ; 52938
-                bra.w   L_5285E                             ; 5293E
+                bra.w   MacroStep                             ; 5293E
 Mac_Cont:
                 move.b  $29(a6),d0                          ; 52942
                 andi.l  #$FF,d0                             ; 52946
@@ -509,7 +523,7 @@ Mac_Cont:
                 clr.w   $42(a5)                             ; 52966
                 move.w  #$FFFF,$2(a5)                       ; 5296A
                 move.w  #$FFFF,$62(a5)                      ; 52970
-                bra.w   L_5282E                             ; 52976
+                bra.w   TfmxMacroChannel                             ; 52976
 Mac_Stop:
                 clr.w   $2(a5)                              ; 5297A
                 rts                                         ; 5297E
@@ -526,9 +540,9 @@ Mac_AddNote:
                 add.w   $2A(a6),d0                          ; 5299E
                 move.w  d0,$A0(a5)                          ; 529A2
                 tst.w   $C0(a5)                             ; 529A6
-                bne.w   L_5289C                             ; 529AA
+                bne.w   MacroAdvance                             ; 529AA
                 move.w  d0,$6(a4)                           ; 529AE
-                bra.w   L_5289C                             ; 529B2
+                bra.w   MacroAdvance                             ; 529B2
 Mac_SetNote:
                 move.b  $29(a6),d0                          ; 529B6
                 andi.w  #$FF,d0                             ; 529BA
@@ -538,15 +552,15 @@ Mac_SetNote:
                 add.w   $2A(a6),d0                          ; 529C8
                 move.w  d0,$A0(a5)                          ; 529CC
                 tst.w   $C0(a5)                             ; 529D0
-                bne.w   L_5289C                             ; 529D4
+                bne.w   MacroAdvance                             ; 529D4
                 move.w  d0,$6(a4)                           ; 529D8
-                bra.w   L_5289C                             ; 529DC
+                bra.w   MacroAdvance                             ; 529DC
 Mac_Portamento:
                 move.b  $29(a6),$82(a5)                     ; 529E0
                 move.b  #$1,$83(a5)                         ; 529E6
                 move.w  $2A(a6),$C0(a5)                     ; 529EC
                 move.w  $A0(a5),$C2(a5)                     ; 529F2
-                bra.w   L_528A4                             ; 529F8
+                bra.w   MacroNext                             ; 529F8
 Mac_Vibrato:
                 move.b  $29(a6),d0                          ; 529FC
                 andi.b  #$FE,d0                             ; 52A00
@@ -556,10 +570,10 @@ Mac_Vibrato:
                 move.b  $2B(a6),$80(a5)                     ; 52A0E
                 move.b  #$1,$81(a5)                         ; 52A14
                 tst.w   $C0(a5)                             ; 52A1A
-                bne.w   L_528A4                             ; 52A1E
+                bne.w   MacroNext                             ; 52A1E
                 move.w  $A0(a5),$6(a4)                      ; 52A22
                 clr.w   $90(a5)                             ; 52A28
-                bra.w   L_528A4                             ; 52A2C
+                bra.w   MacroNext                             ; 52A2C
 Mac_AddVolume:
                 move.w  $20(a5),d0                          ; 52A30
                 asl.w   #$1,d0                              ; 52A34
@@ -567,19 +581,19 @@ Mac_AddVolume:
                 add.w   $2A(a6),d0                          ; 52A3A
                 move.w  d0,$8(a4)                           ; 52A3E
                 move.b  d0,$60(a5)                          ; 52A42
-                bra.w   L_528A4                             ; 52A46
+                bra.w   MacroNext                             ; 52A46
 Mac_SetVolume:
                 move.w  $2A(a6),$8(a4)                      ; 52A4A
                 move.b  $2B(a6),$60(a5)                     ; 52A50
-                bra.w   L_528A4                             ; 52A56
+                bra.w   MacroNext                             ; 52A56
 Mac_Envelope:
                 move.b  $2A(a6),$70(a5)                     ; 52A5A
                 move.b  $29(a6),$73(a5)                     ; 52A60
                 move.b  $2A(a6),$71(a5)                     ; 52A66
                 move.b  $2B(a6),$72(a5)                     ; 52A6C
-                bra.w   L_528A4                             ; 52A72
+                bra.w   MacroNext                             ; 52A72
 Mac_LoopKeyUp:
-                bra.w   L_5289C                             ; 52A76
+                bra.w   MacroAdvance                             ; 52A76
 Mac_AddBegin:
                 move.w  $2A(a6),d0                          ; 52A7A
                 ext.l   d0                                  ; 52A7E
@@ -587,22 +601,22 @@ Mac_AddBegin:
                 add.l   d0,d1                               ; 52A84
                 move.l  d1,$B0(a5)                          ; 52A86
                 move.l  d1,$0(a4)                           ; 52A8A
-                bra.w   L_528A4                             ; 52A8E
+                bra.w   MacroNext                             ; 52A8E
 Mac_AddLen:
                 move.w  $2A(a6),d0                          ; 52A92
                 move.w  $D0(a5),d1                          ; 52A96
                 add.w   d0,d1                               ; 52A9A
                 move.w  d1,$D0(a5)                          ; 52A9C
                 move.w  d1,$4(a4)                           ; 52AA0
-                bra.w   L_528A4                             ; 52AA4
+                bra.w   MacroNext                             ; 52AA4
 Mac_Reset:
                 clr.b   $70(a5)                             ; 52AA8
                 clr.b   $92(a5)                             ; 52AAC
                 clr.w   $C0(a5)                             ; 52AB0
-                bra.w   L_528A4                             ; 52AB4
+                bra.w   MacroNext                             ; 52AB4
 Mac_DmaOff:
                 move.w  $52(a5),($DFF096).l                 ; 52AB8
-                bra.w   L_528A4                             ; 52AC0
+                bra.w   MacroNext                             ; 52AC0
 Mac_End:
                 clr.w   $2(a5)                              ; 52AC4
                 rts                                         ; 52AC8
@@ -628,81 +642,84 @@ MacroCmds:
                 dc.l    Mac_AddLen-TfmxBase
                 dc.l    Mac_DmaOff-TfmxBase
                 dc.l    Mac_End-TfmxBase
-L_52B1E:
+; TfmxVibrato - vibrato: add delta $80 to offset $90 each tick, negate the delta every $92 ticks
+TfmxVibrato:
                 tst.b   $92(a5)                             ; 52B1E
-                beq.w   L_5282C                             ; 52B22
+                beq.w   TfmxRts                             ; 52B22
                 move.b  $80(a5),d0                          ; 52B26
                 ext.w   d0                                  ; 52B2A
                 add.w   d0,$90(a5)                          ; 52B2C
                 move.w  $90(a5),d0                          ; 52B30
                 add.w   $A0(a5),d0                          ; 52B34
                 tst.w   $C0(a5)                             ; 52B38
-                bne.w   L_52B44                             ; 52B3C
+                bne.w   .52B44                             ; 52B3C
                 move.w  d0,$6(a4)                           ; 52B40
-L_52B44:
+.52B44:
                 subi.b  #$1,$93(a5)                         ; 52B44
-                bne.w   L_5282C                             ; 52B4A
+                bne.w   TfmxRts                             ; 52B4A
                 move.b  $92(a5),$93(a5)                     ; 52B4E
                 eori.b  #$FF,$80(a5)                        ; 52B54
                 addi.b  #$1,$80(a5)                         ; 52B5A
                 rts                                         ; 52B60
-L_52B62:
+; TfmxPortamento - portamento: slide the period from $A0 towards the target $C2
+TfmxPortamento:
                 tst.w   $C0(a5)                             ; 52B62
-                beq.w   L_5282C                             ; 52B66
+                beq.w   TfmxRts                             ; 52B66
                 subi.b  #$1,$83(a5)                         ; 52B6A
-                bne.w   L_5282C                             ; 52B70
+                bne.w   TfmxRts                             ; 52B70
                 move.b  $82(a5),$83(a5)                     ; 52B74
                 move.w  $A0(a5),d1                          ; 52B7A
                 move.w  $C2(a5),d0                          ; 52B7E
                 cmp.w   d1,d0                               ; 52B82
-                beq.w   L_5282C                             ; 52B84
-                bcs.w   L_52BAC                             ; 52B88
+                beq.w   TfmxRts                             ; 52B84
+                bcs.w   .52BAC                             ; 52B88
                 sub.w   $C0(a5),d0                          ; 52B8C
                 cmp.w   d1,d0                               ; 52B90
-                beq.w   L_52B9A                             ; 52B92
-                bcc.w   L_52BA2                             ; 52B96
-L_52B9A:
+                beq.w   .52B9A                             ; 52B92
+                bcc.w   .52BA2                             ; 52B96
+.52B9A:
                 clr.w   $C0(a5)                             ; 52B9A
                 move.w  $A0(a5),d0                          ; 52B9E
-L_52BA2:
+.52BA2:
                 move.w  d0,$C2(a5)                          ; 52BA2
                 move.w  d0,$6(a4)                           ; 52BA6
                 rts                                         ; 52BAA
-L_52BAC:
+.52BAC:
                 add.w   $C0(a5),d0                          ; 52BAC
                 cmp.w   d1,d0                               ; 52BB0
-                beq.w   L_52B9A                             ; 52BB2
-                bcc.w   L_52B9A                             ; 52BB6
-                bra.w   L_52BA2                             ; 52BBA
-L_52BBE:
+                beq.w   .52B9A                             ; 52BB2
+                bcc.w   .52B9A                             ; 52BB6
+                bra.w   .52BA2                             ; 52BBA
+; TfmxEnvelope - envelope: every $70 ticks step volume $60 by $73 towards $72, then stop
+TfmxEnvelope:
                 tst.b   $70(a5)                             ; 52BBE
-                beq.w   L_5282C                             ; 52BC2
+                beq.w   TfmxRts                             ; 52BC2
                 tst.b   $71(a5)                             ; 52BC6
-                beq.w   L_52BD6                             ; 52BCA
+                beq.w   .52BD6                             ; 52BCA
                 subi.b  #$1,$71(a5)                         ; 52BCE
                 rts                                         ; 52BD4
-L_52BD6:
+.52BD6:
                 move.b  $70(a5),$71(a5)                     ; 52BD6
                 move.b  $72(a5),d0                          ; 52BDC
                 cmp.b   $60(a5),d0                          ; 52BE0
-                bcc.w   L_52C0E                             ; 52BE4
+                bcc.w   .52C0E                             ; 52BE4
                 move.b  $73(a5),d1                          ; 52BE8
                 sub.b   d1,$60(a5)                          ; 52BEC
                 cmp.b   $60(a5),d0                          ; 52BF0
-                bpl.w   L_52BFC                             ; 52BF4
-                bcs.w   L_52C1E                             ; 52BF8
-L_52BFC:
+                bpl.w   .52BFC                             ; 52BF4
+                bcs.w   .52C1E                             ; 52BF8
+.52BFC:
                 move.b  $72(a5),d0                          ; 52BFC
                 andi.w  #$FF,d0                             ; 52C00
                 move.w  d0,$8(a4)                           ; 52C04
                 clr.b   $70(a5)                             ; 52C08
                 rts                                         ; 52C0C
-L_52C0E:
+.52C0E:
                 move.b  $73(a5),d1                          ; 52C0E
                 add.b   d1,$60(a5)                          ; 52C12
                 cmp.b   $60(a5),d0                          ; 52C16
-                bcs.w   L_52BFC                             ; 52C1A
-L_52C1E:
+                bcs.w   .52BFC                             ; 52C1A
+.52C1E:
                 move.b  $60(a5),d0                          ; 52C1E
                 andi.w  #$FF,d0                             ; 52C22
                 move.w  d0,$8(a4)                           ; 52C26
@@ -718,11 +735,11 @@ TfmxNote:
                 asl.w   #$2,d1                              ; 52C42
                 adda.w  d1,a5                               ; 52C44
                 cmp.l   #$30000000,d0                       ; 52C46
-                bcs.w   L_52C5E                             ; 52C4C
+                bcs.w   .52C5E                             ; 52C4C
                 clr.b   $62(a5)                             ; 52C50
                 move.w  #$FFFF,$2(a5)                       ; 52C54
-                bra.w   L_52C9C                             ; 52C5A
-L_52C5E:
+                bra.w   .52C9C                             ; 52C5A
+.52C5E:
                 move.b  d0,$23(a5)                          ; 52C5E
                 ror.w   #$4,d2                              ; 52C62
                 andi.w  #$F,d2                              ; 52C64
@@ -741,7 +758,7 @@ L_52C5E:
                 move.l  a1,$30(a5)                          ; 52C8C
                 move.w  #$1,$0(a5)                          ; 52C90
                 move.w  #$1,$2(a5)                          ; 52C96
-L_52C9C:
+.52C9C:
                 movem.l (a7)+,d0-d7/a0-a7                   ; 52C9C
                 rts                                         ; 52CA0
 TfmxChannelOff:
@@ -773,7 +790,7 @@ Tfmx_SongStart:
                 move.w  $140(a4),$2(a5)                     ; 52CF8
                 move.w  $180(a4),$6(a5)                     ; 52CFE
                 movea.l $0(a6),a4                           ; 52D04
-                bsr.w   L_52468                             ; 52D08
+                bsr.w   TfmxReadTrackStep                             ; 52D08
                 clr.w   $A(a6)                              ; 52D0C
                 move.w  #$1,$2E(a6)                         ; 52D10
                 clr.w   $2C(a6)                             ; 52D16
@@ -822,27 +839,27 @@ TfmxIrqOff:
                 rts                                         ; 52DBE
 TfmxCommand:
                 subq.w  #$1,d0                              ; 52DC0
-                beq.w   L_52E12                             ; 52DC2
-L_52DC6:
+                beq.w   .52E12                             ; 52DC2
+.52DC6:
                 cmpi.b  #$22,(a0)+                          ; 52DC6
-                bne.w   L_52DC6                             ; 52DCA
+                bne.w   .52DC6                             ; 52DCA
                 lea.l   TfmxVars(pc),a6                      ; 52DCE
-                bsr.w   L_52E36                             ; 52DD2
+                bsr.w   TfmxParsePaths                             ; 52DD2
                 tst.l   d0                                  ; 52DD6
-                beq.w   L_52E12                             ; 52DD8
+                beq.w   .52E12                             ; 52DD8
                 move.w  #$0,d0                              ; 52DDC
                 bsr.w   Tfmx_StartSong                             ; 52DE0
                 bsr.w   TfmxIrqOn                             ; 52DE4
                 move.w  #$1,$8(a6)                          ; 52DE8
-L_52DEE:
+.52DEE:
                 btst.b  #$6,($BFE001).l                     ; 52DEE
-                beq.w   L_52DEE                             ; 52DF6
+                beq.w   .52DEE                             ; 52DF6
                 btst.b  #$7,($BFE001).l                     ; 52DFA
-                bne.w   L_52DEE                             ; 52E02
+                bne.w   .52DEE                             ; 52E02
                 bsr.w   TfmxIrqOff                             ; 52E06
                 bsr.w   TfmxStop                             ; 52E0A
-                bsr.w   L_53098                             ; 52E0E
-L_52E12:
+                bsr.w   TfmxFreeFiles                             ; 52E0E
+.52E12:
                 clr.l   d0                                  ; 52E12
                 rts                                         ; 52E14
 TfmxLevel3Int:
@@ -850,18 +867,19 @@ TfmxLevel3Int:
                 dc.w    $0006,$6100,$F51A,$4CDF,$FFFF
 TfmxOldIntJmp:
                 dc.w    $4EF9,$0000,$0000
-L_52E36:
+; TfmxParsePaths - find the mdat./smpl. names on the command line and build both paths
+TfmxParsePaths:
                 lea.l   MdatPath(pc),a1                      ; 52E36
                 lea.l   SmplPath(pc),a2                      ; 52E3A
-L_52E3E:
+.52E3E:
                 cmpi.b  #$6D,(a0)                           ; 52E3E
-                bne.w   L_52E7C                             ; 52E42
+                bne.w   .52E7C                             ; 52E42
                 cmpi.b  #$64,$1(a0)                         ; 52E46
-                bne.w   L_52E7C                             ; 52E4C
+                bne.w   .52E7C                             ; 52E4C
                 cmpi.b  #$61,$2(a0)                         ; 52E50
-                bne.w   L_52E7C                             ; 52E56
+                bne.w   .52E7C                             ; 52E56
                 cmpi.b  #$74,$3(a0)                         ; 52E5A
-                bne.w   L_52E7C                             ; 52E60
+                bne.w   .52E7C                             ; 52E60
                 move.b  (a0)+,(a1)+                         ; 52E64
                 move.b  (a0)+,(a1)+                         ; 52E66
                 move.b  (a0)+,(a1)+                         ; 52E68
@@ -870,13 +888,13 @@ L_52E3E:
                 move.b  #$6D,(a2)+                          ; 52E70
                 move.b  #$70,(a2)+                          ; 52E74
                 move.b  #$6C,(a2)+                          ; 52E78
-L_52E7C:
+.52E7C:
                 cmpi.b  #$22,(a0)                           ; 52E7C
-                beq.w   L_52E8C                             ; 52E80
+                beq.w   .52E8C                             ; 52E80
                 move.b  (a0),(a1)+                          ; 52E84
                 move.b  (a0)+,(a2)+                         ; 52E86
-                bra.w   L_52E3E                             ; 52E88
-L_52E8C:
+                bra.w   .52E3E                             ; 52E88
+.52E8C:
                 clr.b   (a1)+                               ; 52E8C
                 clr.b   (a2)+                               ; 52E8E
                 lea.l   DosName(pc),a1                      ; 52E90
@@ -885,7 +903,7 @@ L_52E8C:
                 jsr     -$198(a6)                           ; 52E9C
                 movea.l (a7)+,a6                            ; 52EA0
                 tst.l   d0                                  ; 52EA2
-                beq.w   L_53096                             ; 52EA4
+                beq.w   .53096                             ; 52EA4
                 move.l  d0,$14(a6)                          ; 52EA8
                 lea.l   SmplPath(pc),a0                      ; 52EAC
                 move.l  a0,d1                               ; 52EB0
@@ -897,14 +915,14 @@ L_52E8C:
                 movem.l (a7)+,a5-a6                         ; 52EC8
                 move.l  d0,$1C(a6)                          ; 52ECC
                 move.l  d0,d1                               ; 52ED0
-                lea.l   D_532F0(pc),a0                      ; 52ED2
+                lea.l   TfmxFib(pc),a0                      ; 52ED2
                 move.l  a0,d2                               ; 52ED6
                 movem.l a5-a6,-(a7)                         ; 52ED8
                 lea.l   TfmxVars(pc),a5                      ; 52EDC
                 movea.l $14(a5),a6                          ; 52EE0
                 jsr     -$66(a6)                            ; 52EE4
                 movem.l (a7)+,a5-a6                         ; 52EE8
-                lea.l   D_532F0(pc),a0                      ; 52EEC
+                lea.l   TfmxFib(pc),a0                      ; 52EEC
                 move.l  $7C(a0),$20(a6)                     ; 52EF0
                 move.l  $1C(a6),d1                          ; 52EF6
                 movem.l a5-a6,-(a7)                         ; 52EFA
@@ -919,7 +937,7 @@ L_52E8C:
                 jsr     -$C6(a6)                            ; 52F20
                 movea.l (a7)+,a6                            ; 52F24
                 tst.l   d0                                  ; 52F26
-                beq.w   L_53096                             ; 52F28
+                beq.w   .53096                             ; 52F28
                 move.l  d0,$4(a6)                           ; 52F2C
                 lea.l   SmplPath(pc),a0                      ; 52F30
                 move.l  a0,d1                               ; 52F34
@@ -930,7 +948,7 @@ L_52E8C:
                 jsr     -$1E(a6)                            ; 52F48
                 movem.l (a7)+,a5-a6                         ; 52F4C
                 tst.l   d0                                  ; 52F50
-                beq.w   L_53096                             ; 52F52
+                beq.w   .53096                             ; 52F52
                 move.l  d0,$18(a6)                          ; 52F56
                 move.l  d0,d1                               ; 52F5A
                 move.l  $4(a6),d2                           ; 52F5C
@@ -956,14 +974,14 @@ L_52E8C:
                 movem.l (a7)+,a5-a6                         ; 52FAC
                 move.l  d0,$1C(a6)                          ; 52FB0
                 move.l  d0,d1                               ; 52FB4
-                lea.l   D_532F0(pc),a0                      ; 52FB6
+                lea.l   TfmxFib(pc),a0                      ; 52FB6
                 move.l  a0,d2                               ; 52FBA
                 movem.l a5-a6,-(a7)                         ; 52FBC
                 lea.l   TfmxVars(pc),a5                      ; 52FC0
                 movea.l $14(a5),a6                          ; 52FC4
                 jsr     -$66(a6)                            ; 52FC8
                 movem.l (a7)+,a5-a6                         ; 52FCC
-                lea.l   D_532F0(pc),a0                      ; 52FD0
+                lea.l   TfmxFib(pc),a0                      ; 52FD0
                 move.l  $7C(a0),$24(a6)                     ; 52FD4
                 move.l  $1C(a6),d1                          ; 52FDA
                 movem.l a5-a6,-(a7)                         ; 52FDE
@@ -978,7 +996,7 @@ L_52E8C:
                 jsr     -$C6(a6)                            ; 53004
                 movea.l (a7)+,a6                            ; 53008
                 tst.l   d0                                  ; 5300A
-                beq.w   L_53096                             ; 5300C
+                beq.w   .53096                             ; 5300C
                 move.l  d0,$0(a6)                           ; 53010
                 lea.l   MdatPath(pc),a0                      ; 53014
                 move.l  a0,d1                               ; 53018
@@ -989,7 +1007,7 @@ L_52E8C:
                 jsr     -$1E(a6)                            ; 5302C
                 movem.l (a7)+,a5-a6                         ; 53030
                 tst.l   d0                                  ; 53034
-                beq.w   L_53096                             ; 53036
+                beq.w   .53096                             ; 53036
                 move.l  d0,$18(a6)                          ; 5303A
                 move.l  d0,d1                               ; 5303E
                 move.l  $0(a6),d2                           ; 53040
@@ -1010,12 +1028,13 @@ L_52E8C:
                 movea.l ($4).l,a6                           ; 5307A
                 jsr     -$19E(a6)                           ; 53080
                 movea.l (a7)+,a6                            ; 53084
-                bsr.w   L_530C6                             ; 53086
+                bsr.w   TfmxFlash                             ; 53086
                 move.w  #$1,$8(a6)                          ; 5308A
                 move.l  #$1,d0                              ; 53090
-L_53096:
+.53096:
                 rts                                         ; 53096
-L_53098:
+; TfmxFreeFiles - FreeMem the loaded mdat and smpl files
+TfmxFreeFiles:
                 movea.l $4(a6),a1                           ; 53098
                 move.l  $20(a6),d0                          ; 5309C
                 move.l  a6,-(a7)                            ; 530A0
@@ -1029,12 +1048,13 @@ L_53098:
                 jsr     -$D2(a6)                            ; 530BE
                 movea.l (a7)+,a6                            ; 530C2
                 rts                                         ; 530C4
-L_530C6:
+; TfmxFlash - flash COLOR00 through every colour (load done)
+TfmxFlash:
                 move.l  d0,-(a7)                            ; 530C6
                 move.w  #$FFF,d0                            ; 530C8
-L_530CC:
+.530CC:
                 move.w  d0,($DFF180).l                      ; 530CC
-                dbra    d0,L_530CC                          ; 530D2
+                dbra    d0,.530CC                          ; 530D2
                 move.l  (a7)+,d0                            ; 530D6
                 rts                                         ; 530D8
                 dc.w    $4348,$6669,$656C,$6430
@@ -1077,7 +1097,8 @@ TfmxPeriods:
                 dc.w    $010E,$00FE,$00F0,$00E3,$00D6,$00CA,$00BF,$00B4
                 dc.w    $00AA,$00A0,$0097,$008F,$0087,$007F,$0078,$0071
                 dc.w    $0000
-D_532F0:
+; TfmxFib - FileInfoBlock for Lock/Examine (fib_Size at $7C gives the file length)
+TfmxFib:
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
