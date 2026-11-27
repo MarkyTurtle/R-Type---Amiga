@@ -1251,23 +1251,23 @@ Upd_Crawler:
                 jmp     (jt_ObjKillSelf).w
 .4B532:
                 rts
-; Bold: a massive floating obstacle.  It drifts right for 470 frames, then
-; left; it only takes damage while the ship is behind it, and 70 hits
-; destroy it (40 explosions, 1500 points).
+; Bold: a massive floating obstacle.  It drifts right (a pixel every other
+; frame) for 470 frames, then left; it only takes damage while the ship is
+; behind it, and 70 hits destroy it (17 explosions, 1500 points).
 Spawn_Bold:
                 movem.w $2(a1),d0-d1
-                moveq   #-1,d2
+                moveq   #-1,d2                  ; indestructible: hits counted by its update
                 jsr     (jt_ObjCreate).w
-                clr.b   $22(a0)
-                move.b  #$A,$4(a0)
-                move.w  #$1D6,$32(a0)
-                clr.w   $34(a0)
-                clr.b   $36(a0)
+                clr.b   $22(a0)                 ; no animation
+                move.b  #$A,$4(a0)              ; priority 10
+                move.w  #$1D6,$32(a0)           ; 470 frames drifting right
+                clr.w   $34(a0)                 ; hits so far
+                clr.b   $36(a0)                 ; not exploding
                 jmp     (jt_ObjInsert).w
 Upd_Bold:
                 tst.b   $36(a0)                     ; exploding?
                 bne.w   .4B5AC
-                move.w  $26(a0),d1
+                move.w  $26(a0),d1              ; damage this frame
                 clr.w   $26(a0)
                 move.w  $A(a0),d0
                 sub.w   (ShipPos).w,d0              ; ship in front: hits don't count
@@ -1275,58 +1275,58 @@ Upd_Bold:
                 add.w   d1,$34(a0)
                 cmpi.w  #$46,$34(a0)                ; 70 hits from behind:
                 bcs.b   .4B588
-                move.w  #$110,$36(a0)
+                move.w  #$110,$36(a0)           ; exploding, 17 explosions
 .4B588:
                 tst.w   $32(a0)                     ; drift right for 470 frames,
                 bmi.b   .4B5A0
                 subq.w  #$1,$32(a0)
-                btst.b  #$0,$33(a0)
+                btst.b  #$0,$33(a0)             ; every other frame
                 beq.b   .4B5AA
-                addq.w  #$1,$A(a0)
+                addq.w  #$1,$A(a0)              ; 1 pixel right (against the scroll)
                 rts
 .4B5A0:
                 subq.w  #$1,$A(a0)                  ; then left
-                bpl.b   .4B5AA
+                bpl.b   .4B5AA                  ; off the left edge: remove
                 jmp     (jt_ObjKillSelf).w
 .4B5AA:
                 rts
 .4B5AC:
-                subq.b  #$1,$37(a0)
+                subq.b  #$1,$37(a0)             ; explosions left?
                 bmi.b   .4B5F8
                 movea.l a0,a3
-                moveq   #30,d0
+                moveq   #30,d0                  ; y = y - 10 + random(30)
                 jsr     (jt_Random).w
                 sub.w   #$A,d0
                 add.w   $C(a0),d0
                 move.w  d0,d1
-                move.w  #$60,d0
+                move.w  #$60,d0                 ; x = x - 15 + random(96)
                 jsr     (jt_Random).w
                 add.w   $A(a0),d0
                 sub.w   #$F,d0
                 moveq   #-1,d2
-                lea.l   (Def_Bold).l,a2
+                lea.l   (Def_Bold).l,a2         ; as a plain explosion
                 jsr     (jt_ObjCreate).w
-                clr.l   $6(a0)
+                clr.l   $6(a0)                  ; exploding at once
                 move.b  #$1,$5(a0)
-                move.b  #$28,$4(a0)
+                move.b  #$28,$4(a0)             ; priority 40
                 jsr     (jt_ObjInsert).w
                 movea.l a3,a0
                 rts
 .4B5F8:
-                move.b  #$1,$5(a0)
+                move.b  #$1,$5(a0)              ; then it explodes itself
                 clr.l   $6(a0)
                 move.l  #$1500,d0                   ; 1500 points
                 jmp     (jt_AddScore).w
 Spawn_MidCheetah:
-                moveq   #1,d7
-                moveq   #0,d6
-                moveq   #0,d5
+                moveq   #1,d7                   ; always 2 here (level 5: entry $06 + 1)
+                moveq   #0,d6                   ; d6 = start delay, 24 frames apart
+                moveq   #0,d5                   ; d5 = first frame
 .4B612:
-                movem.w $2(a1),d0-d1
+                movem.w $2(a1),d0-d1            ; at the wave entry's x, y
                 moveq   #1,d2
                 jsr     (jt_ObjCreate).w
                 move.w  d6,$34(a0)
-                moveq   #30,d0
+                moveq   #30,d0                  ; first beam after 0-29 frames
                 jsr     (jt_Random).w
                 move.w  d0,$32(a0)
                 move.w  d5,$1E(a0)
@@ -1336,28 +1336,28 @@ Spawn_MidCheetah:
                 dbra    d7,.4B612
                 rts
 Upd_MidCheetah:
-                tst.w   $34(a0)
+                tst.w   $34(a0)                 ; waiting to start?
                 beq.b   .4B64C
                 subq.w  #$1,$34(a0)
                 rts
 .4B64C:
-                subq.w  #$3,$A(a0)
-                bpl.b   .4B656
+                subq.w  #$3,$A(a0)              ; 3 pixels a frame left
+                bpl.b   .4B656                  ; off the left edge: remove
                 jmp     (jt_ObjKillSelf).w
 .4B656:
-                subq.w  #$1,$32(a0)
+                subq.w  #$1,$32(a0)             ; beam due?
                 bpl.b   .4B68A
-                move.w  #$32,$32(a0)
-                moveq   #10,d7
+                move.w  #$32,$32(a0)            ; every 51 frames
+                moveq   #10,d7                  ; 10 pixels below its top
                 add.w   $C(a0),d7
                 move.w  d7,d0
                 move.w  d0,d1
                 move.w  $A(a0),d0
-                moveq   #-1,d2
+                moveq   #-1,d2                  ; indestructible
                 move.l  a0,-(a7)
                 lea.l   (Def_CheetahBeam).l,a2
                 jsr     (jt_ObjCreate).w
-                bset.b  #$2,$23(a0)
+                bset.b  #$2,$23(a0)             ; not hit by weapons
                 jsr     (jt_ObjInsert).w
                 movea.l (a7)+,a0
 .4B68A:
@@ -1374,74 +1374,74 @@ Upd_CheetahBeam:
 ; points) and another rises at a random x after 100 frames - until the
 ; boss dies.
 Spawn_Sonar:
-                bsr.w   RandomX
-                move.w  #$DC,d1
-                move.w  #$7D0,d2
+                bsr.w   RandomX                 ; x 100-199
+                move.w  #$DC,d1                 ; below the floor
+                move.w  #$7D0,d2                ; 2000 hit points: 5 damage decides
                 lea.l   (Def_Sonar).l,a2
                 jsr     (jt_ObjCreate).w
-                clr.b   $22(a0)
-                clr.b   $34(a0)
-                move.b  #$14,$32(a0)
+                clr.b   $22(a0)                 ; frame set by its aim
+                clr.b   $34(a0)                 ; rise at once
+                move.b  #$14,$32(a0)            ; first shot 20 frames after it is up
                 jmp     (jt_ObjInsert).w
 Sonar_Up:
-                cmpi.w  #$5,$26(a0)
+                cmpi.w  #$5,$26(a0)             ; 5 damage:
                 bcs.b   Sonar_Aim
-                movem.w $A(a0),d0-d1
+                movem.w $A(a0),d0-d1            ; an explosion in its place
                 moveq   #-1,d2
                 lea.l   (Def_Sonar).l,a2
                 movea.l a0,a4
                 jsr     (jt_ObjCreate).w
-                move.b  #$1,$5(a0)
+                move.b  #$1,$5(a0)              ; exploding at once
                 clr.l   $6(a0)
                 jsr     (jt_ObjInsert).w
-                movea.l a4,a0
-                move.b  #$64,$34(a0)
-                move.w  #$DC,$C(a0)
-                bsr.b   RandomX
+                movea.l a4,a0                   ; the Sonar itself is reused:
+                move.b  #$64,$34(a0)            ; 100 frames later
+                move.w  #$DC,$C(a0)             ; from below the floor
+                bsr.b   RandomX                 ; at a new x
                 move.w  d0,$A(a0)
-                move.l  #Upd_Sonar,$6(a0)
-                move.l  #$500,d0
+                move.l  #Upd_Sonar,$6(a0)       ; it rises again
+                move.l  #$500,d0                ; 500 points
                 jmp     (jt_AddScore).w
 RandomX:
-                moveq   #100,d0
+                moveq   #100,d0                 ; x = 100 + random(100)
                 jsr     (jt_Random).w
                 add.w   #$64,d0
                 rts
 Sonar_Aim:
-                tst.b   (BossDead).l
+                tst.b   (BossDead).l            ; boss dead:
                 beq.b   .4B72E
-                jmp     (jt_ObjKillSelf).w
+                jmp     (jt_ObjKillSelf).w      ; no more Sonars
 .4B72E:
-                movem.w $A(a0),d0-d1
+                movem.w $A(a0),d0-d1            ; turn towards the ship
                 movem.w (ShipPos).w,d2-d3
                 jsr     (jt_DirectionTo).w
                 move.w  d0,$1E(a0)
-                subq.b  #$1,$32(a0)
+                subq.b  #$1,$32(a0)             ; shot due?
                 bne.b   .4B772
-                lea.l   (SonarMuzzles).l,a3
+                lea.l   (SonarMuzzles).l,a3     ; muzzle for the direction
                 move.w  d0,d2
                 lsl.w   #$2,d2
                 movem.w $A(a0),d0-d1
                 add.w   (a3,d2.w),d0
                 add.w   $2(a3,d2.w),d1
-                jsr     (jt_FireEnemyBullet).w
-                moveq   #20,d0
+                jsr     (jt_FireEnemyBullet).w  ; fire at the ship
+                moveq   #20,d0                  ; next in 20-39 frames
                 jsr     (jt_Random).w
                 add.w   #$14,d0
                 move.b  d0,$32(a0)
 .4B772:
                 rts
 Upd_Sonar:
-                tst.b   $34(a0)
+                tst.b   $34(a0)                 ; waiting?
                 beq.b   .4B780
                 subq.b  #$1,$34(a0)
                 rts
 .4B780:
-                subq.w  #$2,$C(a0)
-                cmpi.w  #$AA,$C(a0)
+                subq.w  #$2,$C(a0)              ; rise 2 pixels a frame
+                cmpi.w  #$AA,$C(a0)             ; to y $AA
                 bhi.b   .4B798
-                clr.w   $26(a0)
-                move.l  #Sonar_Up,$6(a0)
+                clr.w   $26(a0)                 ; hits while rising don't count
+                move.l  #Sonar_Up,$6(a0)        ; then aim and fire
 .4B798:
                 rts
 PataPataData1:
