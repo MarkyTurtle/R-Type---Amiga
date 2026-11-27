@@ -433,131 +433,131 @@ Upd_GomanderCore:
                 move.w  #$FF0,$36(a1)
                 rts
 Spawn_Worm:
-                moveq   #10,d7
-                moveq   #0,d6
-                moveq   #11,d5
-                lea.l   (WormSegments).l,a3
+                moveq   #10,d7                  ; 11 segments, priority 10 down to 0
+                moveq   #0,d6                   ; d6 = start delay, 5 frames apart
+                moveq   #11,d5                  ; d5 = explosion delay when the boss dies
+                lea.l   (WormSegments).l,a3     ; definition and animation per segment
 .4A9A8:
-                move.w  #$160,d0
+                move.w  #$160,d0                ; parked off screen until its turn
                 moveq   #60,d1
-                moveq   #-1,d2
+                moveq   #-1,d2                  ; indestructible
                 movea.l (a3)+,a2
                 jsr     (jt_ObjCreate).w
-                clr.b   $22(a0)
+                clr.b   $22(a0)                 ; segment frames come from the path
                 move.b  d7,$4(a0)
                 movea.l (a3)+,a2
                 move.l  a2,$2A(a0)
-                cmpa.l  #WormEyeAnim,a2
+                cmpa.l  #WormEyeAnim,a2         ; an eye?
                 bne.b   .4A9D0
-                st.b    $22(a0)
+                st.b    $22(a0)                 ; eyes animate
 .4A9D0:
                 move.w  d6,$34(a0)
-                clr.w   $32(a0)
-                clr.w   $3A(a0)
-                clr.b   $3C(a0)
+                clr.w   $32(a0)                 ; $32: 1 = the leading segment
+                clr.w   $3A(a0)                 ; path step
+                clr.b   $3C(a0)                 ; eye not shot
                 move.b  d5,$3D(a0)
-                cmp.w   #$A,d7
+                cmp.w   #$A,d7                  ; the first segment
                 bne.b   .4A9F0
-                move.b  #$1,$32(a0)
+                move.b  #$1,$32(a0)             ; leads
 .4A9F0:
                 jsr     (jt_ObjInsert).w
                 addq.w  #$5,d6
                 subq.w  #$1,d5
                 dbra    d7,.4A9A8
-                move.l  #WormFirstPath,(WormPath).l
+                move.l  #WormFirstPath,(WormPath).l ; the first path
                 rts
 Upd_Worm:
-                tst.b   (BossDead).l
+                tst.b   (BossDead).l            ; boss dead:
                 beq.b   .4AA22
-                subq.b  #$1,$3D(a0)
+                subq.b  #$1,$3D(a0)             ; each segment in turn
                 bpl.b   .4AA22
-                move.b  #$1,$5(a0)
+                move.b  #$1,$5(a0)              ; explodes
                 clr.l   $6(a0)
                 rts
 .4AA22:
-                tst.b   $32(a0)
+                tst.b   $32(a0)                 ; leader finished its path?
                 bmi.w   .4AB1E
 .4AA2A:
-                tst.w   $34(a0)
+                tst.w   $34(a0)                 ; waiting?
                 bmi.b   .4AA36
                 subq.w  #$1,$34(a0)
                 rts
 .4AA36:
-                tst.b   $33(a0)
+                tst.b   $33(a0)                 ; on a path?
                 bne.b   .4AA5A
-                movea.l (WormPath).l,a1
-                move.w  (a1)+,$A(a0)
-                move.w  (a1)+,$C(a0)
-                move.l  a1,$36(a0)
+                movea.l (WormPath).l,a1         ; no: start the current one
+                move.w  (a1)+,$A(a0)            ; start x
+                move.w  (a1)+,$C(a0)            ; start y
+                move.l  a1,$36(a0)              ; then steps and the dx, dy, frame tables
                 clr.w   $3A(a0)
-                clr.w   $26(a0)
-                st.b    $33(a0)
+                clr.w   $26(a0)                 ; hits count from the start of the pass
+                st.b    $33(a0)                 ; on the path
 .4AA5A:
                 movea.l $36(a0),a1
-                move.w  $3A(a0),d0
-                move.w  (a1)+,d1
-                bsr.w   .4AB14
+                move.w  $3A(a0),d0              ; step
+                move.w  (a1)+,d1                ; number of steps
+                bsr.w   .4AB14                  ; dx
                 add.w   d2,$A(a0)
-                bsr.w   .4AB14
+                bsr.w   .4AB14                  ; dy
                 add.w   d2,$C(a0)
-                tst.b   $22(a0)
+                tst.b   $22(a0)                 ; an eye?
                 bne.b   .4AA84
-                bsr.w   .4AB14
+                bsr.w   .4AB14                  ; no: frame from the path
                 move.b  d2,$1F(a0)
                 bra.b   .4AADC
 .4AA84:
-                tst.b   $3C(a0)
+                tst.b   $3C(a0)                 ; eye already shot?
                 bne.b   .4AADC
-                tst.w   $26(a0)
+                tst.w   $26(a0)                 ; or not hit:
                 beq.b   .4AADC
                 movem.l d0-d1/a0,-(a7)
-                move.l  #WormEyeShotAnim,$2A(a0)
+                move.l  #WormEyeShotAnim,$2A(a0) ; hit: the shot-eye animation
                 clr.b   $20(a0)
                 clr.w   $1E(a0)
-                movem.w $A(a0),d0-d1
+                movem.w $A(a0),d0-d1            ; and an explosion over it
                 moveq   #-1,d2
                 lea.l   (Def_WormEye).l,a2
                 jsr     (jt_ObjCreate).w
-                move.b  #$1,$5(a0)
+                move.b  #$1,$5(a0)              ; exploding at once
                 clr.l   $6(a0)
-                move.b  #$1E,$4(a0)
+                move.b  #$1E,$4(a0)             ; drawn on top
                 jsr     (jt_ObjInsert).w
-                move.l  #$200,d0
+                move.l  #$200,d0                ; 200 points
                 jsr     (jt_AddScore).w
                 movem.l (a7)+,d0-d1/a0
-                st.b    $3C(a0)
+                st.b    $3C(a0)                 ; shot (until the end of this pass)
 .4AADC:
-                cmp.w   d1,d0
+                cmp.w   d1,d0                   ; end of the path?
                 bcc.b   .4AAE6
-                addq.w  #$1,$3A(a0)
+                addq.w  #$1,$3A(a0)             ; no: next step
                 rts
 .4AAE6:
-                move.w  #$FFFF,$A(a0)
-                tst.b   $3C(a0)
+                move.w  #$FFFF,$A(a0)           ; yes: park off screen
+                tst.b   $3C(a0)                 ; eye shot:
                 beq.b   .4AAFE
-                move.l  #WormEyeAnim,$2A(a0)
+                move.l  #WormEyeAnim,$2A(a0)    ; open it again
                 clr.b   $3C(a0)
 .4AAFE:
-                clr.b   $33(a0)
-                move.w  #$55,$34(a0)
-                tst.b   $32(a0)
+                clr.b   $33(a0)                 ; off the path
+                move.w  #$55,$34(a0)            ; 85 frames before the next
+                tst.b   $32(a0)                 ; the leader
                 beq.b   .4AB12
-                st.b    $32(a0)
+                st.b    $32(a0)                 ; moves the Worm on to the next path
 .4AB12:
                 rts
 .4AB14:
-                movea.l (a1)+,a2
-                move.b  (a2,d0.w),d2
+                movea.l (a1)+,a2                ; table pointer
+                move.b  (a2,d0.w),d2            ; entry for this step
                 ext.w   d2
                 rts
 .4AB1E:
-                move.b  #$1,$32(a0)
+                move.b  #$1,$32(a0)             ; still the leader
                 movea.l (WormPath).l,a1
-                adda.l  #$12,a1
-                cmpa.l  #WormPath,a1
+                adda.l  #$12,a1                 ; next path (18 bytes each)
+                cmpa.l  #WormPath,a1            ; past the last?
                 bcs.b   .4AB42
-                lea.l   (WormPaths).l,a1
-                st.b    (LevelComplete).w
+                lea.l   (WormPaths).l,a1        ; back to the first
+                st.b    (LevelComplete).w       ; and the level ends
 .4AB42:
                 move.l  a1,(WormPath).l
                 bra.w   .4AA2A
@@ -962,9 +962,11 @@ WormSegments:
 ; The Worm: an 11-segment creature - a head at each end (WormHead), body
 ; segments next to them and 7 armoured eyes (WormEye) in between - that
 ; follows paths (WormPath: start x, y, steps, then dx/dy/frame tables in
-; level B), 5 frames apart.  Each eye can be shot out once (200 points)
-; and then shows its "shot" frame.  When the last segment finishes a path
-; the next path starts (WormPaths); after the last one the level ends.
+; level B), 5 frames apart.  Each eye can be shot out once per pass (200
+; points) and then shows its "shot" frame until the pass ends.  When the
+; leading segment finishes a path the Worm moves on to the next
+; (WormPaths, 18 bytes each); each segment waits 85 frames after its
+; pass.  After the last path the level ends.
 ; When the boss dies the segments explode one by one.
 ; (32x29, 16 frames, gfx $699A6, score 1000, update Upd_Worm, spawn Spawn_Worm)
 Def_WormHead:
