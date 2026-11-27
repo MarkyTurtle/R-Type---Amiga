@@ -143,17 +143,17 @@ LevelPalette:
 ; frames (when it runs out the level ends: the battleship has gone by),
 ; and the rear tower.
 LevelInit:
-                move.w  #$78,(ScrollY).w
-                move.l  #ShipParts,(NextShipPart).l
+                move.w  #$78,(ScrollY).w        ; the battleship starts 120 lines down
+                move.l  #ShipParts,(NextShipPart).l ; hull parts, by frame
                 clr.w   (FrameCount).l
-                lea.l   (InitialBlocks).l,a4
+                lea.l   (InitialBlocks).l,a4    ; 10 blocks of map cells
                 moveq   #9,d7
 .4A71E:
                 movea.l (a4)+,a0
                 bsr.w   PatchMap
                 dbra    d7,.4A71E
                 move.l  #EngineRoom,(EngineRoomState).l
-                move.l  #CoreIdleFrames,(CoreFramePtr).l
+                move.l  #CoreIdleFrames,(CoreFramePtr).l ; 5575 frames until it has gone by
                 clr.b   (OrbTimer).l
                 clr.w   (CoreSteps).l
                 clr.w   (CoreTimer).l
@@ -165,54 +165,54 @@ LevelInit:
 ; rear tower.
 LevelFrame:
                 addq.w  #$1,(FrameCount).l
-                movea.l (NextShipPart).l,a1
+                movea.l (NextShipPart).l,a1     ; next hull part (20 bytes each)
                 move.w  (FrameCount).l,d0
-                cmp.w   (a1)+,d0
+                cmp.w   (a1)+,d0                ; due at this frame?
                 bcs.b   .4A784
-                bsr.w   .4A79E
+                bsr.w   .4A79E                  ; create it
                 addi.l  #$14,(NextShipPart).l
 .4A784:
-                subq.w  #$1,(ShipTimer).l
+                subq.w  #$1,(ShipTimer).l       ; battleship gone by:
                 bpl.b   .4A796
-                st.b    (BossDead).l
+                st.b    (BossDead).l            ; the level ends
                 st.b    (LevelComplete).w
 .4A796:
                 bsr.w   BossPhase
                 bra.w   UpdateRearTower
 .4A79E:
-                movem.w (a1)+,d0-d1
-                move.w  #$3E8,d2
-                lea.l   (Def_ShipPart).l,a2
+                movem.w (a1)+,d0-d1             ; x, y
+                move.w  #$3E8,d2                ; 1000 hit points: only the hit count matters
+                lea.l   (Def_ShipPart).l,a2     ; an invisible target
                 jsr     (jt_ObjCreate).w
                 clr.b   $22(a0)
-                move.w  (a1)+,d0
+                move.w  (a1)+,d0                ; hits to destroy it
                 move.b  d0,$36(a0)
-                move.w  (a1)+,d0
+                move.w  (a1)+,d0                ; explosions when it goes
                 move.b  d0,$3C(a0)
-                move.w  (a1)+,d0
+                move.w  (a1)+,d0                ; which gun (PartGunOffsets)
                 move.b  d0,$3D(a0)
-                clr.b   $37(a0)
-                move.l  $4(a1),$32(a0)
-                move.w  (ScrollX).w,$38(a0)
+                clr.b   $37(a0)                 ; fire timer
+                move.l  $4(a1),$32(a0)          ; its wrecked cells
+                move.w  (ScrollX).w,$38(a0)     ; scroll position now (FollowScroll)
                 move.w  (ScrollY).w,$3A(a0)
                 jsr     (jt_ObjInsert).w
-                movea.l (a1),a0
+                movea.l (a1),a0                 ; then patch the map with the part itself
 ; PatchMap: a0 = block: map address.l, width-1.b, height-1.b, then the
 ; cells row by row - written straight into the map (parts appear, open,
 ; burn or are destroyed this way).
 PatchMap:
                 moveq   #0,d0
                 moveq   #0,d1
-                movea.l (a0)+,a1
-                move.b  (a0)+,d0
-                move.b  (a0)+,d1
+                movea.l (a0)+,a1                ; map address
+                move.b  (a0)+,d0                ; width - 1
+                move.b  (a0)+,d1                ; height - 1
 .4A7EC:
                 move.w  d0,d2
-                movea.l a1,a2
+                movea.l a1,a2                   ; one row
 .4A7F0:
                 move.w  (a0)+,(a2)+
                 dbra    d2,.4A7F0
-                adda.l  (MapRowBytes).w,a1
+                adda.l  (MapRowBytes).w,a1      ; next map row
                 dbra    d1,.4A7EC
                 rts
 ; Upd_ShipPart: a gun or panel of the hull.  It moves with the map
@@ -254,58 +254,58 @@ Upd_ShipPart:
                 subq.b  #$1,$3C(a0)                 ; one more explosion
                 move.w  #$FFFF,$24(a0)              ; (indestructible meanwhile)
                 move.l  a0,-(a7)
-                moveq   #50,d0
+                moveq   #50,d0                  ; at a random x along it
                 jsr     (jt_Random).w
                 add.w   $A(a0),d0
                 move.w  $C(a0),d1
-                moveq   #-1,d2
+                moveq   #-1,d2                  ; plain explosion
                 jsr     (jt_ObjCreate).w
-                move.b  #$1,$5(a0)
+                move.b  #$1,$5(a0)              ; exploding at once
                 clr.l   $6(a0)
                 jsr     (jt_ObjInsert).w
                 movea.l (a7)+,a0
                 rts
 ; FollowScroll: keeps an object fixed to the map as ScrollX/ScrollY change.
 FollowScroll:
-                move.w  (ScrollX).w,d0
+                move.w  (ScrollX).w,d0          ; scroll x moved by
                 move.w  d0,d1
                 sub.w   $38(a0),d0
                 move.w  d1,$38(a0)
-                sub.w   d0,$A(a0)
-                move.w  (ScrollY).w,d0
+                sub.w   d0,$A(a0)               ; move the object the other way
+                move.w  (ScrollY).w,d0          ; the same for y
                 move.w  d0,d1
                 sub.w   $3A(a0),d0
                 move.w  d1,$3A(a0)
                 sub.w   d0,$C(a0)
                 rts
 BossPhase:
-                tst.b   (BossDead).l
+                tst.b   (BossDead).l            ; core destroyed:
                 beq.b   .4A912
 .4A8C0:
-                move.w  #$96,d0
+                move.w  #$96,d0                 ; an explosion every frame: y = core y - 80 + random(150)
                 jsr     (jt_Random).w
                 sub.w   #$50,d0
                 add.w   (CoreY).l,d0
                 move.w  d0,d1
-                bmi.b   .4A8C0
+                bmi.b   .4A8C0                  ; on screen
                 cmp.w   #$E0,d1
                 bhi.b   .4A8C0
 .4A8DC:
-                move.w  #$A0,d0
+                move.w  #$A0,d0                 ; x = core x + random(160)
                 jsr     (jt_Random).w
                 add.w   (CoreX).l,d0
-                bmi.b   .4A8DC
+                bmi.b   .4A8DC                  ; on screen
                 cmp.w   #$15E,d0
                 bhi.b   .4A8DC
                 moveq   #-1,d2
-                lea.l   (Def_BattleshipCore).l,a2
+                lea.l   (Def_BattleshipCore).l,a2 ; as a plain explosion
                 jsr     (jt_ObjCreate).w
-                clr.l   $6(a0)
+                clr.l   $6(a0)                  ; exploding at once
                 move.b  #$1,$5(a0)
-                move.b  #$A,$4(a0)
+                move.b  #$A,$4(a0)              ; priority 10
                 jmp     (jt_ObjInsert).w
 .4A912:
-                movea.l (EngineRoomState).l,a1
+                movea.l (EngineRoomState).l,a1  ; engine room state routine
                 jmp     (a1)
 ; EngineRoom (the boss, from frame $5F0): the core's chamber animates in the
 ; map (CoreIdleFrames) and between frames $5F0 and $AF0 it sends out a
@@ -313,79 +313,79 @@ BossPhase:
 ; the music fades), then the core opens (CoreOpenFrames) and closes in a
 ; cycle.
 EngineRoom:
-                cmpi.w  #$5F0,(FrameCount).l
+                cmpi.w  #$5F0,(FrameCount).l    ; from frame $5F0
                 bcs.b   .4A972
-                cmpi.w  #$AF0,(FrameCount).l
+                cmpi.w  #$AF0,(FrameCount).l    ; until $AF0:
                 bcs.b   .4A942
-                subq.b  #$1,(OrbTimer).l
+                subq.b  #$1,(OrbTimer).l        ; a CoreOrb every 11 frames
                 bpl.b   .4A942
                 move.b  #$A,(OrbTimer).l
                 bsr.w   Spawn_CoreOrb
 .4A942:
-                subq.w  #$1,(CoreTimer).l
+                subq.w  #$1,(CoreTimer).l       ; chamber animation: every 4 frames
                 bpl.b   .4A972
                 move.w  #$3,(CoreTimer).l
-                movea.l (CoreFramePtr).l,a1
-                cmpa.l  #CoreOpenFrames,a1
+                movea.l (CoreFramePtr).l,a1     ; next idle frame
+                cmpa.l  #CoreOpenFrames,a1      ; past the idle frames:
                 bcs.b   .4A966
-                lea.l   (CoreIdleFrames).l,a1
+                lea.l   (CoreIdleFrames).l,a1   ; start them again
 .4A966:
                 movea.l (a1)+,a0
                 move.l  a1,(CoreFramePtr).l
-                bsr.w   PatchMap
+                bsr.w   PatchMap                ; write it into the map
 .4A972:
-                cmpi.w  #$A8C,(FrameCount).l
+                cmpi.w  #$A8C,(FrameCount).l    ; at frame $A8C:
                 bne.b   .4A998
-                moveq   #122,d0
+                moveq   #122,d0                 ; the Main Core target
                 moveq   #98,d1
-                moveq   #-1,d2
+                moveq   #-1,d2                  ; indestructible: hits counted by its update
                 lea.l   (Def_BattleshipCore).l,a2
                 jsr     (jt_ObjCreate).w
-                clr.w   $32(a0)
+                clr.w   $32(a0)                 ; damage seen
                 jsr     (jt_ObjInsert).w
-                st.b    (MusicFadeReq).w
+                st.b    (MusicFadeReq).w        ; fade the level music out
 .4A998:
-                bcs.b   .4A9C4
-                subq.w  #$1,(CoreSteps).l
+                bcs.b   .4A9C4                  ; (flags from the compare: before $A8C, done)
+                subq.w  #$1,(CoreSteps).l       ; from then on, after CoreSteps frames
                 bpl.b   .4A9C4
-                move.l  #.4A9C6,(EngineRoomState).l
-                move.l  #CoreOpenFrames,(CoreFramePtr).l
+                move.l  #.4A9C6,(EngineRoomState).l ; open the core
+                move.l  #CoreOpenFrames,(CoreFramePtr).l ; CoreOpenFrames: 11 opening, then 11 closing
                 clr.w   (CoreTimer).l
-                move.w  #$B,(CoreSteps).l
+                move.w  #$B,(CoreSteps).l       ; 11 steps
 .4A9C4:
                 rts
 .4A9C6:
                 subq.w  #$1,(CoreTimer).l
                 bpl.b   .4A9C4
-                bsr.w   .4AA36
-                bne.b   .4A9C4
-                move.w  #$19,(CoreTimer).l
+                bsr.w   .4AA36                  ; next step (every 3 frames)
+                bne.b   .4A9C4                  ; all 11?
+                move.w  #$19,(CoreTimer).l      ; stay open 26 frames
                 move.l  #.4A9E8,(EngineRoomState).l
                 rts
 .4A9E8:
                 subq.w  #$1,(CoreTimer).l
                 bpl.b   .4AA02
-                move.w  #$B,(CoreSteps).l
+                move.w  #$B,(CoreSteps).l       ; then close: 11 steps
                 move.l  #.4AA04,(EngineRoomState).l
 .4AA02:
                 rts
 .4AA04:
                 subq.w  #$1,(CoreTimer).l
                 bpl.b   .4AA02
-                bsr.w   .4AA36
-                bne.b   .4AA02
-                move.l  #EngineRoom,(EngineRoomState).l
+                bsr.w   .4AA36                  ; next step
+                bne.b   .4AA02                  ; all 11?
+                move.l  #EngineRoom,(EngineRoomState).l ; closed: back to idle
                 clr.w   (CoreTimer).l
                 move.l  #CoreIdleFrames,(CoreFramePtr).l
-                move.w  #$7D,(CoreSteps).l
+                move.w  #$7D,(CoreSteps).l      ; for 125 frames
                 rts
 .4AA36:
-                move.w  #$2,(CoreTimer).l
+                move.w  #$2,(CoreTimer).l       ; 3 frames to the next step
                 movea.l (CoreFramePtr).l,a1
-                movea.l (a1)+,a0
+                movea.l (a1)+,a0                ; next cell block
                 move.l  a1,(CoreFramePtr).l
-                bsr.w   PatchMap
-                subq.w  #$1,(CoreSteps).l
+                bsr.w   PatchMap                ; write it into the map
+                subq.w  #$1,(CoreSteps).l       ; Z set when the last is done
                 rts
 ; Upd_BattleshipCore: the Main Core, the battleship's weak point.  Moves
 ; with the map, flashes when hit; 10 hits destroy it (BossDead,
@@ -408,48 +408,48 @@ Upd_BattleshipCore:
                 rts
 Spawn_CoreOrb:
                 movea.l a0,a4
-                movem.w (CoreX).l,d0-d1
+                movem.w (CoreX).l,d0-d1         ; from the core chamber
                 sub.w   #$23,d0
                 sub.w   #$14,d1
                 moveq   #1,d2
                 lea.l   (Def_CoreOrb).l,a2
                 jsr     (jt_ObjCreate).w
-                moveq   #7,d0
+                moveq   #7,d0                   ; start at a random point of the wave (0-6)
                 jsr     (jt_Random).w
                 move.w  d0,$32(a0)
 .4AABE:
-                moveq   #4,d0
+                moveq   #4,d0                   ; x step: 2 or 1 to the right, or 1 to the left
                 jsr     (jt_Random).w
                 subq.w  #$2,d0
                 neg.w   d0
                 beq.b   .4AABE
                 move.w  d0,$34(a0)
-                move.b  #$1,$21(a0)
+                move.b  #$1,$21(a0)             ; explosion type 1
                 jsr     (jt_ObjInsert).w
                 movea.l a4,a0
                 rts
 Upd_CoreOrb:
-                movem.w $A(a0),d0-d1
+                movem.w $A(a0),d0-d1            ; on the map?
                 addq.w  #$8,d0
                 addq.w  #$8,d1
                 jsr     (jt_GetMapCell).w
                 beq.b   .4AAF8
-                move.b  #$1,$5(a0)
+                move.b  #$1,$5(a0)              ; burst
                 clr.l   $6(a0)
                 rts
 .4AAF8:
-                lea.l   ($6FCA6).l,a1
+                lea.l   ($6FCA6).l,a1           ; wave: signed y steps, $7F ends (level B)
                 move.w  $32(a0),d2
                 move.b  (a1,d2.w),d1
-                cmp.b   #$7F,d1
+                cmp.b   #$7F,d1                 ; at the end:
                 bne.b   .4AB12
-                subq.w  #$1,$32(a0)
+                subq.w  #$1,$32(a0)             ; keep the last step
                 bra.b   .4AAF8
 .4AB12:
                 addq.w  #$1,$32(a0)
                 ext.w   d1
                 move.w  $34(a0),d0
-                add.w   $A(a0),d0
+                add.w   $A(a0),d0               ; off the screen:
                 bmi.b   .4AB3C
                 cmp.w   #$170,d0
                 bhi.b   .4AB3C
@@ -460,7 +460,7 @@ Upd_CoreOrb:
                 movem.w d0-d1,$A(a0)
                 rts
 .4AB3C:
-                jmp     (jt_ObjKillSelf).w
+                jmp     (jt_ObjKillSelf).w      ; remove
 Spawn_GunTower:
                 movem.w $2(a1),d0-d1
                 moveq   #-1,d2
