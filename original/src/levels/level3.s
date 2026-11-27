@@ -828,211 +828,211 @@ Upd_EngineShot:
                 rts
 Spawn_LaserTower:
                 movem.w $2(a1),d0-d1
-                move.w  #$7D0,d2
+                move.w  #$7D0,d2                ; 2000 hit points: the damage check decides
                 jsr     (jt_ObjCreate).w
-                move.b  #$14,$4(a0)
-                move.b  #$19,$3D(a0)
-                move.w  (ScrollX).w,$38(a0)
+                move.b  #$14,$4(a0)             ; priority 20
+                move.b  #$19,$3D(a0)            ; 25 explosions when it goes
+                move.w  (ScrollX).w,$38(a0)     ; scroll position now (FollowScroll)
                 move.w  (ScrollY).w,$3A(a0)
-                move.w  #$226,$34(a0)
-                move.b  #$19,$32(a0)
-                st.b    $33(a0)
+                move.w  #$226,$34(a0)           ; starts sinking after 550 frames
+                move.b  #$19,$32(a0)            ; first laser after 25 frames
+                st.b    $33(a0)                 ; upper laser next
                 jmp     (jt_ObjInsert).w
 Upd_LaserTower:
-                bsr.w   FollowScroll
-                cmpi.w  #$37,$26(a0)
-                bcc.b   .4B0F4
-                bsr.w   .4B15A
-                subq.w  #$1,$34(a0)
+                bsr.w   FollowScroll            ; move with the hull
+                cmpi.w  #$37,$26(a0)            ; 55 damage:
+                bcc.b   .4B0F4                  ; explode
+                bsr.w   .4B15A                  ; fire
+                subq.w  #$1,$34(a0)             ; time to sink?
                 bpl.b   .4B0F2
-                addq.w  #$1,$C(a0)
-                tst.w   $A(a0)
+                addq.w  #$1,$C(a0)              ; 1 pixel a frame
+                tst.w   $A(a0)                  ; off the left
                 bmi.b   .4B0EE
-                cmpi.w  #$CF,$C(a0)
+                cmpi.w  #$CF,$C(a0)             ; or the bottom:
                 bcs.b   .4B0F2
 .4B0EE:
-                jmp     (jt_ObjKillSelf).w
+                jmp     (jt_ObjKillSelf).w      ; remove
 .4B0F2:
                 rts
 .4B0F4:
-                subq.b  #$1,$3D(a0)
+                subq.b  #$1,$3D(a0)             ; 25 explosions, one a frame
                 bmi.b   .4B146
-                move.w  #$FFFF,$24(a0)
+                move.w  #$FFFF,$24(a0)          ; indestructible meanwhile
                 movea.l a0,a3
-                moveq   #30,d0
+                moveq   #30,d0                  ; y = tower y - 10 + random(30)
                 jsr     (jt_Random).w
                 sub.w   #$A,d0
                 add.w   $C(a0),d0
                 move.w  d0,d1
-                move.w  #$A0,d0
+                move.w  #$A0,d0                 ; x = tower x - 15 + random(160)
                 jsr     (jt_Random).w
                 add.w   $A(a0),d0
                 sub.w   #$F,d0
                 moveq   #-1,d2
-                lea.l   (Def_LaserTower).l,a2
+                lea.l   (Def_LaserTower).l,a2   ; as a plain explosion
                 jsr     (jt_ObjCreate).w
-                clr.l   $6(a0)
+                clr.l   $6(a0)                  ; exploding at once
                 move.b  #$1,$5(a0)
-                move.b  #$1E,$4(a0)
+                move.b  #$1E,$4(a0)             ; priority 30
                 jsr     (jt_ObjInsert).w
                 movea.l a3,a0
                 rts
 .4B146:
-                move.b  #$1,$5(a0)
+                move.b  #$1,$5(a0)              ; then it explodes itself
                 clr.l   $6(a0)
-                move.l  #$800,d0
+                move.l  #$800,d0                ; 800 points
                 jmp     (jt_AddScore).w
 .4B15A:
-                moveq   #19,d7
-                subq.b  #$1,$32(a0)
+                moveq   #19,d7                  ; upper laser: 19 pixels down
+                subq.b  #$1,$32(a0)             ; due?
                 bne.b   .4B1A2
-                eori.b  #$FF,$33(a0)
+                eori.b  #$FF,$33(a0)            ; alternate
                 bne.b   .4B172
-                move.b  #$1,$32(a0)
+                move.b  #$1,$32(a0)             ; the lower one follows next frame
                 bra.b   .4B17A
 .4B172:
-                moveq   #27,d7
-                move.b  #$19,$32(a0)
+                moveq   #27,d7                  ; lower laser: 27 pixels down
+                move.b  #$19,$32(a0)            ; then 25 frames to the next pair
 .4B17A:
                 movea.l a0,a4
                 movem.w $A(a4),d0-d1
                 add.w   d7,d1
-                moveq   #-1,d2
+                moveq   #-1,d2                  ; indestructible
                 lea.l   (Def_TowerLaser).l,a2
                 jsr     (jt_ObjCreate).w
-                bset.b  #$2,$23(a0)
-                move.b  #$A,$4(a0)
+                bset.b  #$2,$23(a0)             ; not hit by weapons
+                move.b  #$A,$4(a0)              ; priority 10
                 jsr     (jt_ObjInsert).w
                 movea.l a4,a0
 .4B1A2:
                 rts
 Upd_TowerLaser:
-                subq.w  #$7,$A(a0)
-                cmpi.w  #$10,$A(a0)
+                subq.w  #$7,$A(a0)              ; 7 pixels a frame left
+                cmpi.w  #$10,$A(a0)             ; off the left edge: remove
                 bhi.b   .4B1B4
                 jmp     (jt_ObjKillSelf).w
 .4B1B4:
                 rts
 InitRearTower:
-                lea.l   (RearTowerBase).l,a0
+                lea.l   (RearTowerBase).l,a0    ; its base cells
                 bsr.w   PatchMap
                 clr.w   (BuildTimer).l
                 clr.w   (RearAnimTimer).l
-                move.b  #$1,(RearTowerState).l
-                move.l  #RearTowerBuild,(BuildPtr).l
-                move.l  #RearTowerStages,(StagePtr).l
+                move.b  #$1,(RearTowerState).l  ; state 1: waiting for frame $578
+                move.l  #RearTowerBuild,(BuildPtr).l ; build steps: cell block, frames to the next
+                move.l  #RearTowerStages,(StagePtr).l ; stages: damage, explosions, width, cells (or an animation)
                 clr.b   (RearAnim).l
-                move.w  #$FFFE,(RearTowerFrame).l
+                move.w  #$FFFE,(RearTowerFrame).l ; no frame yet
                 clr.w   (RearTowerDamage).l
                 clr.b   (ExplosionsLeft).l
-                move.l  #RearTowerXOffsets,(XOffsetPtr).l
+                move.l  #RearTowerXOffsets,(XOffsetPtr).l ; explosion x offset per stage
                 rts
 UpdateRearTower:
-                tst.b   (RearTowerState).l
+                tst.b   (RearTowerState).l      ; state 0: building / being destroyed
                 beq.b   .4B256
-                bmi.w   .4B2F2
-                cmpi.w  #$578,(FrameCount).l
+                bmi.w   .4B2F2                  ; -1: finished (explosions only)
+                cmpi.w  #$578,(FrameCount).l    ; 1: wait for frame $578
                 bcs.b   .4B254
                 move.l  a0,-(a7)
-                move.w  #$139,d0
+                move.w  #$139,d0                ; then its target (4 stacked hit boxes)
                 move.w  #$8A,d1
-                move.w  #$FA0,d2
+                move.w  #$FA0,d2                ; 4000 hit points: the stage damage decides
                 lea.l   (Def_RearTower).l,a2
                 jsr     (jt_ObjCreate).w
-                move.w  (ScrollX).w,$38(a0)
+                move.w  (ScrollX).w,$38(a0)     ; scroll position now (FollowScroll)
                 move.w  (ScrollY).w,$3A(a0)
                 jsr     (jt_ObjInsert).w
                 movea.l (a7)+,a0
-                clr.b   (RearTowerState).l
+                clr.b   (RearTowerState).l      ; state 0
 .4B254:
                 rts
 .4B256:
-                cmpi.w  #$50,(RearTowerDamage).l
+                cmpi.w  #$50,(RearTowerDamage).l ; 80 damage: start blowing it up
                 bcc.b   .4B28E
-                subq.w  #$1,(BuildTimer).l
+                subq.w  #$1,(BuildTimer).l      ; otherwise keep building
                 bpl.b   .4B254
-                movea.l (BuildPtr).l,a4
+                movea.l (BuildPtr).l,a4         ; next build step
                 movea.l (a4)+,a0
-                move.l  (a4)+,d0
+                move.l  (a4)+,d0                ; frames to the next step
                 move.w  d0,(BuildTimer).l
-                bmi.b   .4B286
-                bsr.w   PatchMap
+                bmi.b   .4B286                  ; -1: built
+                bsr.w   PatchMap                ; write the cells into the map
                 move.l  a4,(BuildPtr).l
                 rts
 .4B286:
-                st.b    (RearTowerState).l
+                st.b    (RearTowerState).l      ; finished: the target goes, explosions run out
                 rts
 .4B28E:
-                move.b  (RearAnim).l,d7
+                move.b  (RearAnim).l,d7         ; a stage animation running?
                 bne.w   .4B35C
 .4B298:
-                movea.l (StagePtr).l,a4
-                move.l  (a4)+,d0
-                bmi.b   .4B286
+                movea.l (StagePtr).l,a4         ; next stage
+                move.l  (a4)+,d0                ; damage that triggers it
+                bmi.b   .4B286                  ; none left: finished
                 cmp.w   (RearTowerDamage).l,d0
-                bhi.b   .4B2F2
-                move.w  (a4)+,d0
+                bhi.b   .4B2F2                  ; not reached: just the explosions
+                move.w  (a4)+,d0                ; explosions for this stage
                 move.b  d0,(ExplosionsLeft).l
-                move.w  (a4)+,d0
+                move.w  (a4)+,d0                ; spread across this width
                 move.w  d0,(ExplosionWidth).l
-                addq.l  #$2,(XOffsetPtr).l
-                move.l  (a4)+,d6
+                addq.l  #$2,(XOffsetPtr).l      ; and the next x offset
+                move.l  (a4)+,d6                ; its cells, or a negative animation number
                 bpl.b   .4B2CC
-                move.b  d6,(RearAnim).l
+                move.b  d6,(RearAnim).l         ; animation 1 or 2
                 bra.b   .4B2D8
 .4B2CC:
                 movea.l d6,a0
-                bsr.w   PatchMap
+                bsr.w   PatchMap                ; write the cells into the map
                 clr.b   (RearAnim).l
 .4B2D8:
                 move.l  a4,(StagePtr).l
-                addq.w  #$1,(RearTowerFrame).l
+                addq.w  #$1,(RearTowerFrame).l  ; next target frame (the hit boxes shrink)
                 clr.w   (RearAnimStep).l
                 clr.w   (RearAnimTimer).l
-                bra.b   .4B28E
+                bra.b   .4B28E                  ; the next stage may be due too
 .4B2F2:
-                tst.b   (ExplosionsLeft).l
+                tst.b   (ExplosionsLeft).l      ; explosions to go?
                 beq.b   .4B35A
                 movea.l a0,a3
                 subq.b  #$1,(ExplosionsLeft).l
-                bne.b   .4B30E
-                move.l  #$600,d0
+                bne.b   .4B30E                  ; the last one of a stage:
+                move.l  #$600,d0                ; 600 points
                 jsr     (jt_AddScore).w
 .4B30E:
-                moveq   #30,d0
+                moveq   #30,d0                  ; y = tower y - 27 + random(30)
                 jsr     (jt_Random).w
                 add.w   (RearTowerY).l,d0
                 move.w  d0,d1
                 sub.w   #$1B,d1
-                move.w  (ExplosionWidth).l,d0
+                move.w  (ExplosionWidth).l,d0   ; x = tower x + offset + random(width)
                 jsr     (jt_Random).w
                 add.w   (RearTowerX).l,d0
                 movea.l (XOffsetPtr).l,a2
                 add.w   (a2),d0
                 moveq   #-1,d2
-                lea.l   (Def_RearTower).l,a2
+                lea.l   (Def_RearTower).l,a2    ; as a plain explosion
                 jsr     (jt_ObjCreate).w
-                move.b  #$1,$5(a0)
+                move.b  #$1,$5(a0)              ; exploding at once
                 clr.l   $6(a0)
-                move.b  #$5,$4(a0)
+                move.b  #$5,$4(a0)              ; priority 5
                 jsr     (jt_ObjInsert).w
                 movea.l a3,a0
 .4B35A:
                 rts
 .4B35C:
-                lea.l   (RearTowerAnimA).l,a1
+                lea.l   (RearTowerAnimA).l,a1   ; animation 1: A, 2: B
                 neg.b   d7
                 subq.b  #$1,d7
                 beq.b   .4B36E
                 lea.l   (RearTowerAnimB).l,a1
 .4B36E:
-                subq.w  #$1,(RearAnimTimer).l
+                subq.w  #$1,(RearAnimTimer).l   ; next animation step due?
                 bpl.w   .4B298
-                move.w  (RearAnimStep).l,d7
+                move.w  (RearAnimStep).l,d7     ; step: cells.l, frames.w
                 move.w  $4(a1,d7.w),(RearAnimTimer).l
                 movea.l (a1,d7.w),a0
-                bsr.w   PatchMap
-                cmp.w   #$18,d7
+                bsr.w   PatchMap                ; write the cells into the map
+                cmp.w   #$18,d7                 ; 5 steps, then round again
                 bcs.b   .4B39E
                 clr.w   (RearAnimStep).l
                 bra.w   .4B298
@@ -1040,16 +1040,16 @@ UpdateRearTower:
                 addq.w  #$6,(RearAnimStep).l
                 bra.w   .4B298
 Upd_RearTower:
-                bsr.w   FollowScroll
+                bsr.w   FollowScroll            ; move with the hull
                 movem.w $A(a0),d0-d1
-                movem.w d0-d1,(RearTowerX).l
-                move.w  $26(a0),(RearTowerDamage).l
-                move.w  (RearTowerFrame).l,d0
+                movem.w d0-d1,(RearTowerX).l    ; for the explosions
+                move.w  $26(a0),(RearTowerDamage).l ; its damage drives the stages
+                move.w  (RearTowerFrame).l,d0   ; frame set by the stages
                 bmi.b   .4B3DA
                 move.w  d0,$1E(a0)
-                tst.b   (RearTowerState).l
+                tst.b   (RearTowerState).l      ; finished:
                 bpl.b   .4B3DA
-                jmp     (jt_ObjKillSelf).w
+                jmp     (jt_ObjKillSelf).w      ; remove the target
 .4B3DA:
                 rts
 ShipParts:
@@ -1319,8 +1319,9 @@ Def_TowerLaser:
                 dc.w    $0000,$0000,$0020,$0003,$0000,$0000,$0020,$0003
                 dc.w    $0000,$0000,$0020,$0003,$0001,$0203,$FF00
 ; LaserTower: the laser tower block - fires TowerLasers (32x3, 7 pixels a
-; frame) from two heights in turn.  Moves with the map and slowly sinks;
-; 55 hits destroy it (30 explosions, 800 points).
+; frame) in pairs, one at each height a frame apart, every 26 frames.
+; Moves with the map, and after 550 frames sinks a pixel a frame; 55
+; damage destroys it (25 explosions, 800 points).
 Def_LaserTower:
                 dc.w    $200B,$001E,$1400,$0000,$0000,$0000,$0006,$AD10
                 dc.w    $0000,$0A00,$0004,$BD60,$0004,$BD62
@@ -1457,7 +1458,10 @@ ExplosionsLeft:
 ; RearTower: a tall structure at the rear (4 hit boxes stacked) built up in
 ; the map from frame $578 (RearTowerBuild); its damage drives RearTowerStages:
 ; each stage blows up a section (explosions across ExplosionWidth, 600
-; points) and patches the map.  (Possibly the FAQ's "multiple gun tower"
+; points) and patches the map.  Stages fall due at 0, 196, 220, 280, 340
+; and 440 damage, but only once it has taken 80 (that also stops the
+; build); if the build finishes first, the target is removed and the
+; tower can no longer be hit.  (Possibly the FAQ's "multiple gun tower"
 ; or "spare engines" - not confirmed.)
 Def_RearTower:
                 dc.w    $0101,$0032,$0000,$0000,$0000,$0000,$0004,$C38A
