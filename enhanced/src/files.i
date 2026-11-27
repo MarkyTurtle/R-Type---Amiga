@@ -9,11 +9,10 @@ FID_GAMELOW     equ     2       ; the engine -> $A4
 FID_GAMEMAIN    equ     3       ; the $6000 graphics block -> $6000
 FID_SHARED      equ     4       ; title data and jingle player -> $4A300
 FID_HISCORE     equ     5       ; the high-score block (512 bytes, stored)
-FID_LEVEL1A     equ     6       ; level n part A -> $4A2E4: FID_LEVEL1A + n - 1
-FID_LEVEL1B     equ     14      ; level n part B -> $4D300: FID_LEVEL1B + n - 1
-FID_RESIDENT    equ     22      ; the cheats' hooks -> RES_ORG (stage 2, once)
-FID_MENU        equ     23      ; the title menu -> MENU_ORG (with the title file)
-NFILES          equ     24
+FID_LEVEL1      equ     6       ; level n, parts A and B together -> $4A2E4: FID_LEVEL1 + n - 1
+FID_RESIDENT    equ     14      ; the cheats' hooks -> RES_ORG (stage 2, once)
+FID_MENU        equ     15      ; the title menu -> MENU_ORG (with the title file)
+NFILES          equ     16
 
 FT_SIZE         equ     12      ; offset.l, length on the disk.l, unpacked end.l
 

@@ -8,7 +8,8 @@
 ;     4489_byteloader and unpacked (ZX0) in place, a file cache in extra
 ;     memory, the high scores in a block of their own; padded to the same
 ;     size, so every label after it is where the original has it
-;   * LevelTable holds file ids; LoadLevel loads level B straight to $4D300;
+;   * LevelTable holds file ids; LoadLevel loads one file per level (parts
+;     A and B assembled together from the original sources) to $4A2E4;
 ;     LoadShared loads FID_SHARED; Init keeps the drive booted from
 ;     (BootDrive, the original's CurrentTrack)
 ;   * the track cache variables are the file cache and the file table
@@ -45,7 +46,7 @@ CIAB_CRB        equ     $BFDF00
 ; --- Memory map ----------------------------------------------------------------
 SCREEN_A        equ     $2D1BA          ; double-buffered playfield
 SCREEN_B        equ     $3AEBA
-LEVEL_A         equ     $4A2E4          ; level part A (ST header + level code)
+LEVEL_A         equ     $4A2E4          ; the level file (enhanced: parts A and B together)
 LEVEL_B_CRUNCHED equ    $4CB00
 LEVEL_B         equ     $4D300          ; level part B, decrunched (tiles, ...)
 MUSIC           equ     $52300
@@ -262,9 +263,13 @@ LoadLevel:
                 movem.w (a4)+,d0-d1
                 move.l  #LEVEL_A,d2
                 bsr.w   LoadTracksCached
-                movem.w (a4)+,d0-d1
-                move.l  #LEVEL_B,d2                 ; (enhanced: LoadFile unpacks it there)
-                bsr.w   LoadTracksCached
+                addq.l  #4,a4                       ; (enhanced: parts A and B are one
+                nop                                 ;  file, assembled together from the
+                nop                                 ;  sources with B straight after A;
+                nop                                 ;  its second load is gone)
+                nop
+                nop
+                nop
                 move.w  (a4)+,(MapWidth).l
                 move.l  a4,(LevelTablePtr).l
                 lea.l   (LEVEL_B).l,a1
@@ -5253,14 +5258,14 @@ DiskCodeEnd:
 ; LevelTable: 8 x (file id A, 0 -> $4A2E4; file id B, 0 -> $4CB00 (LoadFile
 ; unpacks it to $4D300 itself); map row length in BYTES)
 LevelTable:
-                dc.w    FID_LEVEL1A+0,0,FID_LEVEL1B+0,0,$0218   ; level 1: part A, part B (files), map row bytes
-                dc.w    FID_LEVEL1A+1,0,FID_LEVEL1B+1,0,$0168   ; level 2: part A, part B (files), map row bytes
-                dc.w    FID_LEVEL1A+2,0,FID_LEVEL1B+2,0,$0088   ; level 3: part A, part B (files), map row bytes
-                dc.w    FID_LEVEL1A+3,0,FID_LEVEL1B+3,0,$0158   ; level 4: part A, part B (files), map row bytes
-                dc.w    FID_LEVEL1A+4,0,FID_LEVEL1B+4,0,$01A4   ; level 5: part A, part B (files), map row bytes
-                dc.w    FID_LEVEL1A+5,0,FID_LEVEL1B+5,0,$0148   ; level 6: part A, part B (files), map row bytes
-                dc.w    FID_LEVEL1A+6,0,FID_LEVEL1B+6,0,$0134   ; level 7: part A, part B (files), map row bytes
-                dc.w    FID_LEVEL1A+7,0,FID_LEVEL1B+7,0,$0176   ; level 8: part A, part B (files), map row bytes
+                dc.w    FID_LEVEL1+0,0,0,0,$0218           ; level 1: its file (A and B), map row bytes
+                dc.w    FID_LEVEL1+1,0,0,0,$0168           ; level 2: its file (A and B), map row bytes
+                dc.w    FID_LEVEL1+2,0,0,0,$0088           ; level 3: its file (A and B), map row bytes
+                dc.w    FID_LEVEL1+3,0,0,0,$0158           ; level 4: its file (A and B), map row bytes
+                dc.w    FID_LEVEL1+4,0,0,0,$01A4           ; level 5: its file (A and B), map row bytes
+                dc.w    FID_LEVEL1+5,0,0,0,$0148           ; level 6: its file (A and B), map row bytes
+                dc.w    FID_LEVEL1+6,0,0,0,$0134           ; level 7: its file (A and B), map row bytes
+                dc.w    FID_LEVEL1+7,0,0,0,$0176           ; level 8: its file (A and B), map row bytes
 NewLifeFlag:
                 dc.b    $00
 Level:

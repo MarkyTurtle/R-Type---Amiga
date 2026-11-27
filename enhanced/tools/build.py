@@ -39,7 +39,6 @@ FILES = os.path.join(ORIG, 'files')
 VASM = os.environ.get('VASM', 'vasmm68k_mot')
 SALVADOR = os.environ.get('SALVADOR', 'salvador')
 
-LEVEL_A_KEEP = 0x4CB00 - 0x4A2E4        # what survives the level B load
 
 
 # ---------------------------------------------------------------------------
@@ -56,6 +55,22 @@ def assemble(src, out, extra=()):
         if m:
             syms[m.group(1)] = int(m.group(2), 16)
     return open(out, 'rb').read(), syms
+
+
+def level_file(n):
+    """level n, parts A and B assembled together from the original sources (LEVEL_AB):
+    A at $4A2E4 up to LevelAEnd, then B -> (bytes, symbols)"""
+    lv = os.path.join(ORIG, 'src', 'levels')
+    src = os.path.join(BUILD, 'level%d_ab.s' % n)
+    with open(src, 'w') as f:
+        f.write('; level %d, parts A and B together (written by tools/build.py)\n'
+                'LEVEL_AB        equ     1\n'
+                '                include "level%d.s"\n'
+                '                include "level%d_b.s"\n' % (n, n, n))
+    data, syms = assemble(src, os.path.join(BUILD, 'level%d.bin' % n),
+                          ('-I', lv, '-I', os.path.join(ORIG, 'files')))
+    assert syms['LvEnd'] - 0x4A2E4 == len(data)
+    return data, syms
 
 
 def equates(path):
@@ -221,11 +236,15 @@ def main():
         fid['FID_RESIDENT']: ('cheats', resident, fid['RES_ORG'], True),
         fid['FID_MENU']: ('menu', menu, fid['MENU_ORG'], True),
     }
-    for n in range(8):
-        files[fid['FID_LEVEL1A'] + n] = ('level%da' % (n + 1),
-                                         rd('level%d_a_4a2e4.bin' % (n + 1))[:LEVEL_A_KEEP], 0x4A2E4, True)
-        files[fid['FID_LEVEL1B'] + n] = ('level%db' % (n + 1),
-                                         rd('level%d_b_4d300.bin' % (n + 1)), 0x4D300, True)
+    levels = {}
+    for n in range(1, 9):
+        data, lsyms = level_file(n)
+        levels[n] = lsyms
+        files[fid['FID_LEVEL1'] + n - 1] = ('level%d' % n, data, 0x4A2E4, True)
+        # what each level uses above its file: level 4's LevelInit copies its map to LvEnd
+        top = lsyms['LvEnd'] + (13 * 0x158 if n == 4 else 0)
+        assert top <= 0x7C400, 'level %d reaches the MFM buffer' % n
+        levels[n] = top
     assert sorted(files) == list(range(fid['NFILES']))
 
     # 3. pack, and check each in-place unpacking against what must survive it
@@ -247,7 +266,7 @@ def main():
                       'title': 0x52300,
                       'cheats': fid['RES_LIMIT'],  # the level file
                       'menu': fid['MENU_LIMIT'],   # the end of chip memory (512K)
-                      }.get(name, 0x7C400 if name.endswith('b') else 0x4D300)  # (b: the MFM buffer)
+                      }.get(name, 0x7C400 if name.startswith('level') else 0x4D300)  # (the MFM buffer)
             if top > limits:
                 sys.exit('%s: the packed data would end at $%X, over $%X' % (name, top, limits))
             raw = top - 512 * ofs.OFSDisk.nblocks(len(p))
@@ -306,6 +325,8 @@ def main():
     for i, name, n, p, m, dest in report:
         print('%-4d %-11s %9d %9d %7s  $%05X' % (i, name, n, p, '-' if m is None else m, offsets[i]))
     used = sum(len(stored[i][0]) for i in files)
+    print('free above each level in play: ' + ', '.join('%d: $%05X %.1fK' % (n, t, (0x80000 - t) / 1024)
+                                                     for n, t in levels.items()))
     print('files %d bytes on disk; %d blocks free (%d KB)' % (used, disk.free_blocks(), disk.free_blocks() // 2))
     print('wrote %s%s' % (os.path.relpath(out, ROOT), ' (xdftool: files read back through the file system)' if xdf.returncode == 0 else ''))
 

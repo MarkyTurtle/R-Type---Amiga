@@ -76,7 +76,8 @@ The `original/` sources stay byte-identical; changes go in a separate `enhanced/
 5. **Level data:**
    - [x] Level B sources (`original/src/levels/levelN_b.s`, labelled `incbin` blocks), level A's pointers into B by label; A and B assemble together anywhere (`tools/check_levelab.py`). Together, B starts 3.9–9.1K lower than `$4D300`.
    - [ ] The music players disassembled (variants of `shared.s`'s player; they are PC-relative, so the `incbin` already moves).
-   - [ ] `enhanced/`: one file per level (A and B together), one load; then trim what the levels don't use (level 3's 30K and level 6's 7K of extra tiles, the unknown blocks).
+   - [x] `enhanced/`: one file per level (A and B together, B straight after A), one load. In play, 30.4K (stage 1) to 108.8K (stage 6) free in one block at the top.
+   - [ ] Trim what the levels don't use: level 3's 30K and level 6's 7K of extra tiles (check `PatchMap` and the tile animations first), the unknown blocks.
 3. [x] **The cheats**, on the options page: infinite lives, invincibility, start stage (1-8), full weapons (the Force at full strength, both Bits, the missiles, a chosen laser), the stage-skip key. A game with cheats gets no high-score place.
 4. **CD32 pad support** as the enhanced controller option. The original already reads button 2 (or Space) for the Force, as the arcade does, so the option adds the pad's extra buttons (read through the CD32 pad's serial protocol on port 2) for a third function, such as charging the beam or autofire.
 

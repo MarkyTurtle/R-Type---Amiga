@@ -35,13 +35,20 @@ Kickstart 1.3 won't boot.)
 | 3 | `graphics` | `$6000` | ZX0 | stage 2: the `$6000` block |
 | 4 | `title` | `$4A300` | ZX0 | the engine (`LoadShared`): the title data and jingle player |
 | 5 | `highscores` | – | no | the engine: one block, the table's 100 longs and a checksum |
-| 6–13 | `level1a`–`level8a` | `$4A2E4` | ZX0 | `LoadLevel`: level part A, the `$281C` bytes that survive the level B load |
-| 14–21 | `level1b`–`level8b` | `$4D300` | ZX0 | `LoadLevel`: level part B, unpacked (the original's was ByteKiller-packed) |
-| 22 | `cheats` | `$49D48` | ZX0 | stage 2, once: the cheats' hooks and settings (`src/resident.s`) |
-| 23 | `menu` | `$7F600` | ZX0 | the engine (`LoadShared`), with the title file each time: the title menu (`src/menu.s`) |
+| 6–13 | `level1`–`level8` | `$4A2E4` | ZX0 | `LoadLevel`: the level, parts A and B in one file (below) |
+| 14 | `cheats` | `$49D48` | ZX0 | stage 2, once: the cheats' hooks and settings (`src/resident.s`) |
+| 15 | `menu` | `$7F600` | ZX0 | the engine (`LoadShared`), with the title file each time: the title menu (`src/menu.s`) |
 
 `build.py` prints the sizes and offsets. The files take about 580K, leaving roughly 260K free.
-ZX0 packs the level B files about 35% smaller than the original's ByteKiller.
+ZX0 packs the level data about 35% smaller than the original's ByteKiller.
+
+**The level files.** Each level is one file, assembled from the original tree's sources: part A
+(`original/src/levels/levelN.s`, the level's code) and part B (`levelN_b.s`, its tiles, map,
+music and graphics) together, with `LEVEL_AB` set, so B starts straight after A's code and
+data (`LevelAEnd`) instead of at `$4D300`. Level A refers to B by label, so its pointers follow
+(`original/tools/check_levelab.py` checks that). B now starts 3.9–9.1K lower, and the space
+the original kept for its packed level B is gone. `LoadLevel` loads the one file; its
+`LevelTable` entries keep their size (the second file id is 0).
 
 **Unpacking in place.** ZX0 unpacks forwards, so a packed file is loaded to end just past where
 its unpacked data will end, then unpacked to its destination. The gap is the file's *margin*
@@ -171,10 +178,15 @@ space (`src/cheats.s`).
 | `$490A2–$49359` | sprite buffers, Bit trail buffers |
 | `$4935A–$49D47` | the object table: 41 objects (see `InitObjects`) |
 | `$49D48–` | `resident.s` (cheats), up to `$4A2E3` |
-| `$4A2E4–` | level part A |
-| `–$4D2FF` | free, 2–5.6K (the original's packed level B went here) |
-| `$4D300–` | level part B (level 4 also copies its map just past it, 4.4K) |
-| up to `$7FFFF` | **free**: one block, 26.4K on stage 1 (`$7965B`) to 99.5K on stage 6 |
+| `$4A2E4–` | the level: part A, then part B (level 4 also copies its map just past its end, 4.4K) |
+| up to `$7FFFF` | **free**: one block |
+
+Free above each level in play (`build.py` prints it):
+
+| Stage | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
+|---|---|---|---|---|---|---|---|---|
+| from | `$78639` | `$7090A` | `$6ED70` | `$6E772` | `$66C1E` | `$64CC0` | `$6FF21` | `$66020` |
+| free | 30.4K | 61.7K | 68.6K | 70.1K | 101.0K | 108.8K | 64.2K | 104.0K |
 
 On the title the top block holds the title music, the high-score save buffers, the byte
 loader's MFM buffer (`$7C400–$7F3FF`, while loading) and the title menu (`$7F600`). In play all
@@ -193,7 +205,7 @@ decoded back into the disk image with its MFM and checksums checked. It runs:
 - stage 2's three loads, each unpacked in place with stage 2 intact
 - every file through the engine's `LoadFile`, without and with extra memory (the second loads
   must come from the cache, with no disk reads)
-- `LoadLevel` for all 8 levels
+- `LoadLevel` for all 8 levels: one load each, parts A and B together
 - the N key through Level2Int: the stage skip, the cases where it must do nothing, and P still
   pausing
 - reading the high scores, saving a changed table (only its block may change on the track),

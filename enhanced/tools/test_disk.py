@@ -154,11 +154,10 @@ def expected():
     rd = lambda n: open(os.path.join(FILES, n), 'rb').read()
     exp = {1: (0x52300, rd('music_52300.bin')), 2: (0xA4, open(os.path.join(BUILD, 'game_low.bin'), 'rb').read()),
            3: (0x6000, rd('game_main_06000.bin')), 4: (0x4A300, rd('shared_4a300.bin'))}
-    for n in range(8):
-        exp[6 + n] = (0x4A2E4, rd('level%d_a_4a2e4.bin' % (n + 1))[:0x4CB00 - 0x4A2E4])
-        exp[14 + n] = (0x4D300, rd('level%d_b_4d300.bin' % (n + 1)))
-    exp[22] = (0x49D48, open(os.path.join(BUILD, "resident.bin"), 'rb').read())  # FID_RESIDENT -> RES_ORG
-    exp[23] = (0x7F600, open(os.path.join(BUILD, 'menu.bin'), 'rb').read())      # FID_MENU -> MENU_ORG
+    for n in range(8):                       # each level: parts A and B assembled together
+        exp[6 + n] = (0x4A2E4, open(os.path.join(BUILD, 'level%d.bin' % (n + 1)), 'rb').read())
+    exp[14] = (0x49D48, open(os.path.join(BUILD, 'resident.bin'), 'rb').read())  # FID_RESIDENT -> RES_ORG
+    exp[15] = (0x7F600, open(os.path.join(BUILD, 'menu.bin'), 'rb').read())      # FID_MENU -> MENU_ORG
     return exp
 
 
@@ -166,7 +165,7 @@ def main():
     adf = open(os.path.join(BUILD, 'rtype.adf'), 'rb').read()
     boot = open(os.path.join(BUILD, 'boot.bin'), 'rb').read()
     g, s2 = syms('game_low.bin.lst'), syms('stage2.bin.lst')
-    table = boot[s2['S2FileTable'] - layout()['PIC_PACKED']:][:24 * 12]
+    table = boot[s2['S2FileTable'] - layout()['PIC_PACKED']:][:16 * 12]
     exp = expected()
 
     # 1. the bootblock -------------------------------------------------------------
@@ -246,7 +245,7 @@ def main():
     m.w16(0xDFF01E, 0)
     s2start = lay['STAGE2_ORG'] - base
     snapshot = m.mem(lay['STAGE2_ORG'], len(boot) - s2start)    # (its frame counter moved)
-    for fid in (1, 2, 3, 22):
+    for fid in (1, 2, 3, 14):
         dest, data = exp[fid]
         m.call(s2['LoadFile'], [(UC_M68K_REG_D0, fid), (UC_M68K_REG_D2, dest)], sp=0x40B60)
         now = m.mem(lay['STAGE2_ORG'], len(boot) - s2start)
@@ -265,7 +264,7 @@ def main():
             m.w32(g['CacheBase'], SLOW); m.w32(g['CacheNext'], SLOW); m.w32(g['CacheLimit'], SLOW + 0x80000)
         for rnd in (1, 2):
             for fid in sorted(exp):
-                if fid in (1, 2, 3, 22):
+                if fid in (1, 2, 3, 14):
                     continue
                 dest, data = exp[fid]
                 m.u.mem_write(dest, b'\x55' * len(data))
@@ -275,12 +274,12 @@ def main():
                 cached = slow and rnd == 2
                 if cached:
                     ok = ok and m.fd.reads == before
-                if not ok or fid in (4, 6, 14, 21):
+                if not ok or fid in (4, 6, 13, 15):
                     check(ok, 'engine LoadFile %d -> $%X%s%s' % (fid, dest, ' (extra memory)' if slow else '',
                                                                 ', from the cache' if cached else ''))
         if slow:
             blocks = lambda k: (struct.unpack_from('>L', table, k * 12 + 4)[0] + 487) // 488 * 512
-            check(m.r32(g['CacheNext']) - SLOW == sum(blocks(k) for k in exp if k not in (1, 2, 3, 22)),
+            check(m.r32(g['CacheNext']) - SLOW == sum(blocks(k) for k in exp if k not in (1, 2, 3, 14)),
                   'the cache holds every packed file once (its blocks)')
 
     # 3b. LoadLevel's loads, from LevelTable, for every level -----------------------
@@ -290,16 +289,20 @@ def main():
     m.fd.ranges = [(g['ByteLoader'], g['Decrunch'])]
     lst = open(os.path.join(BUILD, 'game_low.bin.lst'), errors='replace').read()
     after = int(re.search(r'00:([0-9A-F]{8}) [0-9A-F]+\s+\d+:\s+bsr\.w\s+Decrunch', lst).group(1), 16) + 4
+    loads = []
+    m.u.hook_add(UC_HOOK_CODE, lambda uc, a, sz, ud: loads.append(uc.reg_read(UC_M68K_REG_D0) & 0xFFFF),
+                 begin=g['LoadFile'], end=g['LoadFile'])
     for n in range(8):
+        loads.clear()
         m.w32(g['LevelTablePtr'], g['LevelTable'] + 10 * n)
-        m.u.mem_write(0x4A2E4, b'\x55' * 0x2B000)
+        m.u.mem_write(0x4A2E4, b'\x55' * 0x30000)
         m.u.reg_write(UC_M68K_REG_A7, 0x7FF00)
         m.u.emu_start(g['LoadLevel'], after, count=400_000_000)
-        a, b = exp[6 + n][1], exp[14 + n][1]
+        a = exp[6 + n][1]
         row = struct.unpack_from('>H', exp[2][1], g['LevelTable'] + 10 * n + 8 - 0xA4)[0]
-        check(m.mem(0x4A2E4, len(a)) == a and m.mem(0x4D300, len(b)) == b and m.r16(g['MapWidth']) == row
-              and m.r32(g['LevelTablePtr']) == g['LevelTable'] + 10 * (n + 1),
-              'LoadLevel, level %d: part A at $4A2E4, part B at $4D300, MapWidth $%X' % (n + 1, row))
+        check(m.mem(0x4A2E4, len(a)) == a and m.r16(g['MapWidth']) == row
+              and m.r32(g['LevelTablePtr']) == g['LevelTable'] + 10 * (n + 1) and loads == [6 + n],
+              'LoadLevel, level %d: one file, A and B, at $4A2E4 ($%X bytes), MapWidth $%X' % (n + 1, len(a), row))
 
     # 3c. the stage-skip key (CheatKeys, from Level2Int) ---------------------------
     m = Machine(adf)
