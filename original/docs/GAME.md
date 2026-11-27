@@ -207,7 +207,7 @@ Enemies are named after the arcade's, matched by points, graphics and behaviour 
 | 2 | Gouger, Wick, the Worm (two heads, 7 eyes at 200 each), two Broods that release Zoids | Gomander: the eye opens and closes in the map, faster each time; core takes 30 hits (9000 points) |
 | 3 | The battleship itself: gun towers, cannon pods, the main engine (three-way shots, breaks away), the laser tower, shooting hull parts, the rear tower | The Main Core in the engine room (10 hits); a timer ends the level when the ship has gone by |
 | 4 | Level 1's Pata-Pata, Bug, P-Staff, Bink, Cancer; Cytron (builds cell walls), Geld (eats them) | The Compiler: three sections on their own paths, each with a core (30 hits, 5000 points) and a gun |
-| 5 | Cancer, Slither (breaks apart when the head dies), Pursuer, Cheetah and the Mid-phase Cheetah | Bellmite with 8 shells in formation (30 hits, 2000 points); the background loops |
+| 5 | Cancer, Slither (breaks apart when the head dies, splits when a body segment is shot), Pursuer, Cheetah and the Mid-phase Cheetah | Bellmite with 8 shells it throws at the ship one at a time (they fly back to their slots); 30 damage, 2000 points; the background loops |
 | 6 | Dop containers on rails (hurt only from the core side), Bink, the Capsule | None: a queue of Dops at the end |
 | 7 | Level 1's enemies, the Mid-phase Cheetah, Bold (70 hits, from behind), the Sonar, a crawler, collapsing buildings | Bronco (50 hits) with 5 garbage chutes that drop junk and enemies |
 | 8 | Mikun, Win (immortal, homes in faster each time the core opens) | The Bydo (60 hits, 15000 points), then the ending: the R-9 escort and the ending text |

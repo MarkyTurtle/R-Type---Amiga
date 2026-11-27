@@ -632,107 +632,113 @@ Upd_CheetahBeam:
                 jmp     (jt_ObjKillSelf).w
 .4ACFE:
                 rts
-; Bellmite (the boss): a control centre (10000 hit points, but 30 hits
-; kill it: LevelComplete, 2000 points) guarded by 8 shells that hold
-; formations round it (BellmiteShells, ShellFormations).  It drifts in
-; straight lines, bouncing (BellmiteBounce/BellmiteSteps); shells scatter
-; (ShellScatter) when hit or when the formation changes.
+; Bellmite (the boss): a control centre (10000 hit points, but more than
+; 30 damage kills it: LevelComplete, 2000 points, and every shell goes
+; too) guarded by 8 shells in fixed slots round it (BellmiteShells: x, y
+; offset, object), jiggling a pixel each frame.  It enters 2 px a frame
+; for 41 frames, then drifts in straight lines of 20-119 frames aimed at
+; the ship, bouncing off x $30-$12E / y $30-$AC (BellmiteBounce,
+; BellmiteSteps).  Every 36 frames it throws a shell at the ship: the
+; first one still in its slot in ShellLaunchOrder (an order for each
+; quadrant the ship is in).  The shell flies out 4 px a frame
+; (ShellSteps) until it leaves x $30-$148 / y $30-$D0, then retraces its
+; path back to its slot.  20 damage destroys a shell (300 points).
 Spawn_Bellmite:
                 movem.w $2(a1),d0-d1
-                movem.w d0-d1,(BellmiteX).l
-                move.w  #$2710,d2
+                movem.w d0-d1,(BellmiteX).l     ; shells are placed from here
+                move.w  #$2710,d2               ; 10000 hit points: the damage check decides
                 jsr     (jt_ObjCreate).w
-                clr.w   $3C(a0)
-                move.w  #$28,$38(a0)
-                st.b    $3A(a0)
+                clr.w   $3C(a0)                 ; first shell after 1 frame
+                move.w  #$28,$38(a0)            ; enter for 41 frames
+                st.b    $3A(a0)                 ; entering
                 clr.b   $22(a0)
-                move.b  #$A,$4(a0)
-                move.b  #$2,$21(a0)
+                move.b  #$A,$4(a0)              ; priority 10
+                move.b  #$2,$21(a0)             ; explosion type 2
                 jsr     (jt_ObjInsert).w
-                moveq   #7,d7
-                moveq   #0,d6
-                moveq   #1,d5
+                moveq   #7,d7                   ; 8 shells
+                moveq   #0,d6                   ; d6 = shell number
+                moveq   #1,d5                   ; d5 = jiggle, +1 / -1 alternately
                 lea.l   (BellmiteShells).l,a4
                 lea.l   (Def_BellmiteShell).l,a2
 .4AD4A:
                 movem.w (BellmiteX).l,d0-d1
-                movem.w (a4),d2-d3
+                movem.w (a4),d2-d3              ; its slot offset
                 add.w   d2,d0
                 add.w   d3,d1
-                move.w  #$BB8,d2
+                move.w  #$BB8,d2                ; 3000 hit points: the damage check decides
                 jsr     (jt_ObjCreate).w
-                move.l  a0,$4(a4)
-                move.l  (a4),$36(a0)
-                move.w  d6,$3A(a0)
+                move.l  a0,$4(a4)               ; the slot's object
+                move.l  (a4),$36(a0)            ; offset from the Bellmite
+                move.w  d6,$3A(a0)              ; shell number
                 clr.w   $3C(a0)
-                clr.l   $32(a0)
-                move.b  #$1E,$4(a0)
+                clr.l   $32(a0)                 ; in its slot
+                move.b  #$1E,$4(a0)             ; priority 30
                 move.b  d5,$3D(a0)
                 neg.w   d5
                 jsr     (jt_ObjInsert).w
-                addq.l  #$8,a4
+                addq.l  #$8,a4                  ; next slot (8 bytes)
                 addq.w  #$1,d6
                 dbra    d7,.4AD4A
-                st.b    (MusicFadeReq).w
+                st.b    (MusicFadeReq).w        ; fade the level music out
                 rts
 Upd_Bellmite:
-                cmpi.w  #$1E,$26(a0)
+                cmpi.w  #$1E,$26(a0)            ; more than 30 damage:
                 ble.b   .4ADCA
-                move.b  #$1,$5(a0)
+                move.b  #$1,$5(a0)              ; explode
                 clr.l   $6(a0)
-                st.b    (LevelComplete).w
-                move.l  #$2000,d0
+                st.b    (LevelComplete).w       ; the level ends
+                move.l  #$2000,d0               ; 2000 points
                 jsr     (jt_AddScore).w
-                lea.l   (BellmiteShells).l,a1
+                lea.l   (BellmiteShells).l,a1   ; and every shell
                 moveq   #7,d0
 .4ADBC:
                 movea.l $4(a1),a2
-                st.b    $3C(a2)
+                st.b    $3C(a2)                 ; explodes too
                 addq.l  #$8,a1
                 dbra    d0,.4ADBC
 .4ADCA:
-                tst.b   $3A(a0)
+                tst.b   $3A(a0)                 ; entering?
                 bpl.b   .4ADE8
                 subq.w  #$1,$38(a0)
                 bmi.b   .4ADE4
-                subq.w  #$2,$A(a0)
+                subq.w  #$2,$A(a0)              ; 2 pixels a frame left
                 move.l  $A(a0),(BellmiteX).l
                 rts
 .4ADE4:
-                clr.b   $3A(a0)
+                clr.b   $3A(a0)                 ; entered
 .4ADE8:
-                subq.w  #$1,$38(a0)
+                subq.w  #$1,$38(a0)             ; time for a new heading?
                 bmi.w   .4AE5C
-                movem.w $32(a0),d0-d1
+                movem.w $32(a0),d0-d1           ; dx, dy
                 movem.w $A(a0),d2-d3
                 add.w   d0,d2
                 add.w   d1,d3
-                cmp.w   #$30,d2
+                cmp.w   #$30,d2                 ; would leave x $30-$12E
                 blt.b   .4AE2A
                 cmp.w   #$12E,d2
                 bhi.b   .4AE2A
-                cmp.w   #$30,d3
+                cmp.w   #$30,d3                 ; or y $30-$AC:
                 blt.b   .4AE2A
                 cmp.w   #$AC,d3
                 bhi.b   .4AE2A
-                movem.w d2-d3,$A(a0)
+                movem.w d2-d3,$A(a0)            ; no: move
                 movem.w d2-d3,(BellmiteX).l
                 bra.w   .4AE98
 .4AE2A:
-                lsr.w   $38(a0)
+                lsr.w   $38(a0)                 ; bounce: halve the time left
                 moveq   #0,d0
                 moveq   #0,d1
-                move.b  $37(a0),d1
-                lea.l   (BellmiteBounce).l,a1
+                move.b  $37(a0),d1              ; direction
+                lea.l   (BellmiteBounce).l,a1   ; turned direction for a bounce
                 move.b  (a1,d1.w),d0
                 move.b  d0,$37(a0)
-                lsl.w   #$2,d0
+                lsl.w   #$2,d0                  ; its dx, dy
                 lea.l   (BellmiteSteps).l,a1
                 movem.w (a1,d0.w),d2-d3
                 movem.w d2-d3,$32(a0)
                 bra.w   .4ADCA
 .4AE5C:
-                movem.w $A(a0),d0-d1
+                movem.w $A(a0),d0-d1            ; aim at the ship
                 movem.w (ShipPos).w,d2-d3
                 jsr     (jt_DirectionTo).w
                 move.b  d0,$37(a0)
@@ -741,123 +747,123 @@ Upd_Bellmite:
                 lea.l   (BellmiteSteps).l,a1
                 movem.w (a1,d1.w),d2-d3
                 movem.w d2-d3,$32(a0)
-                moveq   #100,d0
+                moveq   #100,d0                 ; for 20-119 frames
                 jsr     (jt_Random).w
                 add.w   #$14,d0
                 move.w  d0,$38(a0)
                 bra.w   .4ADCA
 .4AE98:
-                subq.w  #$1,$3C(a0)
+                subq.w  #$1,$3C(a0)             ; time to throw a shell?
                 bmi.b   .4AEA0
                 rts
 .4AEA0:
-                move.w  #$23,$3C(a0)
-                moveq   #0,d2
+                move.w  #$23,$3C(a0)            ; every 36 frames
+                moveq   #0,d2                   ; quadrant of the ship:
                 movem.w (BellmiteX).l,d0-d1
-                add.w   #$18,d0
+                add.w   #$18,d0                 ; from the Bellmite's middle
                 add.w   #$18,d1
-                sub.w   (ShipPos).w,d0
+                sub.w   (ShipPos).w,d0          ; +1 ship to the right
                 bpl.b   .4AEC0
                 addq.w  #$1,d2
 .4AEC0:
-                sub.w   ($F0).w,d1
+                sub.w   ($F0).w,d1              ; +2 ship below
                 bpl.b   .4AEC8
                 addq.w  #$2,d2
 .4AEC8:
-                lsl.w   #$3,d2
-                lea.l   (ShellFormations).l,a1
+                lsl.w   #$3,d2                  ; 8 bytes an order
+                lea.l   (ShellLaunchOrder).l,a1
                 lea.l   (BellmiteShells).l,a2
                 adda.l  d2,a1
-                moveq   #6,d1
+                moveq   #6,d1                   ; first 7 of the order
 .4AEDA:
                 moveq   #0,d0
-                move.b  (a1)+,d0
+                move.b  (a1)+,d0                ; shell number
                 lsl.w   #$3,d0
-                tst.l   $4(a2,d0.w)
+                tst.l   $4(a2,d0.w)             ; still there?
                 bne.b   .4AEEC
 .4AEE6:
                 dbra    d1,.4AEDA
                 rts
 .4AEEC:
                 movea.l $4(a2,d0.w),a3
-                tst.w   $32(a3)
+                tst.w   $32(a3)                 ; and in its slot?
                 bne.b   .4AEE6
-                movem.w $A(a3),d0-d1
+                movem.w $A(a3),d0-d1            ; throw it at the ship
                 movem.w (ShipPos).w,d2-d3
                 jsr     (jt_DirectionTo).w
-                addq.w  #$1,d0
+                addq.w  #$1,d0                  ; direction + 1
                 move.w  d0,$32(a3)
-                move.w  #$1,$34(a3)
+                move.w  #$1,$34(a3)             ; outward, step count 0
                 rts
 Upd_BellmiteShell:
-                cmpi.w  #$14,$26(a0)
+                cmpi.w  #$14,$26(a0)            ; 20 damage:
                 blt.b   .4AF40
 .4AF1C:
-                move.b  #$1,$5(a0)
+                move.b  #$1,$5(a0)              ; explode
                 clr.l   $6(a0)
-                move.w  $3A(a0),d0
+                move.w  $3A(a0),d0              ; its slot is empty now
                 lsl.w   #$3,d0
                 lea.l   (BellmiteShells).l,a1
                 clr.l   $4(a1,d0.w)
-                move.l  #$300,d0
+                move.l  #$300,d0                ; 300 points
                 jmp     (jt_AddScore).w
 .4AF40:
-                tst.b   $3C(a0)
-                bmi.b   .4AF1C
-                move.w  $32(a0),d0
-                beq.w   .4AFEA
-                subq.w  #$1,d0
+                tst.b   $3C(a0)                 ; Bellmite dead:
+                bmi.b   .4AF1C                  ; explode too
+                move.w  $32(a0),d0              ; thrown?
+                beq.w   .4AFEA                  ; no: sit in the slot
+                subq.w  #$1,d0                  ; direction
                 lsl.w   #$2,d0
-                lea.l   (ShellScatter).l,a1
+                lea.l   (ShellSteps).l,a1       ; its step
                 lea.l   (a1,d0.w),a1
-                movem.w $36(a0),d0-d1
+                movem.w $36(a0),d0-d1           ; offset from the Bellmite
                 movem.w (a1),d2-d3
-                tst.b   $34(a0)
+                tst.b   $34(a0)                 ; coming back?
                 bne.b   .4AF72
-                add.w   d2,d0
+                add.w   d2,d0                   ; out: step away
                 add.w   d3,d1
                 bra.b   .4AFAC
 .4AF72:
-                sub.w   d2,d0
+                sub.w   d2,d0                   ; back: step towards the slot
                 sub.w   d3,d1
-                subq.b  #$1,$35(a0)
+                subq.b  #$1,$35(a0)             ; all the way back:
                 bne.b   .4AF92
-                clr.w   $32(a0)
-                move.w  $3A(a0),d2
+                clr.w   $32(a0)                 ; in the slot again
+                move.w  $3A(a0),d2              ; its exact slot offset
                 lsl.w   #$3,d2
                 lea.l   (BellmiteShells).l,a1
                 movem.w (a1,d2.w),d0-d1
 .4AF92:
                 movem.w d0-d1,$36(a0)
-                add.w   (BellmiteX).l,d0
+                add.w   (BellmiteX).l,d0        ; follow the Bellmite
                 add.w   (BellmiteY).l,d1
                 movem.w d0-d1,$A(a0)
                 rts
 .4AFAC:
                 movem.w d0-d1,$36(a0)
-                addq.b  #$1,$35(a0)
+                addq.b  #$1,$35(a0)             ; count the steps out
                 add.w   (BellmiteX).l,d0
                 add.w   (BellmiteY).l,d1
-                cmp.w   #$30,d0
+                cmp.w   #$30,d0                 ; left x $30-$148
                 bcs.b   .4AFE2
                 cmp.w   #$148,d0
                 bhi.b   .4AFE2
-                cmp.w   #$30,d1
+                cmp.w   #$30,d1                 ; or y $30-$D0:
                 bcs.b   .4AFE2
                 cmp.w   #$D0,d1
                 bhi.b   .4AFE2
                 movem.w d0-d1,$A(a0)
                 rts
 .4AFE2:
-                st.b    $34(a0)
+                st.b    $34(a0)                 ; turn back
                 bra.w   Upd_BellmiteShell
 .4AFEA:
-                movem.w (BellmiteX).l,d0-d1
+                movem.w (BellmiteX).l,d0-d1     ; in the slot:
                 add.w   $36(a0),d0
                 add.w   $38(a0),d1
-                move.b  $3D(a0),d2
+                move.b  $3D(a0),d2              ; jiggle a pixel
                 ext.w   d2
-                neg.b   $3D(a0)
+                neg.b   $3D(a0)                 ; the other way next frame
                 add.w   d2,d0
                 sub.w   d2,d1
                 movem.w d0-d1,$A(a0)
@@ -1007,7 +1013,7 @@ BellmiteY:
                 dc.w    $0000,$0008,$0009,$000A,$000B,$000C,$000D,$000E
                 dc.w    $000F,$0000,$0001,$0002,$0003,$0004,$0005,$0006
                 dc.w    $0007
-ShellScatter:
+ShellSteps:
                 dc.w    $0000,$FFFC,$0002,$FFFC,$0004,$FFFC,$0004,$FFFE
                 dc.w    $0004,$0000,$0004,$0002,$0004,$0004,$0002,$0004
                 dc.w    $0000,$0004,$FFFE,$0004,$FFFC,$0004,$FFFC,$0002
@@ -1017,7 +1023,7 @@ BellmiteSteps:
                 dc.w    $0002,$0000,$0002,$0001,$0002,$0002,$0001,$0002
                 dc.w    $0000,$0002,$FFFF,$0002,$FFFE,$0002,$FFFE,$0001
                 dc.w    $FFFE,$0000,$FFFE,$FFFF,$FFFE,$FFFE,$FFFF,$FFFE
-ShellFormations:
+ShellLaunchOrder:
                 dc.w    $0001,$0305,$0204,$0607,$0506,$0304,$0001,$0702
                 dc.w    $0704,$0603,$0502,$0100,$0201,$0403,$0700,$0605
 ; object definition: 48x48, 1 frame, gfx $66FC8, score 1000, update Upd_Bellmite, spawn Spawn_Bellmite
