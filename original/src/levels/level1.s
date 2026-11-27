@@ -1330,7 +1330,7 @@ LevelInit:
                 clr.b   (BossAdvance).l
                 clr.b   (BossPulseTimer).l
                 clr.b   (BossPulseStep).l
-                move.w  #$4E2,(BossTimer).l
+                move.w  #$4E2,(BossTimer).l     ; 1250 frames before the boss advances
                 rts
 ; LevelFrame: the boss (Dobkeratops), from scroll x $D3E:
 ;  - while BossMouthOpen (set when the core fires) the mouth opens: every
@@ -1341,138 +1341,138 @@ LevelInit:
 ;    the core it is cut to 50); then the scroll starts again - the boss
 ;    advances - and at $F39 the level ends.
 LevelFrame:
-                cmpi.w  #$D3E,(ScrollX).w
+                cmpi.w  #$D3E,(ScrollX).w       ; boss area yet?
                 bcs.w   .4B5B6
-                tst.b   (BossMouthOpen).l
+                tst.b   (BossMouthOpen).l       ; mouth opening?
                 beq.b   .4B53E
-                subq.b  #$1,(BossMouthTimer).l
+                subq.b  #$1,(BossMouthTimer).l  ; every 10 frames
                 bpl.b   .4B53E
                 move.b  #$A,(BossMouthTimer).l
-                moveq   #0,d4
+                moveq   #0,d4                   ; next mouth frame (4 of them)
                 move.b  (BossMouthStep).l,d4
                 lea.l   (BossMouthFrames).l,a0
-                movea.l (a0,d4.w),a0
-                lea.l   ($5BB5E).l,a1
+                movea.l (a0,d4.w),a0            ; its map cells
+                lea.l   ($5BB5E).l,a1           ; write 2x2 cells
                 bsr.w   .4B5B8
                 addq.b  #$4,d4
-                move.b  d4,(BossMouthStep).l
+                move.b  d4,(BossMouthStep).l    ; all 4 shown:
                 cmp.b   #$C,d4
-                bls.b   .4B53E
+                bls.b   .4B53E                  ; the mouth is done
                 clr.b   (BossMouthOpen).l
                 clr.b   (BossMouthStep).l
                 clr.b   (BossMouthTimer).l
 .4B53E:
-                subq.b  #$1,(BossPulseTimer).l
+                subq.b  #$1,(BossPulseTimer).l  ; body pulse: every 75 frames
                 bne.b   .4B57E
                 move.b  #$4B,(BossPulseTimer).l
                 moveq   #0,d4
-                move.b  (BossPulseStep).l,d4
+                move.b  (BossPulseStep).l,d4    ; next pulse frame (4 of them)
                 lea.l   (BossPulseFrames).l,a0
                 movea.l (a0,d4.w),a0
-                lea.l   ($5B72A).l,a1
+                lea.l   ($5B72A).l,a1           ; its map cells
                 bsr.w   .4B5B8
                 addq.b  #$4,d4
                 move.b  d4,(BossPulseStep).l
-                cmp.b   #$C,d4
+                cmp.b   #$C,d4                  ; after the last
                 bls.b   .4B57E
-                clr.b   (BossPulseStep).l
+                clr.b   (BossPulseStep).l       ; start again
 .4B57E:
-                tst.b   (BossAdvance).l
+                tst.b   (BossAdvance).l         ; advancing?
                 beq.b   .4B598
-                cmpi.w  #$F39,(ScrollX).w
+                cmpi.w  #$F39,(ScrollX).w       ; reached the end of the map:
                 bcs.b   .4B5B6
-                clr.b   (ScrollActive).w
-                st.b    (LevelComplete).w
+                clr.b   (ScrollActive).w        ; stop the scroll
+                st.b    (LevelComplete).w       ; and end the level
                 rts
 .4B598:
-                cmpi.w  #$E5D,(ScrollX).w
+                cmpi.w  #$E5D,(ScrollX).w       ; reached the boss:
                 bcs.b   .4B5B6
-                clr.b   (ScrollActive).w
-                subq.w  #$1,(BossTimer).l
+                clr.b   (ScrollActive).w        ; stop the scroll
+                subq.w  #$1,(BossTimer).l       ; and wait BossTimer frames,
                 bpl.b   .4B5B6
-                st.b    (BossAdvance).l
-                st.b    (ScrollActive).w
+                st.b    (BossAdvance).l         ; then advance
+                st.b    (ScrollActive).w        ; (the scroll moves on)
 .4B5B6:
                 rts
 .4B5B8:
-                move.l  (a0)+,(a1)
-                adda.l  (MapRowBytes).w,a1
+                move.l  (a0)+,(a1)              ; 2 cells on this row
+                adda.l  (MapRowBytes).w,a1      ; 2 on the next
                 move.l  (a0),(a1)
                 rts
 Spawn_DobkeratopsTail:
-                move.w  #$12C,(TailX).l
+                move.w  #$12C,(TailX).l         ; tail root x
                 clr.b   (BossHit).l
                 clr.w   (TailWave).l
                 clr.w   (TailTimer).l
                 clr.w   (BossDead).l
-                moveq   #15,d7
-                moveq   #0,d6
-                moveq   #0,d5
+                moveq   #15,d7                  ; 16 segments
+                moveq   #0,d6                   ; d6 = offset into a wave row
+                moveq   #0,d5                   ; d5 = explosion delay
 .4B5E8:
-                move.w  #$190,d0
+                move.w  #$190,d0                ; created off screen (placed by the update)
                 moveq   #5,d1
-                moveq   #-1,d2
+                moveq   #-1,d2                  ; indestructible
                 movem.w d5-d7,-(a7)
                 jsr     (jt_ObjCreate).w
-                move.w  d6,$32(a0)
-                clr.w   $34(a0)
-                move.w  d5,$36(a0)
-                move.w  #$5,$1E(a0)
+                move.w  d6,$32(a0)              ; segment's (x, y) in each wave row
+                clr.w   $34(a0)                 ; 0 = follower
+                move.w  d5,$36(a0)              ; segments explode one after another
+                move.w  #$5,$1E(a0)             ; segment frame
                 clr.b   $22(a0)
-                jsr     (jt_ObjInsert).w
+                jsr     (jt_ObjInsert).w        ; link it in
                 movem.w (a7)+,d5-d7
-                addq.w  #$2,d6
+                addq.w  #$2,d6                  ; next pair of bytes
                 addq.w  #$1,d5
                 dbra    d7,.4B5E8
-                st.b    $34(a0)
-                movea.l (PalettePtr).w,a1
+                st.b    $34(a0)                 ; the last segment leads (the tip)
+                movea.l (PalettePtr).w,a1       ; colour 11 = $090
                 move.w  #$90,$16(a1)
-                st.b    (MusicFadeReq).w
+                st.b    (MusicFadeReq).w        ; fade the level music out
                 rts
 Upd_DobkeratopsTail:
-                tst.b   (BossDead).l
+                tst.b   (BossDead).l            ; boss dead?
                 bpl.b   .4B652
-                tst.w   $36(a0)
-                bpl.b   .4B64C
-                move.b  #$1,$5(a0)
+                tst.w   $36(a0)                 ; delay over:
+                bpl.b   .4B64C                  ; explode
+                move.b  #$1,$5(a0)              ; and stop updating
                 clr.l   $6(a0)
                 rts
 .4B64C:
-                subq.w  #$1,$36(a0)
+                subq.w  #$1,$36(a0)             ; wait for this segment's turn
                 rts
 .4B652:
-                tst.b   (BossHit).l
+                tst.b   (BossHit).l             ; core hit this frame:
                 beq.b   .4B660
-                bset.b  #$0,$23(a0)
+                bset.b  #$0,$23(a0)             ; flash the segment too
 .4B660:
-                lea.l   ($78AB8).l,a1
+                lea.l   ($78AB8).l,a1           ; wave rows: 40 x 16 (x, y) byte pairs (level B)
                 move.w  (TailWave).l,d0
-                lsl.w   #$5,d0
-                add.w   $32(a0),d0
+                lsl.w   #$5,d0                  ; row * 32
+                add.w   $32(a0),d0              ; + this segment's pair
                 move.b  (a1,d0.w),d2
                 move.b  $1(a1,d0.w),d3
                 and.w   #$FF,d2
                 and.w   #$FF,d3
-                add.w   (TailX).l,d2
-                sub.w   #$A,d3
+                add.w   (TailX).l,d2            ; x from the tail root
+                sub.w   #$A,d3                  ; y - 10
                 movem.w d2-d3,$A(a0)
-                tst.b   $34(a0)
-                bmi.b   .4B69A
+                tst.b   $34(a0)                 ; the tip?
+                bmi.b   .4B69A                  ; no: done
                 rts
 .4B69A:
-                tst.b   (ScrollActive).w
+                tst.b   (ScrollActive).w        ; scrolling (the boss advances):
                 beq.b   .4B6A6
-                subq.w  #$1,(TailX).l
+                subq.w  #$1,(TailX).l           ; the tail moves left with it
 .4B6A6:
-                subq.w  #$1,(TailTimer).l
+                subq.w  #$1,(TailTimer).l       ; every 2 frames
                 bpl.b   .4B6CC
                 move.w  #$1,(TailTimer).l
-                addq.w  #$1,(TailWave).l
-                cmpi.w  #$28,(TailWave).l
+                addq.w  #$1,(TailWave).l        ; the next wave row
+                cmpi.w  #$28,(TailWave).l       ; 40 rows,
                 blt.b   .4B6CC
-                clr.w   (TailWave).l
+                clr.w   (TailWave).l            ; then round again
 .4B6CC:
-                lea.l   ($78AB8).l,a1
+                lea.l   ($78AB8).l,a1           ; place the tip on the new row
                 move.w  (TailWave).l,d0
                 lsl.w   #$5,d0
                 add.w   $32(a0),d0
@@ -1484,7 +1484,7 @@ Upd_DobkeratopsTail:
                 sub.w   #$A,d3
                 movem.w d2-d3,$A(a0)
                 movem.w $A(a0),d0-d1
-                movem.w (ShipPos).w,d2-d3
+                movem.w (ShipPos).w,d2-d3       ; tip frame: one of 4 directions towards the ship
                 jsr     (jt_DirectionTo).w
                 and.w   #$7,d0
                 lsr.w   #$1,d0
@@ -1493,7 +1493,7 @@ Upd_DobkeratopsTail:
 Spawn_DobkeratopsCore:
                 movem.w $2(a1),d0-d1
                 moveq   #-1,d2
-                jsr     (jt_ObjCreate).w
+                jsr     (jt_ObjCreate).w        ; indestructible: hits are counted by the update
                 clr.b   $22(a0)
                 move.w  #$3F,$32(a0)
                 clr.w   $34(a0)
@@ -1508,50 +1508,50 @@ Upd_DobkeratopsCore:
                 bne.w   .4B81E
                 subq.w  #$1,$32(a0)                 ; fire every 64 frames:
                 bpl.b   .4B7CC
-                move.w  #$3F,$32(a0)
+                move.w  #$3F,$32(a0)            ; 64 frames to the next volley
                 move.l  a0,-(a7)
                 moveq   #4,d7                       ; 5 shots
-                moveq   #1,d5
-                movem.w $A(a0),d3-d4
+                moveq   #1,d5                   ; d5 = launch delay, 3 frames apart
+                movem.w $A(a0),d3-d4            ; from 20 pixels left of the core
                 sub.w   #$14,d3
                 move.w  d4,d1
-                move.w  #$170,d0
+                move.w  #$170,d0                ; created off screen, at x $170
                 move.w  ($F0).w,d2                  ; path set by the ship's height
-                moveq   #-1,d6
+                moveq   #-1,d6                  ; ship high (y < $64): -1, curve up
                 cmp.w   #$64,d2
                 bcs.b   .4B788
-                moveq   #0,d6
+                moveq   #0,d6                   ; middle: 0, straight
                 cmp.w   #$9D,d2
                 bcs.b   .4B788
-                moveq   #1,d6
+                moveq   #1,d6                   ; low (y >= $9D): 1, curve down
 .4B788:
-                moveq   #-1,d2
+                moveq   #-1,d2                  ; indestructible
                 lea.l   (Def_DobkeratopsShot).l,a2
-                moveq   #0,d4
+                moveq   #0,d4                   ; first frame
 .4B792:
                 jsr     (jt_ObjCreate).w
-                move.w  d3,$38(a0)
-                move.w  d6,$32(a0)
-                move.w  d5,$34(a0)
-                clr.w   $36(a0)
+                move.w  d3,$38(a0)              ; launch x
+                move.w  d6,$32(a0)              ; path: -1 up, 0 straight, 1 down
+                move.w  d5,$34(a0)              ; wait before appearing
+                clr.w   $36(a0)                 ; position on the curve
                 addq.w  #$3,d5
-                move.w  d4,$1E(a0)
+                move.w  d4,$1E(a0)              ; frames 0, 2, 4, 6, 0: a spinning chain
                 addq.w  #$2,d4
                 cmp.w   #$7,d4
                 bls.b   .4B7B6
                 clr.w   d4
 .4B7B6:
-                bset.b  #$2,$23(a0)
+                bset.b  #$2,$23(a0)             ; not hit by weapons
                 jsr     (jt_ObjInsert).w
                 dbra    d7,.4B792
                 movea.l (a7)+,a0
                 st.b    (BossMouthOpen).l           ; and the mouth opens
 .4B7CC:
                 clr.b   (BossHit).l                 ; hit this frame? -> tail flashes
-                move.w  $26(a0),d0
-                cmp.w   $34(a0),d0
+                move.w  $26(a0),d0              ; damage taken
+                cmp.w   $34(a0),d0              ; changed since last frame?
                 beq.b   .4B7E6
-                move.w  d0,$34(a0)
+                move.w  d0,$34(a0)              ; remember it
                 st.b    (BossHit).l
 .4B7E6:
                 cmpi.w  #$14,$26(a0)                ; 20 hits: the timer is cut to 50
@@ -1569,28 +1569,28 @@ Upd_DobkeratopsCore:
 .4B81C:
                 rts
 .4B81E:
-                subq.w  #$1,$36(a0)
+                subq.w  #$1,$36(a0)             ; dead: an explosion every 2 frames
                 bpl.b   .4B872
                 move.w  #$1,$36(a0)
                 move.l  a0,-(a7)
-                moveq   #2,d0
+                moveq   #2,d0                   ; explosion type 0 or 2
                 jsr     (jt_Random).w
                 move.w  d0,d7
                 beq.b   .4B838
                 addq.w  #$1,d7
 .4B838:
-                move.w  #$82,d0
+                move.w  #$82,d0                 ; y = core y - 85 + random(130)
                 jsr     (jt_Random).w
                 sub.w   #$55,d0
                 move.w  d0,d1
                 add.w   $C(a0),d1
-                moveq   #50,d0
+                moveq   #50,d0                  ; x = core x - 50 + random(50)
                 jsr     (jt_Random).w
                 sub.w   #$32,d0
                 add.w   $A(a0),d0
                 moveq   #-1,d2
                 jsr     (jt_ObjCreate).w
-                clr.l   $6(a0)
+                clr.l   $6(a0)                  ; explosion object, exploding now
                 move.b  #$1,$5(a0)
                 move.b  d7,$21(a0)
                 jsr     (jt_ObjInsert).w
@@ -1598,41 +1598,41 @@ Upd_DobkeratopsCore:
 .4B872:
                 rts
 Upd_DobkeratopsShot:
-                tst.b   (BossDead).l
+                tst.b   (BossDead).l            ; boss dead:
                 beq.b   .4B886
-                move.b  #$1,$5(a0)
+                move.b  #$1,$5(a0)              ; explode
                 clr.l   $6(a0)
 .4B886:
-                tst.w   $34(a0)
+                tst.w   $34(a0)                 ; waiting to launch?
                 beq.b   .4B89A
                 subq.w  #$1,$34(a0)
-                bne.b   .4B898
+                bne.b   .4B898                  ; launch: move to the core
                 move.w  $38(a0),$A(a0)
 .4B898:
                 rts
 .4B89A:
-                move.w  $32(a0),d1
-                beq.b   .4B8D2
-                lea.l   ($79607).l,a1
-                move.w  $36(a0),d2
-                move.b  (a1,d2.w),d3
-                move.b  $2A(a1,d2.w),d4
+                move.w  $32(a0),d1              ; path
+                beq.b   .4B8D2                  ; straight: 6 pixels a frame left
+                lea.l   ($79607).l,a1           ; dx, dy curve tables (42 steps, level B)
+                move.w  $36(a0),d2              ; step number
+                move.b  (a1,d2.w),d3            ; dx
+                move.b  $2A(a1,d2.w),d4         ; dy
                 ext.w   d3
                 ext.w   d4
                 tst.w   d1
                 bmi.b   .4B8BC
-                neg.w   d4
+                neg.w   d4                      ; downward path: mirror dy
 .4B8BC:
                 add.w   d3,$A(a0)
                 add.w   d4,$C(a0)
-                cmpi.w  #$29,$36(a0)
+                cmpi.w  #$29,$36(a0)            ; end of the curve:
                 bcc.b   .4B8D6
-                addq.w  #$1,$36(a0)
+                addq.w  #$1,$36(a0)             ; keeps its last step
                 bra.b   .4B8D6
 .4B8D2:
-                subq.w  #$6,$A(a0)
+                subq.w  #$6,$A(a0)              ; straight on
 .4B8D6:
-                cmpi.w  #$10,$A(a0)
+                cmpi.w  #$10,$A(a0)             ; off the left edge: remove
                 bhi.b   .4B8E2
                 jmp     (jt_ObjKillSelf).w
 .4B8E2:
