@@ -120,4 +120,4 @@ VASM=vasmm68k_mot python3 -I tools/build_disk.py --from-source R-Type.adf
 
 `--from-source` assembles `src/` first, replacing the bootblock (its checksum is recomputed), stage 2, the game program, the shared file and the level A files. The other files (title picture, music, `$6000` block, level B) come from `files/`. Every raw track it writes is decoded again with the extractor's decoders and compared with its input. Each file must still fit its tracks (the tool reports an overflow); moving files means changing the loaders' track numbers too (stage 2 and `LevelTable`).
 
-Both commands currently give the same image. It hasn't been booted in WinUAE yet.
+Both commands currently give the same image. It boots and plays in WinUAE (tested 27 Nov 2026: level 1).

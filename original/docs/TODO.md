@@ -70,6 +70,14 @@ State on 27 Nov 2026. All 13 sources reassemble byte-identical (`tools/verify.py
 
 The `original/` sources stay byte-identical; changes go in a separate `enhanced/` tree.
 
+**Order (decided 27 Nov 2026):**
+1. **The AmigaDOS disk** (below): the 4489 byte loader, ZX0-packed files on an FFS disk, the patched load calls, high-score saving.
+2. **A title menu** in the style of the GnG and NZS enhanced versions: `START GAME`, `OPTIONS` (input, cheat, sound test, `EXIT`). The title file is reloaded every time the title comes back, so the menu can live there; only the settings and the in-game input code stay resident.
+3. **The cheats**, on the options page: infinite lives (keeping the score), invincibility, level select (stages 1-8), full weapons (the Force, both Bits, a chosen laser).
+4. **CD32 pad support** as the enhanced controller option. The original already reads button 2 (or Space) for the Force, as the arcade does, so the option adds the pad's extra buttons (read through the CD32 pad's serial protocol on port 2) for a third function, such as charging the beam or autofire.
+
+Each feature on its own branch, tested in WinUAE, then merged (as in GnG).
+
 ### A normal AmigaDOS disk
 
 Replace the custom-track loader with one that reads a standard AmigaDOS (11-sector, `$4489`) disk that has a proper file system, so the disk can be copied, browsed and checked with ordinary tools.
@@ -112,7 +120,7 @@ Replace the custom-track loader with one that reads a standard AmigaDOS (11-sect
   - Keep the checksum check so a bad or missing table falls back to the default.
 - [ ] **Build**: extend `build_disk.py` (or add an `enhanced` mode) to write a plain ADF and verify it, and test it in WinUAE on a 512K A500 and with more memory.
 
-### Cheat mode (first)
+### Cheat mode
 
 The original already has a hidden trainer: entering **`sumita.`** as a high-score name sets `CheatMode` (see `St_HighScore`). Lives are then never lost (each death adds 1 point instead), no points are scored, high scores aren't saved, and the title's "freeplay" line reads "trainer". The ship still dies on contact.
 
