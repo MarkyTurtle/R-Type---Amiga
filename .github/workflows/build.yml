@@ -1,7 +1,7 @@
 # Assemble every source, check it is byte-identical to the original files,
 # and build a bootable disk image (WinUAE extended ADF) from the sources.
 # Then the enhanced game's AmigaDOS disk (enhanced/tools/build.py), with its
-# emulator tests (enhanced/tools/test_disk.py).
+# emulator tests (enhanced/tools/test_disk.py, test_menu.py).
 name: Build
 
 on:
@@ -82,6 +82,7 @@ jobs:
           pip install --quiet unicorn==2.1.4 amitools==0.9.1
           python3 -I enhanced/tools/build.py
           python3 -I enhanced/tools/test_disk.py
+          python3 -I enhanced/tools/test_menu.py
 
       - name: Upload the enhanced disk image
         uses: actions/upload-artifact@v4

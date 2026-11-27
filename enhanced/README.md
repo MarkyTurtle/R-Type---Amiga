@@ -3,12 +3,13 @@
 The game on an ordinary **AmigaDOS disk**, in the old file system (OFS, `DOS\0`): the only kind Kickstart 1.3 boots and reads. The original's custom long tracks are replaced
 by files that Workbench can list, copy and check. They are read with the
 [4489_byteloader](https://github.com/MarkyTurtle/4489_byteloader) and packed with ZX0. The game
-itself is the original's. Next on the plan, in `../original/docs/TODO.md` section 7: a title
-menu, cheats and CD32 pad support.
+itself is the original's, with a **title menu** and **cheats** (below). Next on the plan, in
+`../original/docs/TODO.md` section 7: CD32 pad support.
 
 ```sh
 python3 -I enhanced/tools/build.py       # -> enhanced/build/rtype.adf
 python3 -I enhanced/tools/test_disk.py   # the disk code in a 68000 emulator against that disk
+python3 -I enhanced/tools/test_menu.py   # the title menu and the cheats in the emulator
 ```
 
 You need vasm (`VASM`), [salvador](https://github.com/emmanuel-marty/salvador) (`SALVADOR`), and
@@ -36,6 +37,7 @@ Kickstart 1.3 won't boot.)
 | 5 | `highscores` | – | no | the engine: one block, the table's 100 longs and a checksum |
 | 6–13 | `level1a`–`level8a` | `$4A2E4` | ZX0 | `LoadLevel`: level part A, the `$281C` bytes that survive the level B load |
 | 14–21 | `level1b`–`level8b` | `$4D300` | ZX0 | `LoadLevel`: level part B, unpacked (the original's was ByteKiller-packed) |
+| 22 | `menu` | `$7A7A0` | ZX0 | stage 2: the title menu and the cheats (`src/menu.s`) |
 
 `build.py` prints the sizes and offsets. The files take about 580K, leaving roughly 260K free.
 ZX0 packs the level B files about 35% smaller than the original's ByteKiller.
@@ -99,16 +101,54 @@ after loading the engine.
 
      The block never moves, so the file system's bitmap and directories are never touched.
 
-## Cheats
+## The title menu and the cheats
 
-`CheatFlags` (in `cheats.s`, at a fixed address in the engine) has one bit per cheat. The
-title menu will set them. Until it exists, the one cheat so far is on from the start:
+The title now types **`start game`** and **`options`** where "press fire to start" was. Up and
+down choose, fire selects. A press keeps the title up for another 200 frames. Any press on the
+credits or the high-score table goes back to the title (fire no longer starts a game from
+there), and fire while the title's text is typed finishes the typing at once.
 
-- **N skips the stage.** In normal play it sets `LevelComplete`, as killing the boss does: the
-  ship flies off, the stage bonus is counted and the next stage loads. It does nothing during a
-  stage's intro or ending, after a death, or on stage 8 (whose ending is its own code). Scores
-  are kept and saved as usual. Level2Int calls `CheatKeys` in place of its `cmp.b #$19,d0` for
-  P, and `CheatKeys` ends with that compare, so no byte of the engine moves.
+**Options** (no time-out; up / down choose, left / right or fire change):
+
+| Item | Values | |
+|---|---|---|
+| `infinite lives` | off / on | no life lost when the ship dies |
+| `invincibility` | off / on | nothing kills the ship: enemies, bullets and walls pass through it |
+| `start stage` | 1–8 | the stage a new game starts at |
+| `full weapons` | off / blue / red / yellow | every new ship (stage start, after a death) gets the Force at full strength with that crystal's laser, both Bits and the homing missiles |
+| `stage skip key n` | off / on | N in play ends the stage, as killing the boss does (not on stage 8) |
+| `sound effect` | 00–13 | fire plays it |
+| `exit` | | back to the title (fire) |
+
+The title says `cheats on` (instead of `freeplay`) when any is on, and a game played with any of
+them on, a later start stage included, doesn't go into the high-score table. The settings last
+until the machine is reset. The original's hidden trainer (`sumita.` as a high-score name)
+still works and still shows `trainer`.
+
+**Where the code is.** The engine is full (its spare disk-code space is down to 20 bytes) and
+nothing in it may move, because the level files call it at fixed addresses. So the menu and the
+cheats are a file of their own, `src/menu.s` (about 2K), which stage 2 loads once to
+`MENU_ORG` (`$7A7A0`), just above itself. Nothing else uses that memory: the level files end
+below `$7965E` and the byte loader's MFM buffer starts at `$7C400` (`MENU_LIMIT`). The menu is
+assembled after the engine, against its symbols (`build/game_syms.i`, written by `build.py`
+from the engine's listing). The engine reaches it through a jump table at `MENU_ORG` (`MJ_*` in
+`files.i`). Each hook in `game.s` replaces instructions of the same size, marked
+`(enhanced: ...)`:
+
+| Hook | In place of | What it does |
+|---|---|---|
+| `MJ_FRAME` | `TitleLoop`'s fire test | the menu, every title frame; Z set starts the game |
+| `MJ_TITLETEXT` | `St_TitleText`'s `lea TitleTextList,a4` | the title's text with the menu |
+| `MJ_PRINTFIRE` | `PrintString`'s fire test | fire speeds the typing up instead of leaving the title |
+| `MJ_NEWGAME` | `NewGame`'s `move.l #LevelTable,LevelTablePtr` | the start stage; notes whether the game has cheats |
+| `MJ_LOSELIFE` | `ShipRespawn`'s `subq.w #1,Lives` | infinite lives |
+| `MJ_SHIPHIT` | the three `st.b ShipHit` (an enemy or bullet, a solid map cell, the ship touching a non-power-up) | invincibility |
+| `MJ_WEAPONS` | the end of `ResetShipWeapons` | full weapons, when called from `SpawnShip` (`SpawnShipArmed`) |
+| `MJ_SCORE` | `St_HighScore`'s `move.l Score,d0` | 0 after a game with cheats, so it gets no place |
+
+`CheatFlags` (one bit per cheat, `CHEATB_*` in `files.i`) and the N key's code (`CheatKeys`,
+called from Level2Int in place of its `cmp.b #$19,d0` for P) stay in the engine's spare disk
+space (`src/cheats.s`).
 
 ## The test
 
@@ -129,6 +169,12 @@ decoded back into the disk image with its MFM and checksums checked. It runs:
   reading it back (the OFS block stays valid), and checking that a damaged block is ignored
 
 It doesn't run stage 2's display or the game itself: that is for WinUAE.
+
+`tools/test_menu.py` runs the title sequence itself (the engine, the graphics and the title file
+in memory, the menu at `MENU_ORG`) with `tools/screen.py`: a small emulated Amiga with the
+blitter (the title letters are BOBs), the frame swap done in Python, and the joystick. It
+checks the title's menu, the time-out, presses on the credits, typing cut short by fire, every
+item on the options page, and each cheat's hook. `--png DIR` saves the title and options screens.
 
 ## Checked in WinUAE
 

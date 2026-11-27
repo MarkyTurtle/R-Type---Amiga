@@ -72,8 +72,8 @@ The `original/` sources stay byte-identical; changes go in a separate `enhanced/
 
 **Order (decided 27 Nov 2026):**
 1. **The AmigaDOS disk** (below): the 4489 byte loader, ZX0-packed files on an OFS disk, the patched load calls, high-score saving.
-2. **A title menu** in the style of the GnG and NZS enhanced versions: `START GAME`, `OPTIONS` (input, cheat, sound test, `EXIT`). The title file is reloaded every time the title comes back, so the menu can live there; only the settings and the in-game input code stay resident.
-3. **The cheats**, on the options page: infinite lives (keeping the score), invincibility, level select (stages 1-8), full weapons (the Force, both Bits, a chosen laser).
+2. [x] **A title menu** in the style of the GnG and NZS enhanced versions: `START GAME`, `OPTIONS` (the cheats, a sound test, `EXIT`; the input option comes with the CD32 pad). Branch `enhanced/menu`, `enhanced/src/menu.s`: a file of its own that stage 2 loads once above itself (`MENU_ORG`), as the engine has no room left; see `enhanced/README.md`.
+3. [x] **The cheats**, on the options page: infinite lives, invincibility, start stage (1-8), full weapons (the Force at full strength, both Bits, the missiles, a chosen laser), the stage-skip key. A game with cheats gets no high-score place.
 4. **CD32 pad support** as the enhanced controller option. The original already reads button 2 (or Space) for the Force, as the arcade does, so the option adds the pad's extra buttons (read through the CD32 pad's serial protocol on port 2) for a third function, such as charging the beam or autofire.
 
 Each feature on its own branch, tested in WinUAE, then merged (as in GnG).
@@ -126,8 +126,8 @@ Replace the custom-track loader with one that reads a standard AmigaDOS (11-sect
 
 The original already has a hidden trainer: entering **`sumita.`** as a high-score name sets `CheatMode` (see `St_HighScore`). Lives are then never lost (each death adds 1 point instead), no points are scored, high scores aren't saved, and the title's "freeplay" line reads "trainer". The ship still dies on contact.
 
-- [ ] **Make it reachable**: a title-screen key or joystick sequence (or a start-up option) instead of having to reach the high-score table first.
-- [ ] **Options**, each a flag the code already has a natural place for:
+- [x] **Make it reachable**: the title menu's options page (`enhanced/src/menu.s`). The cheats there are new flags (`CheatFlags`); the original's trainer is left as it was.
+- [x] **Options**, each a flag the code already has a natural place for (done as hooks, see `enhanced/README.md`):
   - Infinite lives: the existing `CheatMode` test in `ShipRespawn`.
   - Invincibility: skip the ship's death in the collision code (`ShipHitsMap`, the enemy and bullet checks), so the ship flies through.
   - Keep the score: drop the `CheatMode` test in `AddScore` (and don't save those scores).

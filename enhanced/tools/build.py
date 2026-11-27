@@ -165,6 +165,14 @@ def main():
     fid = equates(os.path.join(SRC, 'files.i'))
     # 1. the engine, then stage 2 placed to end at $7A7A0 after the packed picture
     game, gsyms = assemble(os.path.join(SRC, 'game.s'), os.path.join(BUILD, 'game_low.bin'))
+    # the menu, against the engine's symbols (labels and equates, from its listing)
+    with open(os.path.join(BUILD, 'game_syms.i'), 'w') as f:
+        f.write('; the engine\'s symbols for menu.s (written by tools/build.py)\n')
+        for line in open(os.path.join(BUILD, 'game_low.bin.lst'), errors='replace'):
+            m = re.match(r'^([A-Za-z_]\w*)\s+[AE]:([0-9A-F]+)\s*$', line)
+            if m and m.group(1) not in fid:
+                f.write('%-24s equ $%s\n' % (m.group(1), m.group(2)))
+    menu, _ = assemble(os.path.join(SRC, 'menu.s'), os.path.join(BUILD, 'menu.bin'))
     rd = lambda n: open(os.path.join(FILES, n), 'rb').read()
     picture = rd('boot_6efa0.bin')[:0xA3C0]                         # title picture + font
     pic_packed, _ = pack(picture, 'picture')
@@ -202,6 +210,7 @@ def main():
         fid['FID_GAMEMAIN']: ('graphics', rd('game_main_06000.bin'), 0x6000, True),
         fid['FID_SHARED']: ('title', rd('shared_4a300.bin'), 0x4A300, True),
         fid['FID_HISCORE']: ('highscores', bytes(hs), None, False),
+        fid['FID_MENU']: ('menu', menu, fid['MENU_ORG'], True),
     }
     for n in range(8):
         files[fid['FID_LEVEL1A'] + n] = ('level%da' % (n + 1),
@@ -226,7 +235,9 @@ def main():
             limits = {'music': org,                # stage 2 runs above it
                       'game': 0x6000,              # the $6000 block follows
                       'graphics': 0x32000,         # stage 2's MFM buffer
-                      'title': 0x52300}.get(name, 0x7C400 if name.endswith('b') else 0x4D300)
+                      'title': 0x52300,
+                      'menu': fid['MENU_LIMIT'],   # the byte loader's MFM buffer
+                      }.get(name, fid['MENU_ORG'] if name.endswith('b') else 0x4D300)
             if top > limits:
                 sys.exit('%s: the packed data would end at $%X, over $%X' % (name, top, limits))
             raw = top - 512 * ofs.OFSDisk.nblocks(len(p))

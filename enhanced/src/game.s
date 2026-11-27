@@ -246,7 +246,9 @@ NewGame:
                 clr.b   (ShipAlive).l
                 clr.w   (MusicRequest).l
                 clr.b   (MusicFadeReq).l
-                move.l  #LevelTable,(LevelTablePtr).l
+                jsr     (MJ_NEWGAME).l              ; (enhanced: LevelTablePtr and
+                nop                                 ;  Level from the start stage)
+                nop
                 move.b  #$4,(Continues).l
                 move.w  #$1,(Lives).l
                 bsr.w   DrawLives
@@ -401,6 +403,7 @@ SpawnShip:
                 move.w  #$76,(ShipY).l
                 clr.b   (StageFlags).l
                 bsr.w   ResetShipWeapons
+SpawnShipArmed:                                     ; (enhanced: full weapons only here)
                 tst.b   (NewLifeFlag).l
                 bne.b   ShipRespawn
                 st.b    (NewLifeFlag).l
@@ -432,8 +435,8 @@ ShipRespawn:
                 move.l  #$6200,(ShipSpriteFrame).l
                 tst.b   (CheatMode).l
                 bne.b   .00564
-                subq.w  #$1,(Lives).l
-                bra.w   DrawLives
+                jsr     (MJ_LOSELIFE).l             ; (enhanced: subq.w #1,Lives unless
+                bra.w   DrawLives                   ;  infinite lives)
 .00564:
                 moveq   #1,d0
                 bra.w   AddScoreAlways
@@ -445,8 +448,10 @@ ResetShipWeapons:
                 clr.b   (ForceLevel).l
                 clr.b   (ForceActive).l
                 clr.w   (ForcePos).l
-                move.l  #Force_Idle,(ForceState).l
-                rts
+                jmp     (MJ_WEAPONS).l              ; (enhanced: move.l #Force_Idle,ForceState
+                nop                                 ;  and rts there, and full weapons)
+                nop
+                nop
 ; LV_Waves is the CHECKPOINT list: 6-byte entries (scroll x.w, wave list.l),
 ; highest first, ending with the scroll-x 0 entry (level start).  On a
 ; restart the first entry at or below Checkpoint gives the new ScrollX and
@@ -1726,8 +1731,8 @@ UpdateEnemyBullets:
                 beq.b   .013ce
                 tst.b   (ShipAlive).l
                 beq.b   .013c8
-                st.b    (ShipHit).l
-.013c8:
+                jsr     (MJ_SHIPHIT).l              ; (enhanced: st.b ShipHit unless
+.013c8:                                             ;  invincible)
                 movem.l (a7)+,d3-d4/a3
                 bra.b   .01436
 .013ce:
@@ -2095,7 +2100,7 @@ HitByForceOrShip:
                 st.b    (ForceActive).l
                 rts
 .0179c:
-                st.b    (ShipHit).l
+                jsr     (MJ_SHIPHIT).l              ; (enhanced: invincibility)
                 rts
 ; CollectSpeedUp: the S power-up.  Shows the speed-up flash beside the
 ; ship and raises ShipSpeed by one, to at most 5.
@@ -2158,7 +2163,7 @@ ShipHitsMap:
                 addq.w  #$6,d1
                 bsr.w   GetMapCell
                 beq.b   .01850
-                st.b    (ShipHit).l
+                jsr     (MJ_SHIPHIT).l              ; (enhanced: invincibility)
 .01850:
                 rts
 ; ObjUpd_SpeedFlash: the speed-up flash sits behind the ship for $32
@@ -4396,7 +4401,8 @@ TitleSequence:
 TitleLoop:
                 tst.b   (FrameReady).l
                 bne.b   TitleLoop
-                btst.b  #$7,(CIAA_PRA).l
+                jsr     (MJ_FRAME).l                ; (enhanced: the menu; it was
+                nop                                 ;  btst #7,CIAA_PRA - fire)
                 beq.w   AbortTitle
                 tst.w   (TitleDelay).l
                 beq.b   .03262
@@ -4451,7 +4457,7 @@ St_TitleLetters:
                 bra.w   TitleNextFrame
 St_TitleText:
                 bsr.w   DrawTitle
-                lea.l   (TitleTextList).l,a4
+                jsr     (MJ_TITLETEXT).l            ; (enhanced: a4 = the menu's list)
                 bsr.w   PrintList
                 move.l  #St_TitleWipe,(TitleState).l
                 move.b  #$D,(TitleFadeSteps).l
@@ -4570,8 +4576,8 @@ St_HighScore:
                 st.b    (Flip50Hz).l
                 lea.l   (TextPalette).l,a1
                 bsr.w   SetPalette
-                move.l  (Score).l,d0
-                bsr.w   InsertScore
+                jsr     (MJ_SCORE).l                ; (enhanced: d0 = Score, or 0 after
+                bsr.w   InsertScore                 ;  a game with cheats on)
                 move.l  a0,-(a7)
                 beq.b   .0357a
                 move.b  #$FF,(JingleCmd).l
@@ -4940,7 +4946,8 @@ PrintList:
 
 ; PrintString: typewriter print, fire aborts the attract mode
 PrintString:
-                btst.b  #$7,(CIAA_PRA).l
+                jsr     (MJ_PRINTFIRE).l            ; (enhanced: fire no longer leaves
+                nop                                 ;  the title, it speeds the text up)
                 bne.b   .03952
                 tst.b   (TitleAbort).l
                 beq.b   .03952

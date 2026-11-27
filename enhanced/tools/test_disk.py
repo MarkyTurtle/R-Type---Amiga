@@ -157,6 +157,7 @@ def expected():
     for n in range(8):
         exp[6 + n] = (0x4A2E4, rd('level%d_a_4a2e4.bin' % (n + 1))[:0x4CB00 - 0x4A2E4])
         exp[14 + n] = (0x4D300, rd('level%d_b_4d300.bin' % (n + 1)))
+    exp[22] = (0x7A7A0, open(os.path.join(BUILD, 'menu.bin'), 'rb').read())     # FID_MENU -> MENU_ORG
     return exp
 
 
@@ -164,7 +165,7 @@ def main():
     adf = open(os.path.join(BUILD, 'rtype.adf'), 'rb').read()
     boot = open(os.path.join(BUILD, 'boot.bin'), 'rb').read()
     g, s2 = syms('game_low.bin.lst'), syms('stage2.bin.lst')
-    table = boot[s2['S2FileTable'] - layout()['PIC_PACKED']:][:22 * 12]
+    table = boot[s2['S2FileTable'] - layout()['PIC_PACKED']:][:23 * 12]
     exp = expected()
 
     # 1. the bootblock -------------------------------------------------------------
@@ -244,7 +245,7 @@ def main():
     m.w16(0xDFF01E, 0)
     s2start = lay['STAGE2_ORG'] - base
     snapshot = m.mem(lay['STAGE2_ORG'], len(boot) - s2start)    # (its frame counter moved)
-    for fid in (1, 2, 3):
+    for fid in (1, 2, 3, 22):
         dest, data = exp[fid]
         m.call(s2['LoadFile'], [(UC_M68K_REG_D0, fid), (UC_M68K_REG_D2, dest)], sp=0x40B60)
         now = m.mem(lay['STAGE2_ORG'], len(boot) - s2start)
@@ -263,7 +264,7 @@ def main():
             m.w32(g['CacheBase'], SLOW); m.w32(g['CacheNext'], SLOW); m.w32(g['CacheLimit'], SLOW + 0x80000)
         for rnd in (1, 2):
             for fid in sorted(exp):
-                if fid in (1, 2, 3):
+                if fid in (1, 2, 3, 22):
                     continue
                 dest, data = exp[fid]
                 m.u.mem_write(dest, b'\x55' * len(data))
@@ -278,7 +279,7 @@ def main():
                                                                 ', from the cache' if cached else ''))
         if slow:
             blocks = lambda k: (struct.unpack_from('>L', table, k * 12 + 4)[0] + 487) // 488 * 512
-            check(m.r32(g['CacheNext']) - SLOW == sum(blocks(k) for k in exp if k not in (1, 2, 3)),
+            check(m.r32(g['CacheNext']) - SLOW == sum(blocks(k) for k in exp if k not in (1, 2, 3, 22)),
                   'the cache holds every packed file once (its blocks)')
 
     # 3b. LoadLevel's loads, from LevelTable, for every level -----------------------
