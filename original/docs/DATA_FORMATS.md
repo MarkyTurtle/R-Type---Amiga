@@ -156,7 +156,7 @@ Level A's pointers into B, found by `tools/gen_levelb.py`:
 - **BOB frames beyond each object's first animation** (about 130K in all) are chosen by the objects' code: directions, corners, turns, aiming (the Gouger's four corners, the Zoid's and Mikun's directions, the P-Staff's aim). Trimming them would need each object's code checked.
 - **Unknown:** 18 bytes after level 1's samples and 192 bytes between two BOB blocks in level 3: left as they are.
 
-Everything else in A that falls in B's address range was checked and is something else: code words, wave parameters, hit boxes, step tables. Pointers per level: 36, 41, 76, 47, 14, 6, 41, 22.
+Everything else in A that falls in B's address range was checked and is something else: code words, wave parameters, hit boxes, step tables. Pointers per level: 36, 41, 77, 47, 14, 6, 41, 22. (Level 3's `Def_LaserTower` was missed at first - the definition finder skipped it and its graphics lie where the layout guessed more EngineShot frames - and showed as corrupt graphics; the generator now also takes every `Def_` label's graphics field, and `check_levelab.py -v` lists what is left for review.)
 
 
 `tools/levelb_layout.py` maps every level B file (the full listing is in [levelb_layout.txt](levelb_layout.txt)). In address order each holds:

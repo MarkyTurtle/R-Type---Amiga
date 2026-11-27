@@ -155,6 +155,9 @@ def main():
                 ptrs[hit[0]] = v
     for d in defs:
         ptrs[d['addr'] + 0x0C] = d['gfx']
+    for name, a in symbols(lst).items():      # every Def_ label too: find_definitions missed
+        if name.startswith('Def_') and inB(rd(a + 0x0C)):   # level 3's Def_LaserTower
+            ptrs[a + 0x0C] = rd(a + 0x0C)
     # other longs in the data that point into a table, the map or at a block's start (path
     # tables, PatchMap blocks); the list is printed for review, with per-level overrides
     data_lines = sorted((a0, ln) for ln, a0 in first.items())

@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Check that a level's parts A and B can be assembled together anywhere (relocated).
 
-usage: python3 -I tools/check_levelab.py [N ...]      (VASM = vasmm68k_mot; default: every
+usage: python3 -I tools/check_levelab.py [-v] [N ...]  (VASM = vasmm68k_mot; default: every
                                                        level that has a levelN_b.s)
+  -v lists the longs in A that fall in B's range but are not pointers, for review
 
 For each level:
   1. A on its own, against B's labels moved by $1000: every long that changes must change by
@@ -57,6 +58,17 @@ def check(n):
     covered = {k + d for k in longs for d in range(4)}
     stray = [i for i in diff if i not in covered]
     print('level %d: %d pointers into B in A' % (n, len(longs)))
+    if '-v' in sys.argv:                     # what's left that looks like an address in B
+        import bisect
+        labs = sorted((v, k) for k, v in asyms.items()); lv = [v for v, _ in labs]
+        end = 0x4D300 + len(orig_b)
+        left = []
+        for k in range(0x1C, asyms['LevelAEnd'] - 0x4A2E4 - 3, 2):
+            v = struct.unpack_from('>L', orig_a, k)[0]
+            if 0x4D300 <= v < end and a2[k:k + 4] == orig_a[k:k + 4] and v & 0xFFFF >= 0x40:
+                i = bisect.bisect_right(lv, 0x4A2E4 + k) - 1
+                left.append('%s+%X:$%05X' % (labs[i][1], 0x4A2E4 + k - labs[i][0], v))
+        print('  left as they are (code words, hit boxes, step and wave tables): ' + ' '.join(left))
     if stray:
         print('  FAIL: A changes that are not pointers into B at', ', '.join('$%05X' % (0x4A2E4 + i) for i in stray[:8]))
         ok = False
@@ -98,7 +110,7 @@ def check(n):
 
 
 def main():
-    ns = [int(a) for a in sys.argv[1:]] or [n for n in range(1, 9) if os.path.exists(
+    ns = [int(a) for a in sys.argv[1:] if a != '-v'] or [n for n in range(1, 9) if os.path.exists(
         os.path.join(ROOT, 'src', 'levels', 'level%d_b.s' % n))]
     ok = all([check(n) for n in ns])
     print('all passed' if ok else 'FAILED')

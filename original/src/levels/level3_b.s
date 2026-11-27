@@ -43,11 +43,12 @@ Gfx_CannonPod:
 ; $69F50-$6AB4F: BOB graphics: 1 frames of 3072 bytes (Def_MainEngine)
 Gfx_MainEngine:
                 incbin  "level3_b_4d300.bin",$1CC50,$C00
-; $6AB50-$6C04F: BOB graphics: 24 frames of 224 bytes (Def_EngineShot)
+; $6AB50-$6AD0F: BOB graphics: 2 frames of 224 bytes (Def_EngineShot)
 Gfx_EngineShot:
-                incbin  "level3_b_4d300.bin",$1D850,$1500
-; $6C050-$6C10F: (not used by the code that is known)
-                incbin  "level3_b_4d300.bin",$1ED50,$C0
+                incbin  "level3_b_4d300.bin",$1D850,$1C0
+; $6AD10-$6C10F: BOB graphics: 1 frame of 5120 bytes (Def_LaserTower)
+Gfx_LaserTower:
+                incbin  "level3_b_4d300.bin",$1DA10,$1400
 ; $6C110-$6F84F: BOB graphics: 17 frames of 832 bytes (Def_Fireball)
 Gfx_Fireball:
                 incbin  "level3_b_4d300.bin",$1EE10,$3740

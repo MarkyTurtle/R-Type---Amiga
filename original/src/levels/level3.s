@@ -1406,7 +1406,8 @@ Def_TowerLaser:
 ; Moves with the map, and after 550 frames sinks a pixel a frame; 55
 ; damage destroys it (25 explosions, 800 points).
 Def_LaserTower:
-                dc.w    $200B,$001E,$1400,$0000,$0000,$0000,$0006,$AD10
+                dc.w    $200B,$001E,$1400,$0000,$0000,$0000
+                dc.l    Gfx_LaserTower
                 dc.w    $0000,$0A00,$0004,$BD60,$0004,$BD62
                 dc.l    Upd_LaserTower
                 dc.l    Spawn_LaserTower
