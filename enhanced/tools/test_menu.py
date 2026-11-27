@@ -53,7 +53,7 @@ def main():
     check(bytes(t.u.mem_read(lay['RES_ORG'], code)) == resident[:code],
           "resident.s intact after the title sequence (nothing else uses RES_ORG)")
     mem = bytes(t.u.mem_read(0, 0x80000)); ctx = t.u.context_save()
-    keep = {k: copy.copy(v) for k, v in t.__dict__.items() if k not in ('u', 'g')}
+    keep = {k: copy.copy(v) for k, v in t.__dict__.items() if k not in ('u', 'g', 'odd')}
 
     def load():
         t.u.mem_write(0, mem); t.u.context_restore(ctx)
@@ -171,6 +171,10 @@ def main():
     t.w8(m['Weapons'], 0)
     w, fs = weapons(g['SpawnShipArmed'])
     check(w == [0, 0, 0, 0, 0] and fs == g['Force_Idle'], '... nor with it off')
+
+    for name, tt in (('the menu runs', t), ('the typing run', t2)):
+        check(not tt.odd, '%s: no word or long access at an odd address (a 68000 address error)%s'
+              % (name, ''.join(' pc $%X addr $%X' % (pc, a) for pc, a, _ in tt.odd[:3])))
 
     print('%d failed' % fails if fails else 'all passed')
     sys.exit(1 if fails else 0)

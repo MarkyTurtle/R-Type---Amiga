@@ -22,7 +22,7 @@
   python3 -I enhanced/tools/test_disk.py
 """
 import os, re, struct, sys
-from unicorn import Uc, UC_ARCH_M68K, UC_MODE_BIG_ENDIAN, UC_HOOK_CODE
+from unicorn import UC_HOOK_MEM_READ, UC_HOOK_MEM_WRITE, Uc, UC_ARCH_M68K, UC_MODE_BIG_ENDIAN, UC_HOOK_CODE
 from unicorn.m68k_const import (UC_CPU_M68K_M68000, UC_M68K_REG_A1, UC_M68K_REG_A6, UC_M68K_REG_A7,
                                 UC_M68K_REG_D0, UC_M68K_REG_D1, UC_M68K_REG_D2, UC_M68K_REG_PC)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -60,6 +60,9 @@ def check(ok, what):
     fails += not ok
 
 
+ODD = []
+
+
 class Machine:
     def __init__(self, adf, unit=0, slow=False):
         u = self.u = Uc(UC_ARCH_M68K, UC_MODE_BIG_ENDIAN)
@@ -70,6 +73,12 @@ class Machine:
         self.w16(RET, 0x4E72); self.w16(RET + 2, 0x2700)       # stop #$2700
         self.adf = bytearray(adf)
         self.fd = WritingFloppy(self, self.adf, unit=unit)
+        # a 68000 takes an address error on a word or long access at an odd address;
+        # Unicorn doesn't, so every machine logs them (checked at the end)
+        def odd(uc, acc, addr, size, value, ud):
+            if size > 1 and addr & 1 and len(ODD) < 20:
+                ODD.append((uc.reg_read(UC_M68K_REG_PC), addr))
+        u.hook_add(UC_HOOK_MEM_READ | UC_HOOK_MEM_WRITE, odd)
     def r8(self, a): return self.u.mem_read(a, 1)[0]
     def r16(self, a): return struct.unpack('>H', bytes(self.u.mem_read(a, 2)))[0]
     def r32(self, a): return struct.unpack('>L', bytes(self.u.mem_read(a, 4)))[0]
@@ -354,6 +363,8 @@ def main():
     m.u.mem_write(hs, default)
     m.call(g['LoadHighScores'])
     check(m.mem(hs, 400) == default, 'LoadHighScores: a damaged block leaves the table alone')
+    check(not ODD, 'no word or long access at an odd address anywhere (a 68000 address error)%s'
+          % ''.join(' pc $%X addr $%X' % x for x in ODD[:3]))
     print('%d failed' % fails if fails else 'all passed')
     sys.exit(1 if fails else 0)
 
