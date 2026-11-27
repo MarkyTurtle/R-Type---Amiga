@@ -14,6 +14,9 @@
 ; the boss is the Bydo itself.  Then the ending (EndingSequence).
 ;==============================================================================
                 include "engine.i"
+                ifnd    LEVEL_AB
+                include "level8_b.i"           ; level B's labels (tools/verify.py writes it
+                endc                            ;  from level8_b.s)
 
                 org     $4A2E4
 LevelHeader:
@@ -30,15 +33,15 @@ LevelInterface:
                 dc.w    $0301,$1969
                 dc.l    WaveList
                 dc.l    LevelPalette
-                dc.l    $5AF00
-                dc.l    $4D300
+                dc.l    LvMap
+                dc.l    LvTiles
                 dc.l    ScrollScript
                 dc.l    $0
                 dc.l    $0
                 dc.l    LevelFrame
                 dc.l    LevelInit
-                dc.l    $5C1FE               ; LvMusic: player in level B; samples $5DE82 (8), data $5DF18, periods $5DEC2
-                dc.l    $5F244               ; LvEndMusic: ending tune player, 32-row ($82) patterns; samples $60376, data $6040C
+                dc.l    LvMusic          ; LvMusic: player in level B; samples $5DE82 (8), data $5DF18, periods $5DEC2
+                dc.l    LvMusicEnd       ; LvEndMusic: ending tune player, 32-row ($82) patterns; samples $60376, data $6040C
 ScrollScript:
                 dc.w    $000B,$0000,$0064,$0000,$0000,$FFFF
 ; Checkpoint list (LV_Waves): scroll x reached, where to resume in the
@@ -524,13 +527,15 @@ EscortList:
                 dc.w    $00A0,$0003,$0002,$0000,$FFFF
 ; object definition: 32x14, 4 frames, gfx $672B8, update Upd_R9Escort
 Def_R9Escort:
-                dc.w    $0E03,$002E,$01C0,$0000,$0000,$0000,$0006,$72B8
+                dc.w    $0E03,$002E,$01C0,$0000,$0000,$0000
+                dc.l    Gfx_R9Escort
                 dc.w    $0000,$00E0,$0004,$AA74,$0004,$AAA0
                 dc.l    Upd_R9Escort
                 dc.w    $0000,$0000,$0000,$0000,$0001,$0203
 ; object definition: 32x23, 10 frames, gfx $61738, score 200, update Upd_Mikun
 Def_Mikun:
-                dc.w    $1703,$002E,$02E0,$0002,$0000,$0000,$0006,$1738
+                dc.w    $1703,$002E,$02E0,$0002,$0000,$0000
+                dc.l    Gfx_Mikun
                 dc.w    $0000,$0170,$0004,$AB60,$0004,$AAA0
                 dc.l    Upd_Mikun
                 dc.w    $0000,$0000,$0000,$0200,$0004,$0000,$0010,$0015
@@ -559,7 +564,8 @@ MikunDirections:
                 dc.w    $0000,$0000,$0004,$AB7E,$0004,$AB60,$0004,$AB81
 ; object definition: 32x30, 6 frames, gfx $65C38
 Def_MikunBurst:
-                dc.w    $1E03,$002E,$03C0,$0000,$0000,$0000,$0006,$5C38
+                dc.w    $1E03,$002E,$03C0,$0000,$0000,$0000
+                dc.l    Gfx_MikunBurst
                 dc.w    $0000,$01E0,$0004,$AC2C,$0004,$AC3C,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000
 MikunBurstAnim:
@@ -595,42 +601,63 @@ CoreOpenAnim:
 CoreAnimWinStep:
                 dc.w    $0004,$AED6,$0004,$AED6,$0004,$AED6,$0004,$AEB0
                 dc.w    $0004,$AE8A,$0004,$AE64,$0004,$AE3E,$8000,$0000
-                dc.w    $0005,$B5B8,$0303,$8058,$8059,$805A,$805B,$806C
+                dc.l    LvMap+$6B8
+                dc.w    $0303,$8058,$8059,$805A,$805B,$806C
                 dc.w    $806D,$806E,$806F,$8080,$8081,$8082,$8083,$8094
-                dc.w    $8095,$8096,$8097,$0005,$B5B8,$0303,$805C,$805D
+                dc.w    $8095,$8096,$8097
+                dc.l    LvMap+$6B8
+                dc.w    $0303,$805C,$805D
                 dc.w    $805E,$805F,$8070,$8071,$8072,$8073,$8084,$8085
-                dc.w    $8086,$8087,$8098,$8099,$809A,$809B,$0005,$B5B8
+                dc.w    $8086,$8087,$8098,$8099,$809A,$809B
+                dc.l    LvMap+$6B8
                 dc.w    $0303,$8060,$8061,$8062,$8063,$8074,$8075,$8076
                 dc.w    $8077,$8088,$8089,$808A,$808B,$809C,$809D,$809E
                 dc.w    $809F
 InitialCellsA:
-                dc.w    $0005,$B5B8,$0303,$8035,$8036,$8037,$8038,$8049
+                dc.l    LvMap+$6B8
+                dc.w    $0303,$8035,$8036,$8037,$8038,$8049
                 dc.w    $804A,$804B,$804C,$8009,$800A,$800B,$800C,$801D
-                dc.w    $801E,$801F,$8020,$0005,$B5B8,$0303,$80A4,$80A5
+                dc.w    $801E,$801F,$8020
+                dc.l    LvMap+$6B8
+                dc.w    $0303,$80A4,$80A5
                 dc.w    $80A6,$80A7,$80B8,$80B9,$80BA,$80BB,$80CC,$80CD
-                dc.w    $80CE,$80CF,$80E0,$80E1,$80E2,$80E3,$0005,$B5B8
+                dc.w    $80CE,$80CF,$80E0,$80E1,$80E2,$80E3
+                dc.l    LvMap+$6B8
                 dc.w    $0303,$80A8,$80A9,$80AA,$80AB,$80BC,$80BD,$80BE
                 dc.w    $80BF,$80D0,$80D1,$80D2,$80D3,$80E4,$80E5,$80E6
-                dc.w    $80E7,$0005,$B5B8,$0303,$80AC,$80AD,$80AE,$80AF
+                dc.w    $80E7
+                dc.l    LvMap+$6B8
+                dc.w    $0303,$80AC,$80AD,$80AE,$80AF
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-                dc.w    $80C0,$80C1,$80C2,$80C3,$0005,$B5B8,$0303,$80B0
+                dc.w    $80C0,$80C1,$80C2,$80C3
+                dc.l    LvMap+$6B8
+                dc.w    $0303,$80B0
                 dc.w    $80B1,$80B2,$80B3,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$80C4,$80C5,$80C6,$80C7
 InitialCellsB:
-                dc.w    $0005,$B5C0,$0303,$00D4,$00D5,$00D6,$00D7,$00E8
+                dc.l    LvMap+$6C0
+                dc.w    $0303,$00D4,$00D5,$00D6,$00D7,$00E8
                 dc.w    $00E9,$00EA,$00EB,$00FC,$00FD,$00FE,$00FF,$0110
-                dc.w    $0111,$0112,$0113,$0005,$B5C0,$0303,$00D8,$00D9
+                dc.w    $0111,$0112,$0113
+                dc.l    LvMap+$6C0
+                dc.w    $0303,$00D8,$00D9
                 dc.w    $00DA,$00DB,$00EC,$00ED,$00EE,$00EF,$0100,$0101
-                dc.w    $0102,$0103,$0114,$0115,$0116,$0117,$0005,$B5C0
+                dc.w    $0102,$0103,$0114,$0115,$0116,$0117
+                dc.l    LvMap+$6C0
                 dc.w    $0303,$0124,$0125,$0126,$0127,$0138,$0139,$013A
                 dc.w    $013B,$014C,$014D,$014E,$014F,$0160,$0161,$0162
-                dc.w    $0163,$0005,$B5C0,$0303,$0128,$0129,$012A,$012B
+                dc.w    $0163
+                dc.l    LvMap+$6C0
+                dc.w    $0303,$0128,$0129,$012A,$012B
                 dc.w    $013C,$013D,$013E,$013F,$0150,$0151,$0152,$0153
-                dc.w    $0164,$0165,$0166,$0167,$0005,$B5C0,$0303,$0174
+                dc.w    $0164,$0165,$0166,$0167
+                dc.l    LvMap+$6C0
+                dc.w    $0303,$0174
                 dc.w    $0175,$0176,$0177,$0188,$0189,$018A,$018B,$019C
                 dc.w    $019D,$019E,$019F,$01B0,$01B1,$01B2,$01B3
 CoreWreckCells:
-                dc.w    $0005,$AFE0,$070B,$00F0,$00F1,$00F2,$00F3,$00F4
+                dc.l    LvMap+$E0
+                dc.w    $070B,$00F0,$00F1,$00F2,$00F3,$00F4
                 dc.w    $00F5,$00F6,$00F7,$0104,$0105,$0106,$0107,$0108
                 dc.w    $0109,$010A,$010B,$0118,$0119,$011A,$011B,$011C
                 dc.w    $011D,$011E,$011F,$012C,$012D,$012E,$012F,$0130
@@ -654,14 +681,19 @@ Def_BydoCore:
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
 ; object definition: 32x24, 3 frames, gfx $679B8, update Upd_Win, spawn Spawn_Win
 Def_Win:
-                dc.w    $1803,$002E,$0300,$0000,$0000,$0000,$0006,$79B8
+                dc.w    $1803,$002E,$0300,$0000,$0000,$0000
+                dc.l    Gfx_Win
                 dc.w    $0000,$0180,$0004,$B048,$0004,$B04C
                 dc.l    Upd_Win
                 dc.l    Spawn_Win
                 dc.w    $0000,$0000,$0001,$02FF,$0004,$0001,$0012,$0016
                 dc.w    $0004,$0003,$0013,$0012,$0002,$0003,$0015,$0011
 WinTurnDelay:
-                dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+                dc.w    $0000,$0000
+LevelAEnd:                               ; (the end of TEXT and DATA)
+                ifnd    LEVEL_AB                ; on its own: the padding to the end
+                                                ;  of its tracks, byte for byte
+                dc.w    $0000,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
@@ -855,3 +887,4 @@ WinTurnDelay:
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000
+                endc

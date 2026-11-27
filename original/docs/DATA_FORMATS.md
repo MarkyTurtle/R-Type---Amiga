@@ -142,6 +142,17 @@ They were found by signature (mask offset = half the frame size, modulo = 52 −
 
 ## Level B layout
 
+**Sources.** Each level B file is `src/levels/levelN_b.s`: the file in labelled `incbin` blocks, byte-identical. B holds no pointers of its own: its music player only uses PC-relative addresses. Level A refers to B through labels instead of numbers: `LvTiles`, `LvMap`, `LvMusic`, `Gfx_<object>` for each object definition's graphics, and `Tbl_<address>` for the tables the code reads. Assembled on its own, A takes those labels from `levelN_b.i`, which `tools/verify.py` writes from B's listing. Assembled together (`LEVEL_AB`), B follows A straight after `LevelAEnd`, the end of A's TEXT and DATA; A's padding to the end of its tracks is left out. `tools/check_levelab.py` checks both: every changed long in A is a pointer into B, and B's bytes don't change when it moves.
+
+Level A's pointers into B, found by `tools/gen_levelb.py`:
+- the level interface (`LV_Map`, `LV_Tiles`, `LV_Music`, level 8's ending music);
+- absolute operands in the code, and the parameter lists written as `dc.l` (the Bug's and Cytron's path tables);
+- every object definition's graphics field (`+$0C`, two words in the data);
+- longs in the data that point into the map or a table: `PatchMap` blocks (levels 3, 7, 8), the Brood's places (level 2), the Worm's paths (level 2).
+
+Everything else in A that falls in B's address range was checked and is something else: code words, wave parameters, hit boxes, step tables. Pointers per level: 36, 41, 76, 47, 14, 6, 41, 22.
+
+
 `tools/levelb_layout.py` maps every level B file (the full listing is in [levelb_layout.txt](levelb_layout.txt)). In address order each holds:
 
 1. **Tiles** from `$4D300` (`LV_Tiles`). Most levels have a few more tiles than their stored map uses (level 2: 4, level 5: 2, level 6: 55, level 7: 6, level 8: 8); level 3 has 239 more, which `PatchMap` writes into the map.

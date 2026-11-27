@@ -16,6 +16,9 @@
 ; All labels named; local .xxxxx labels keep their address.
 ;==============================================================================
                 include "engine.i"
+                ifnd    LEVEL_AB
+                include "level1_b.i"           ; level B's labels (tools/verify.py writes it
+                endc                            ;  from level1_b.s)
 
                 org     $4A2E4
 LevelHeader:
@@ -32,14 +35,14 @@ LevelInterface:
                 dc.w    $0301,$1969
                 dc.l    WaveList
                 dc.l    LevelPalette
-                dc.l    $5AF00
-                dc.l    $4D300                  ; tiles: the start of level B
+                dc.l    LvMap
+                dc.l    LvTiles          ; tiles: the start of level B
                 dc.l    ScrollScript
                 dc.l    TileAnims
                 dc.l    MapPatches
                 dc.l    LevelFrame
                 dc.l    LevelInit
-                dc.l    $5CA38               ; LvMusic: player in level B; samples $604F8 (9), data $60594, periods $60540
+                dc.l    LvMusic          ; LvMusic: player in level B; samples $604F8 (9), data $60594, periods $60540
 ScrollScript:
                 dc.w    $000B,$0000,$0064,$0000,$0000,$FFFF
 ; Checkpoint list (LV_Waves): scroll x reached, where to resume in the
@@ -194,7 +197,7 @@ Upd_PataPata:
                 subq.b  #$1,$32(a0)
                 rts
 .4A780:
-                lea.l   ($78FD8).l,a1               ; wave: 35 signed y steps (level B)
+                lea.l   (Tbl_78FD8).l,a1               ; wave: 35 signed y steps (level B)
                 move.w  $34(a0),d0
                 move.b  (a1,d0.w),d1
                 ext.w   d1
@@ -438,9 +441,9 @@ PStaff_Fire:
                 movea.l a4,a0                   ; back to the P-Staff
                 rts
 Upd_PStaffMissile:
-                lea.l   ($7912E).l,a3           ; up speeds, by y index ($7F ends)
-                lea.l   ($790D0).l,a1           ; side speeds, by x index ($7F ends)
-                lea.l   ($7918C).l,a2           ; frame per y index (the arc's angle)
+                lea.l   (Tbl_7912E).l,a3           ; up speeds, by y index ($7F ends)
+                lea.l   (Tbl_790D0).l,a1           ; side speeds, by x index ($7F ends)
+                lea.l   (Tbl_7918C).l,a2           ; frame per y index (the arc's angle)
                 movem.w $32(a0),d0-d2           ; d0 y index, d1 x index, d2 direction
                 move.b  (a3,d0.w),d3
                 cmp.b   #$7F,d3                 ; end of the arc:
@@ -1057,7 +1060,7 @@ Upd_Shell:
 .4B134:
                 bra.w   .4B1C0
 .4B138:
-                lea.l   ($792D1).l,a1               ; ring path: x table, y table at +$127
+                lea.l   (Tbl_792D1).l,a1               ; ring path: x table, y table at +$127
                 lea.l   $127(a1),a2
 .4B142:
                 move.w  $32(a0),d2
@@ -1352,7 +1355,7 @@ LevelFrame:
                 move.b  (BossMouthStep).l,d4    ; next mouth frame (4 of them)
                 lea.l   (BossMouthFrames).l,a0
                 movea.l (a0,d4.w),a0            ; its map cells
-                lea.l   ($5BB5E).l,a1           ; the mouth's place in the map
+                lea.l   (LvMap+$C5E).l,a1           ; the mouth's place in the map
                 bsr.w   .4B5B8                  ; write 2x2 cells
                 addq.b  #$4,d4
                 move.b  d4,(BossMouthStep).l
@@ -1369,7 +1372,7 @@ LevelFrame:
                 move.b  (BossPulseStep).l,d4    ; next pulse frame (4 of them)
                 lea.l   (BossPulseFrames).l,a0
                 movea.l (a0,d4.w),a0            ; its map cells
-                lea.l   ($5B72A).l,a1           ; the body's place in the map
+                lea.l   (LvMap+$82A).l,a1           ; the body's place in the map
                 bsr.w   .4B5B8
                 addq.b  #$4,d4
                 move.b  d4,(BossPulseStep).l
@@ -1445,7 +1448,7 @@ Upd_DobkeratopsTail:
                 beq.b   .4B660
                 bset.b  #$0,$23(a0)             ; flash the segment too
 .4B660:
-                lea.l   ($78AB8).l,a1           ; wave rows: 40 x 16 (x, y) byte pairs (level B)
+                lea.l   (Tbl_78AB8).l,a1           ; wave rows: 40 x 16 (x, y) byte pairs (level B)
                 move.w  (TailWave).l,d0
                 lsl.w   #$5,d0                  ; row * 32
                 add.w   $32(a0),d0              ; + this segment's pair
@@ -1472,7 +1475,7 @@ Upd_DobkeratopsTail:
                 blt.b   .4B6CC
                 clr.w   (TailWave).l            ; then round again
 .4B6CC:
-                lea.l   ($78AB8).l,a1           ; place the tip on the new row
+                lea.l   (Tbl_78AB8).l,a1           ; place the tip on the new row
                 move.w  (TailWave).l,d0
                 lsl.w   #$5,d0
                 add.w   $32(a0),d0
@@ -1613,7 +1616,7 @@ Upd_DobkeratopsShot:
 .4B89A:
                 move.w  $32(a0),d1              ; path
                 beq.b   .4B8D2                  ; straight: 6 pixels a frame left
-                lea.l   ($79607).l,a1           ; dx, dy curve tables (42 steps, level B)
+                lea.l   (Tbl_79607).l,a1           ; dx, dy curve tables (42 steps, level B)
                 move.w  $36(a0),d2              ; step number
                 move.b  (a1,d2.w),d3            ; dx
                 move.b  $2A(a1,d2.w),d4         ; dy
@@ -1749,7 +1752,9 @@ PataPataData13:
 ; (32x19, 8 frames, gfx $62DA8, 1 hit point, fires every ~60 frames, score 200, update Upd_PataPata, spawn Spawn_PataPata)
 Def_PataPata:
                 dc.w    $1303,$002E,$0260,$0001,$0001
-                dc.w    $003C,$0006,$2DA8,$0000,$0130,$0004,$B9C2,$0004
+                dc.w    $003C
+                dc.l    Gfx_PataPata
+                dc.w    $0000,$0130,$0004,$B9C2,$0004
                 dc.w    $B9CC
                 dc.l    Upd_PataPata
                 dc.l    Spawn_PataPata
@@ -1763,19 +1768,21 @@ Def_PataPata:
 ; $0A is the number of Bugs - 1, $0C their extra x speed.
 BugData1:
                 dc.w    $0046                   ; steps
-                dc.l    $00078FFB,$00079042,$00079089 ; dx, dy, frame tables (level B)
+                dc.l    Tbl_78FFB,Tbl_79042,Tbl_79089 ; dx, dy, frame tables (level B)
 BugData2:
                 dc.w    $004C                   ; steps
-                dc.l    $000791EA,$00079237,$00079284 ; dx, dy, frame tables (level B)
+                dc.l    Tbl_791EA,Tbl_79237,Tbl_79284 ; dx, dy, frame tables (level B)
 BugData3:
                 dc.w    $0047                   ; steps
-                dc.l    $00079525,$00079572,$000795BF ; dx, dy, frame tables (level B)
+                dc.l    Tbl_79525,Tbl_79572,Tbl_795BF ; dx, dy, frame tables (level B)
 ; Bug (probably): a chain of pods, 7 frames apart, each following the same
 ;   path (dx/dy/frame tables, entry $06)
 ; (32x21, 8 frames, gfx $640A8, 1 hit point, fires every ~45 frames, score 200, update Upd_Bug, spawn Spawn_Bug)
 Def_Bug:
                 dc.w    $1503,$002E,$02A0,$0000
-                dc.w    $0001,$002D,$0006,$40A8,$0000,$0150,$0004,$BA5E
+                dc.w    $0001,$002D
+                dc.l    Gfx_Bug
+                dc.w    $0000,$0150,$0004,$BA5E
                 dc.w    $0004,$BA68
                 dc.l    Upd_Bug
                 dc.l    Spawn_Bug
@@ -1788,7 +1795,9 @@ Def_Bug:
 ; (32x26, 6 frames, gfx $67618, 6 hit points, score 500, update Upd_PStaff, spawn Spawn_PStaff)
 Def_PStaff:
                 dc.w    $1A03
-                dc.w    $002E,$0340,$0002,$0006,$0000,$0006,$7618,$0000
+                dc.w    $002E,$0340,$0002,$0006,$0000
+                dc.l    Gfx_PStaff
+                dc.w    $0000
                 dc.w    $01A0,$0004,$BAD0,$0004,$BAEC
                 dc.l    Upd_PStaff
                 dc.l    Spawn_PStaff
@@ -1811,7 +1820,8 @@ PStaffFireAnimEnd:
 ; P-Staff missile: 16 directions
 ; (16x13, 16 frames, gfx $6A6D8, update Upd_PStaffMissile)
 Def_PStaffMissile:
-                dc.w    $0D02,$0030,$00D0,$0000,$0000,$0000,$0006,$A6D8
+                dc.w    $0D02,$0030,$00D0,$0000,$0000,$0000
+                dc.l    Gfx_PStaffMissile
                 dc.w    $0000,$0068,$0004,$BB8C,$0004,$BBA0
                 dc.l    Upd_PStaffMissile
                 dc.w    $0000,$0000,$0000,$0000,$0001,$0203,$0405,$0607
@@ -1862,7 +1872,9 @@ MapPatches:
 ; (48x47, 3 frames, gfx $655A8, 30 hit points, score 500, update Upd_Scant, spawn Spawn_Scant)
 Def_Scant:
                 dc.w    $2F04,$002C,$08D0
-                dc.w    $0000,$001E,$0000,$0006,$55A8,$0000,$0468,$0004
+                dc.w    $0000,$001E,$0000
+                dc.l    Gfx_Scant
+                dc.w    $0000,$0468,$0004
                 dc.w    $BD2A,$0004,$BD2E
                 dc.l    Upd_Scant
                 dc.l    Spawn_Scant
@@ -1871,7 +1883,8 @@ Def_Scant:
 ; Scant's wave blast, 48x16, 2 frames
 ; (48x16, 2 frames, gfx $67018)
 Def_ScantBeam:
-                dc.w    $1004,$002C,$0300,$0000,$0000,$0000,$0006,$7018
+                dc.w    $1004,$002C,$0300,$0000,$0000,$0000
+                dc.l    Gfx_ScantBeam
                 dc.w    $0000,$0180,$0004,$BD6E,$0004,$BD72,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000
 ScantBeamAnim:
@@ -1881,7 +1894,8 @@ ScantBeamAnim:
 ; (32x26, 4 frames, gfx $6B3D8, 1 hit point, fires every ~30 frames, score 200, update Upd_Bink, spawn Spawn_Bink)
 Def_Bink:
                 dc.w    $1A03,$002E,$0340,$0003,$0001,$001E
-                dc.w    $0006,$B3D8,$0000,$01A0,$0004,$BDAA,$0004,$BDBE
+                dc.l    Gfx_Bink
+                dc.w    $0000,$01A0,$0004,$BDAA,$0004,$BDBE
                 dc.l    Upd_Bink
                 dc.l    Spawn_Bink
                 dc.w    $0000,$0200
@@ -1915,8 +1929,9 @@ BinkJumpArc:
 ; after scroll x (entry $06) it gives up and makes for the nearer edge.
 ; (32x26, 6 frames, gfx $6DAD8, 1 hit point, fires every ~40 frames, score 300, update Upd_Cancer, spawn Spawn_Cancer)
 Def_Cancer:
-                dc.w    $1A03,$002E,$0340,$0005,$0001,$0028,$0006
-                dc.w    $DAD8,$0000,$01A0,$0004,$BEC8,$0004,$BED0
+                dc.w    $1A03,$002E,$0340,$0005,$0001,$0028
+                dc.l    Gfx_Cancer
+                dc.w    $0000,$01A0,$0004,$BEC8,$0004,$BED0
                 dc.l    Upd_Cancer
                 dc.l    Spawn_Cancer
                 dc.w    $0000,$0300
@@ -1941,8 +1956,9 @@ ShellGone:
 ;   until the ring leaves the screen
 ; (32x27, 8 frames, gfx $6EE58, 1 hit point, score 200, update Upd_Shell, spawn Spawn_Shell)
 Def_Shell:
-                dc.b    $1B,$03,$00,$2E,$03,$60,$00,$23,$00,$01,$00,$00,$00,$06,$EE
-                dc.b    $58,$00,$00,$01,$B0,$00,$04,$BF,$2C,$00,$04,$BF,$42
+                dc.b    $1B,$03,$00,$2E,$03,$60,$00,$23,$00,$01,$00,$00
+                dc.l    Gfx_Shell
+                dc.b    $00,$00,$01,$B0,$00,$04,$BF,$2C,$00,$04,$BF,$42
                 dc.l    Upd_Shell
                 dc.l    Spawn_Shell
                 dc.b    $00,$00,$02,$00,$04,$03,$02,$01,$00,$07,$06,$05,$FF,$10,$FF
@@ -1964,8 +1980,9 @@ ShellControlAnim:
 ;   that steer towards the ship every 6 frames, 22 times.
 ; (48x43, 5 frames, gfx $727B8, 30 hit points, score 800, update Upd_Tabrok, spawn Spawn_Tabrok)
 Def_Tabrok:
-                dc.b    $2B,$04,$00,$2C,$08,$10,$00,$01,$00,$1E,$00,$00,$00
-                dc.b    $07,$27,$B8,$00,$00,$04,$08,$00,$04,$BF,$F2,$00,$04,$BF,$FE
+                dc.b    $2B,$04,$00,$2C,$08,$10,$00,$01,$00,$1E,$00,$00
+                dc.l    Gfx_Tabrok
+                dc.b    $00,$00,$04,$08,$00,$04,$BF,$F2,$00,$04,$BF,$FE
                 dc.l    Upd_Tabrok
                 dc.l    Spawn_Tabrok
                 dc.w    $0000,$0800
@@ -1979,7 +1996,8 @@ TabrokFireAnim:
 ; Tabrok's missile: 6 px a frame to the left, explodes on the map
 ; (16x9, 1 frame, gfx $76028, 1 hit point, update Upd_TabrokMissile)
 Def_TabrokMissile:
-                dc.w    $0902,$0030,$0090,$0000,$0001,$0000,$0007,$6028
+                dc.w    $0902,$0030,$0090,$0000,$0001,$0000
+                dc.l    Gfx_TabrokMissile
                 dc.w    $0000,$0048,$0004,$C05E,$0004,$C060
                 dc.l    Upd_TabrokMissile
                 dc.w    $0000,$0000,$0000,$0000,$00FF,$0003,$0001,$000C
@@ -1988,7 +2006,8 @@ Def_TabrokMissile:
 ;   while, explodes on the map
 ; (16x15, 16 frames, gfx $760B8, 1 hit point, update Upd_TabrokHomer)
 Def_TabrokHomer:
-                dc.w    $0F02,$0030,$00F0,$0000,$0001,$0000,$0007,$60B8
+                dc.w    $0F02,$0030,$00F0,$0000,$0001,$0000
+                dc.l    Gfx_TabrokHomer
                 dc.w    $0000,$0078,$0004,$C090,$0004,$C0A2
                 dc.l    Upd_TabrokHomer
                 dc.w    $0000,$0000,$0000,$0000,$0001,$0203,$0405,$0607
@@ -2043,8 +2062,9 @@ TailTimer:
 ;   hit; explodes segment by segment when the boss dies
 ; (16x16, 6 frames, gfx $784B8, 1 hit point, update Upd_DobkeratopsTail, spawn Spawn_DobkeratopsTail)
 Def_DobkeratopsTail:
-                dc.w    $1002,$0030,$0100,$0001,$0001,$0000,$0007
-                dc.w    $84B8,$0000,$0080,$0004,$C1F2,$0004,$C1FA
+                dc.w    $1002,$0030,$0100,$0001,$0001,$0000
+                dc.l    Gfx_DobkeratopsTail
+                dc.w    $0000,$0080,$0004,$C1F2,$0004,$C1FA
                 dc.l    Upd_DobkeratopsTail
                 dc.l    Spawn_DobkeratopsTail
                 dc.w    $0000,$0000,$0001,$0203,$0405,$FF00,$0002,$0002
@@ -2068,7 +2088,8 @@ Def_DobkeratopsCore:
 ;   the ship's height
 ; (32x21, 8 frames, gfx $76FB8, 1 hit point, update Upd_DobkeratopsShot)
 Def_DobkeratopsShot:
-                dc.w    $1503,$002E,$02A0,$0000,$0001,$0000,$0007,$6FB8
+                dc.w    $1503,$002E,$02A0,$0000,$0001,$0000
+                dc.l    Gfx_DobkeratopsShot
                 dc.w    $0000,$0150,$0004,$C290,$0004,$C29A
                 dc.l    Upd_DobkeratopsShot
                 dc.w    $0000,$0000,$0001,$0203,$0405,$0607,$FF00,$0002
@@ -2077,7 +2098,11 @@ Def_DobkeratopsShot:
                 dc.w    $0002,$0010,$0011,$0002,$0002,$0010,$0011,$0002
                 dc.w    $0002,$0010,$0011,$0002,$0002,$0010,$0011
 BossHit:
-                dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+                dc.w    $0000,$0000
+LevelAEnd:                               ; (the end of TEXT and DATA)
+                ifnd    LEVEL_AB                ; on its own: the padding to the end
+                                                ;  of its tracks, byte for byte
+                dc.w    $0000,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
@@ -2386,3 +2411,4 @@ BossHit:
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000
+                endc

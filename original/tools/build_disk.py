@@ -137,8 +137,17 @@ def bootblock_checksum(bb):
     return bytes(bb)
 
 def assemble(src, out):
+    tmp = os.path.dirname(out)
+    if src.startswith('src/levels/level') and os.path.exists(os.path.join(ROOT, src[:-2] + '_b.s')):
+        # level A refers to level B by label: B's labels first (as tools/verify.py does)
+        from verify import labels_include
+        lst = out + '_b.lst'
+        subprocess.run([VASM, '-Fbin', '-m68000', '-no-opt', '-quiet', '-I', os.path.join(ROOT, 'src'),
+                        '-I', os.path.join(ROOT, 'files'), '-L', lst, '-o', out + '_b',
+                        os.path.join(ROOT, src[:-2] + '_b.s')], check=True)
+        labels_include(lst, os.path.join(tmp, os.path.basename(src)[:-2] + '_b.i'))
     subprocess.run([VASM, '-Fbin', '-m68000', '-no-opt', '-quiet', '-I', os.path.join(ROOT, 'src'),
-                    '-o', out, os.path.join(ROOT, src)], check=True)
+                    '-I', tmp, '-o', out, os.path.join(ROOT, src)], check=True)
     return open(out, 'rb').read()
 
 def inputs(from_source):

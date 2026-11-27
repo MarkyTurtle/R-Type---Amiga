@@ -15,6 +15,9 @@
 ; Armor; the boss is the Compiler, three sections (5000 points each).
 ;==============================================================================
                 include "engine.i"
+                ifnd    LEVEL_AB
+                include "level4_b.i"           ; level B's labels (tools/verify.py writes it
+                endc                            ;  from level4_b.s)
 
                 org     $4A2E4
 LevelHeader:
@@ -31,14 +34,14 @@ LevelInterface:
                 dc.w    $0301,$1969
                 dc.l    WaveList
                 dc.l    LevelPalette
-                dc.l    $6EA6A
-                dc.l    $4D300                  ; tiles: the start of level B
+                dc.l    LvEnd
+                dc.l    LvTiles          ; tiles: the start of level B
                 dc.l    ScrollScript
                 dc.l    $0
                 dc.l    $0
                 dc.l    LevelFrame
                 dc.l    LevelInit
-                dc.l    $52078                  ; LvMusic: player in level B; samples $53FB6 (8), data $5404C, periods $53FF6
+                dc.l    LvMusic          ; LvMusic: player in level B; samples $53FB6 (8), data $5404C, periods $53FF6
 ScrollScript:
                 dc.w    $000B,$0000,$0064,$0000,$0000,$FFFF
 ; Checkpoint list (LV_Waves): scroll x reached, where to resume in the
@@ -270,7 +273,7 @@ Upd_PataPata:
                 subq.b  #$1,$32(a0)
                 rts
 .4AA56:
-                lea.l   ($6C818).l,a1           ; wave: 35 signed y steps (level B)
+                lea.l   (Tbl_6C818).l,a1           ; wave: 35 signed y steps (level B)
                 move.w  $34(a0),d0
                 move.b  (a1,d0.w),d1
                 ext.w   d1
@@ -508,9 +511,9 @@ PStaff_Fire:
                 movea.l a4,a0                   ; back to the P-Staff
                 rts
 Upd_PStaffMissile:
-                lea.l   ($6C899).l,a3           ; up speeds, by y index ($7F ends)
-                lea.l   ($6C83B).l,a1           ; side speeds, by x index ($7F ends)
-                lea.l   ($6C8F7).l,a2           ; frame per y index (the arc's angle)
+                lea.l   (Tbl_6C899).l,a3           ; up speeds, by y index ($7F ends)
+                lea.l   (Tbl_6C83B).l,a1           ; side speeds, by x index ($7F ends)
+                lea.l   (Tbl_6C8F7).l,a2           ; frame per y index (the arc's angle)
                 movem.w $32(a0),d0-d2           ; d0 y index, d1 x index, d2 direction
                 move.b  (a3,d0.w),d3
                 cmp.b   #$7F,d3                 ; end of the arc:
@@ -792,8 +795,8 @@ Upd_Cancer:
 ; level B the map is read from) and sets three Compiler sections to go.
 LevelInit:
                 move.w  #$8BB,d0
-                lea.l   ($50F00).l,a0
-                lea.l   ($6EA6A).l,a1
+                lea.l   (LvMap).l,a0
+                lea.l   (LvEnd).l,a1
 .4B062:
                 move.w  (a0)+,(a1)+
                 dbra    d0,.4B062
@@ -819,7 +822,7 @@ LevelFrame:
                 lea.l   (CompilerGunParents).l,a1 ; the section each gun sits on
                 moveq   #2,d7                   ; 3 sections
                 moveq   #0,d6                   ; d6 = section number
-                move.l  #$6CFB2,d5              ; d5 = its path (x bytes, then y bytes)
+                move.l  #Tbl_6CFB2,d5              ; d5 = its path (x bytes, then y bytes)
 .4B0BA:
                 movea.l (a4)+,a2
                 move.w  (a4)+,d0
@@ -1342,7 +1345,8 @@ PataPataData4:
 ; PataPata: as in level 1 (the same code)
 ; (32x19, 8 frames, gfx $55378, 1 hit point, fires every ~65 frames, score 200, update Upd_PataPata, spawn Spawn_PataPata)
 Def_PataPata:
-                dc.w    $1303,$002E,$0260,$0001,$0001,$0041,$0005,$5378
+                dc.w    $1303,$002E,$0260,$0001,$0001,$0041
+                dc.l    Gfx_PataPata
                 dc.w    $0000,$0130,$0004,$B71A,$0004,$B724
                 dc.l    Upd_PataPata
                 dc.l    Spawn_PataPata
@@ -1353,12 +1357,14 @@ Def_PataPata:
                 dc.w    $0007,$0014,$0006,$0004,$0003,$000F,$000E
 BugData1:
                 dc.w    $0044                   ; steps
-                dc.l    $0006C95D,$0006C9AA,$0006C9F7 ; dx, dy, frame tables (level B)
+                dc.l    Tbl_6C95D,Tbl_6C9AA,Tbl_6C9F7 ; dx, dy, frame tables (level B)
 ; Bug: as in level 1 (the same code)
 ; (32x21, 8 frames, gfx $56678, 1 hit point, fires every ~48 frames, score 200, update Upd_Bug, spawn Spawn_Bug)
 Def_Bug:
                 dc.w    $1503,$002E
-                dc.w    $02A0,$0000,$0001,$0030,$0005,$6678,$0000,$0150
+                dc.w    $02A0,$0000,$0001,$0030
+                dc.l    Gfx_Bug
+                dc.w    $0000,$0150
                 dc.w    $0004,$B79A,$0004,$B7A4
                 dc.l    Upd_Bug
                 dc.l    Spawn_Bug
@@ -1371,7 +1377,9 @@ Def_Bug:
 ; (32x26, 6 frames, gfx $57B78, 6 hit points, score 500, update Upd_PStaff, spawn Spawn_PStaff)
 Def_PStaff:
                 dc.w    $1A03
-                dc.w    $002E,$0340,$0002,$0006,$0000,$0005,$7B78,$0000
+                dc.w    $002E,$0340,$0002,$0006,$0000
+                dc.l    Gfx_PStaff
+                dc.w    $0000
                 dc.w    $01A0,$0004,$B80C,$0004,$B828
                 dc.l    Upd_PStaff
                 dc.l    Spawn_PStaff
@@ -1394,7 +1402,8 @@ PStaffFireAnimEnd:
 ; PStaffMissile: as in level 1 (the same code)
 ; (16x13, 16 frames, gfx $5AC38, update Upd_PStaffMissile)
 Def_PStaffMissile:
-                dc.w    $0D02,$0030,$00D0,$0000,$0000,$0000,$0005,$AC38
+                dc.w    $0D02,$0030,$00D0,$0000,$0000,$0000
+                dc.l    Gfx_PStaffMissile
                 dc.w    $0000,$0068,$0004,$B8C8,$0004,$B8DC
                 dc.l    Upd_PStaffMissile
                 dc.w    $0000,$0000,$0000,$0000,$0001,$0203,$0405,$0607
@@ -1411,7 +1420,9 @@ Def_PStaffMissile:
 ; (32x26, 4 frames, gfx $5B938, 1 hit point, fires every ~30 frames, score 200, update Upd_Bink, spawn Spawn_Bink)
 Def_Bink:
                 dc.w    $1A03,$002E
-                dc.w    $0340,$0003,$0001,$001E,$0005,$B938,$0000,$01A0
+                dc.w    $0340,$0003,$0001,$001E
+                dc.l    Gfx_Bink
+                dc.w    $0000,$01A0
                 dc.w    $0004,$B984,$0004,$B998
                 dc.l    Upd_Bink
                 dc.l    Spawn_Bink
@@ -1462,8 +1473,9 @@ CancerData7:
 ; Cancer: as in level 1 (the same code)
 ; (32x26, 6 frames, gfx $5E038, 1 hit point, fires every ~40 frames, score 300, update Upd_Cancer, spawn Spawn_Cancer)
 Def_Cancer:
-                dc.w    $1A03,$002E,$0340,$0005,$0001,$0028,$0005
-                dc.w    $E038,$0000,$01A0,$0004,$BA72,$0004,$BA7C
+                dc.w    $1A03,$002E,$0340,$0005,$0001,$0028
+                dc.l    Gfx_Cancer
+                dc.w    $0000,$01A0,$0004,$BA72,$0004,$BA7C
                 dc.l    Upd_Cancer
                 dc.l    Spawn_Cancer
                 dc.w    $0000,$0300
@@ -1486,21 +1498,27 @@ CompilerSections:
 ; object definition: 96x81, 1 frame, gfx $665B8, update Upd_CompilerSection
 Def_CompilerA:
                 dc.w    $5107
-                dc.w    $0026,$1E60,$0000,$0000,$0000,$0006,$65B8,$0000
+                dc.w    $0026,$1E60,$0000,$0000,$0000
+                dc.l    Gfx_CompilerA
+                dc.w    $0000
                 dc.w    $0F30,$0004,$BB46,$0004,$BB4C
                 dc.l    Upd_CompilerSection
                 dc.w    $0000,$0000,$0000,$0000
 ; object definition: 112x58, 1 frame, gfx $68418, update Upd_CompilerSection
 Def_CompilerB:
                 dc.w    $3A08,$0024,$1960,$0000
-                dc.w    $0000,$0000,$0006,$8418,$0000,$0CB0,$0004,$BB46
+                dc.w    $0000,$0000
+                dc.l    Gfx_CompilerB
+                dc.w    $0000,$0CB0,$0004,$BB46
                 dc.w    $0004,$BB54
                 dc.l    Upd_CompilerSection
                 dc.w    $0000,$0000,$0000,$0000
 ; object definition: 96x68, 1 frame, gfx $69D78, update Upd_CompilerSection
 Def_CompilerC:
                 dc.w    $4407,$0026,$1980,$0000
-                dc.w    $0000,$0000,$0006,$9D78,$0000,$0CC0,$0004,$BB46
+                dc.w    $0000,$0000
+                dc.l    Gfx_CompilerC
+                dc.w    $0000,$0CC0,$0004,$BB46
                 dc.w    $0004,$BB5C
                 dc.l    Upd_CompilerSection
                 dc.w    $0000,$0000,$0000,$0000,$0001,$0203,$FF00,$0008
@@ -1515,7 +1533,8 @@ Def_CompilerCore:
                 dc.w    $01A4,$000A,$0002,$0002
 ; object definition: 32x25, 5 frames, gfx $6B6F8, update Upd_CompilerGun
 Def_CompilerGun:
-                dc.w    $1903,$002E,$0320,$0000,$0000,$0000,$0006,$B6F8
+                dc.w    $1903,$002E,$0320,$0000,$0000,$0000
+                dc.l    Gfx_CompilerGun
                 dc.w    $0000,$0190,$0004,$BBD4,$0004,$BBDA
                 dc.l    Upd_CompilerGun
                 dc.w    $0000,$0000,$0000,$0000,$0001,$0203,$04FF,$0004
@@ -1534,7 +1553,8 @@ CompilerGunMuzzles:
                 dc.w    $FFF6,$0006,$FFF9,$FFFD,$FFF9,$FFFD,$FFFD,$FFF8
 ; object definition: 32x3, 4 frames, gfx $6C698, update Upd_CompilerLaser
 Def_CompilerLaser:
-                dc.w    $0303,$002E,$0060,$0002,$0000,$0000,$0006,$C698
+                dc.w    $0303,$002E,$0060,$0002,$0000,$0000
+                dc.l    Gfx_CompilerLaser
                 dc.w    $0000,$0030,$0004,$BB46,$0004,$BC86
                 dc.l    Upd_CompilerLaser
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0020,$0003
@@ -1542,25 +1562,25 @@ Def_CompilerLaser:
                 dc.w    $0000,$0000,$0020,$0003
 CytronData1:
                 dc.w    $004B                   ; steps
-                dc.l    $0006CA3C,$0006CA88,$0006CAD4 ; dx, dy, frame tables (level B)
+                dc.l    Tbl_6CA3C,Tbl_6CA88,Tbl_6CAD4 ; dx, dy, frame tables (level B)
 CytronData2:
                 dc.w    $004C                   ; steps
-                dc.l    $0006CB20,$0006CB6D,$0006CBBA ; dx, dy, frame tables (level B)
+                dc.l    Tbl_6CB20,Tbl_6CB6D,Tbl_6CBBA ; dx, dy, frame tables (level B)
 CytronData4:
                 dc.w    $004F                   ; steps
-                dc.l    $0006CC07,$0006CC57,$0006CCA7 ; dx, dy, frame tables (level B)
+                dc.l    Tbl_6CC07,Tbl_6CC57,Tbl_6CCA7 ; dx, dy, frame tables (level B)
 CytronData3:
                 dc.w    $002E                   ; steps
-                dc.l    $0006CCF7,$0006CD26,$0006CD55 ; dx, dy, frame tables (level B)
+                dc.l    Tbl_6CCF7,Tbl_6CD26,Tbl_6CD55 ; dx, dy, frame tables (level B)
 CytronData5:
                 dc.w    $0054                   ; steps
-                dc.l    $0006CD84,$0006CDD9,$0006CE2E ; dx, dy, frame tables (level B)
+                dc.l    Tbl_6CD84,Tbl_6CDD9,Tbl_6CE2E ; dx, dy, frame tables (level B)
 CytronData6:
                 dc.w    $0031                   ; steps
-                dc.l    $0006CE83,$0006CEB5,$0006CEE7 ; dx, dy, frame tables (level B)
+                dc.l    Tbl_6CE83,Tbl_6CEB5,Tbl_6CEE7 ; dx, dy, frame tables (level B)
 CytronData7:
                 dc.w    $0032                   ; steps
-                dc.l    $0006CF19,$0006CF4C,$0006CF7F ; dx, dy, frame tables (level B)
+                dc.l    Tbl_6CF19,Tbl_6CF4C,Tbl_6CF7F ; dx, dy, frame tables (level B)
 ; Cytron: built to destroy asteroids, it rebuilds the cell walls - every
 ; frame it writes a solid, destructible cell ($9013) into the map cell
 ; under it if that one is empty.
@@ -1569,7 +1589,9 @@ CytronData7:
 ; (32x25, 16 frames, gfx $5F3B8, 3 hit points, score 400, update Upd_Cytron, spawn Spawn_Cytron)
 Def_Cytron:
                 dc.w    $1903,$002E,$0320
-                dc.w    $0000,$0003,$0000,$0005,$F3B8,$0000,$0190,$0004
+                dc.w    $0000,$0003,$0000
+                dc.l    Gfx_Cytron
+                dc.w    $0000,$0190,$0004
                 dc.w    $BD30,$0004,$BD42
                 dc.l    Upd_Cytron
                 dc.l    Spawn_Cytron
@@ -1591,7 +1613,9 @@ Def_Cytron:
 ; (32x32, 3 frames, gfx $625B8, 1 hit point, score 200, update Upd_Geld, spawn Spawn_Geld)
 Def_Geld:
                 dc.w    $2003,$002E,$0400,$0002,$0001
-                dc.w    $0000,$0006,$25B8,$0000,$0200,$0004,$BDEA,$0004
+                dc.w    $0000
+                dc.l    Gfx_Geld
+                dc.w    $0000,$0200,$0004,$BDEA,$0004
                 dc.w    $BE0E
                 dc.l    Upd_Geld
                 dc.l    Spawn_Geld
@@ -1612,7 +1636,11 @@ GeldAnimLeft:
                 dc.b    $15,$00,$05,$00,$05,$00,$13,$00,$17,$00,$04,$00,$06,$00,$15,$00
                 dc.b    $15,$00,$0B,$00,$02,$00,$10,$00,$1A,$00,$04,$00,$08,$00,$15,$00
                 dc.b    $15,$00,$05,$00,$07,$00,$15,$00,$15,$00,$05,$00,$08,$00,$15,$00
-                dc.b    $15,$00,$09,$00,$05,$00,$12,$00,$17,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $15,$00,$09,$00,$05,$00,$12,$00,$17,$00,$00
+LevelAEnd:                               ; (the end of TEXT and DATA)
+                ifnd    LEVEL_AB                ; on its own: the padding to the end
+                                                ;  of its tracks, byte for byte
+                dc.b    $00,$00,$00,$00,$00
                 dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
                 dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
                 dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
@@ -1990,3 +2018,4 @@ GeldAnimLeft:
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000
+                endc

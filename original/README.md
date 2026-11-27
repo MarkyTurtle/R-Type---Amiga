@@ -11,6 +11,7 @@ Reverse-engineering of the Amiga R-Type (Electric Dreams 1989; Amiga version by 
 - [x] Disk formats, game loader, track cache, decruncher and level table – `docs/DISK_FORMAT.md`
 - [x] Game program (`game_low_000a4.bin`) – `src/game.s`: byte-identical, all labels named, every routine commented; see `docs/GAME.md`
 - [x] Level code (`levelN_a`) – `src/levels/level1-8.s`: all labels named, enemies and bosses named and commented line by line
+- [x] Level data (`levelN_b`) – `src/levels/levelN_b.s`: byte-identical, in labelled blocks (tiles, map, music, each object's graphics, tables); level A refers to it by label, so A and B assemble together at any address (`tools/check_levelab.py`)
 - [x] Shared title file and jingle player – `src/shared.s`; TFMX replay – `src/tfmx.s`: byte-identical, all named
 - [x] Data, graphics and music formats – `docs/`; extended ADF rebuilt from the sources (`tools/build_disk.py`), boots in WinUAE
 - [ ] What's left: `docs/TODO.md`
@@ -23,6 +24,7 @@ src/stage2.s           annotated stage-2 loader ($79360)
 src/game.s             the game program ($000A4): engine, all game code
 src/engine.i           engine symbols for the level and shared sources
 src/levels/levelN.s    per-level code and data (level part A, $4A2E4)
+src/levels/levelN_b.s  per-level data (level part B, $4D300): labelled incbin blocks
 src/shared.s           shared title file ($4A300): jingle player + samples
 src/tfmx.s             the TFMX replay for the title music ($52300)
 files/                 every file extracted from the disk; manifest.json lists
@@ -46,6 +48,8 @@ tools/
                        verifies every checksum, decrunches the levels)
   decrunch.py          exact Python port of the game's decruncher at $3EFC
   verify.py            assemble src/*.s and compare with files/
+  gen_levelb.py        (bootstrap, run once) write levelN_b.s, label A's pointers into B
+  check_levelab.py     check that each level's A and B assemble together anywhere
   render_gfx.py        render maps, tiles, BOBs and sprites to gfx/
   render_hud.py        render the HUD and fonts
   levelb_layout.py     map the contents of each level B file

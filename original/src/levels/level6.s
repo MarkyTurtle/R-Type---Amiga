@@ -15,6 +15,9 @@
 ; POW Armor.
 ;==============================================================================
                 include "engine.i"
+                ifnd    LEVEL_AB
+                include "level6_b.i"           ; level B's labels (tools/verify.py writes it
+                endc                            ;  from level6_b.s)
 
                 org     $4A2E4
 LevelHeader:
@@ -31,14 +34,14 @@ LevelInterface:
                 dc.w    $0301,$1969
                 dc.l    WaveList
                 dc.l    LevelPalette
-                dc.l    $5B900
-                dc.l    $4D300                  ; tiles: the start of level B
+                dc.l    LvMap
+                dc.l    LvTiles          ; tiles: the start of level B
                 dc.l    ScrollScript
                 dc.l    $0
                 dc.l    $0
                 dc.l    LevelFrame
                 dc.l    LevelInit
-                dc.l    $5C9A8                  ; LvMusic: player in level B; samples $5F0EE (8), data $5F184, periods $5F12E
+                dc.l    LvMusic          ; LvMusic: player in level B; samples $5F0EE (8), data $5F184, periods $5F12E
 ScrollScript:
                 dc.w    $000B,$0000,$0064,$0000,$0000,$FFFF
 ; Checkpoint list (LV_Waves): scroll x reached, where to resume in the
@@ -578,7 +581,8 @@ DopMoves:
                 dc.w    $0000,$0002,$0005,$0148
 ; object definition: 48x32, 3 frames, gfx $604B0, score 1000, update Upd_Dop, spawn Spawn_Dop
 Def_Dop:
-                dc.w    $2004,$002C,$0600,$0003,$0000,$0000,$0006,$04B0
+                dc.w    $2004,$002C,$0600,$0003,$0000,$0000
+                dc.l    Gfx_Dop
                 dc.w    $0000,$0300,$0004,$AE14,$0004,$ADE4
                 dc.l    Upd_Dop
                 dc.l    Spawn_Dop
@@ -592,7 +596,9 @@ DopAnimLeft:
 ; (32x26, 4 frames, gfx $64930, 1 hit point, fires every ~9 frames, score 200, update Upd_Bink, spawn Spawn_Bink)
 Def_Bink:
                 dc.b    $1A,$03,$00,$2E,$03,$40,$00,$03,$00,$01,$00
-                dc.b    $09,$00,$06,$49,$30,$00,$00,$01,$A0,$00,$04,$AE,$46,$00,$04,$AE
+                dc.b    $09
+                dc.l    Gfx_Bink
+                dc.b    $00,$00,$01,$A0,$00,$04,$AE,$46,$00,$04,$AE
                 dc.b    $5A
                 dc.l    Upd_Bink
                 dc.l    Spawn_Bink
@@ -621,7 +627,8 @@ CapsuleModes:
                 dc.w    $0004,$AF76,$0000,$0000,$0004,$AF7C,$0000,$0001
 ; object definition: 32x26, 5 frames, gfx $628B0, score 300, update Upd_Capsule, spawn Spawn_Capsule
 Def_Capsule:
-                dc.w    $1A03,$002E,$0340,$0002,$0000,$0000,$0006,$28B0
+                dc.w    $1A03,$002E,$0340,$0002,$0000,$0000
+                dc.l    Gfx_Capsule
                 dc.w    $0000,$01A0,$0004,$AF76,$0004,$AF26
                 dc.l    Upd_Capsule
                 dc.l    Spawn_Capsule
@@ -631,7 +638,11 @@ Def_Capsule:
                 dc.w    $0015,$0019,$0001,$FFFF,$0018,$0019,$0001,$FFFF
                 dc.w    $0018,$0019,$0001,$FFFF,$0018,$0019,$0002,$FFFF
                 dc.w    $0015,$0019,$0403,$0201,$00FF,$0506,$0708,$09FF
-                dc.w    $0001,$0203,$04FF,$0908,$0706,$05FF,$0000,$0000
+                dc.w    $0001,$0203,$04FF,$0908,$0706,$05FF,$0000
+LevelAEnd:                               ; (the end of TEXT and DATA)
+                ifnd    LEVEL_AB                ; on its own: the padding to the end
+                                                ;  of its tracks, byte for byte
+                dc.w    $0000
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
@@ -839,3 +850,4 @@ Def_Capsule:
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000,$0000
+                endc

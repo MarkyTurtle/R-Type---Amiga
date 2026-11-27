@@ -16,6 +16,9 @@
 ; 5 garbage chutes dropping junk and enemies.
 ;==============================================================================
                 include "engine.i"
+                ifnd    LEVEL_AB
+                include "level7_b.i"           ; level B's labels (tools/verify.py writes it
+                endc                            ;  from level7_b.s)
 
                 org     $4A2E4
 LevelHeader:
@@ -32,14 +35,14 @@ LevelInterface:
                 dc.w    $0301,$1969
                 dc.l    WaveList
                 dc.l    LevelPalette
-                dc.l    $57300
-                dc.l    $4D300                  ; tiles: the start of level B
+                dc.l    LvMap
+                dc.l    LvTiles          ; tiles: the start of level B
                 dc.l    ScrollScript
                 dc.l    $0
                 dc.l    $0
                 dc.l    LevelFrame
                 dc.l    LevelInit
-                dc.l    $582A4                  ; LvMusic: player in level B; samples $5A914 (8), data $5A9AA, periods $5A954
+                dc.l    LvMusic          ; LvMusic: player in level B; samples $5A914 (8), data $5A9AA, periods $5A954
 ScrollScript:
                 dc.w    $000B,$0000,$0064,$0000,$0000,$FFFF
 ; Checkpoint list (LV_Waves): scroll x reached, where to resume in the
@@ -244,7 +247,7 @@ Upd_PataPata:
                 subq.b  #$1,$32(a0)
                 rts
 .4A95A:
-                lea.l   ($70A06).l,a1           ; wave: 35 signed y steps (level B)
+                lea.l   (Tbl_70A06).l,a1           ; wave: 35 signed y steps (level B)
                 move.w  $34(a0),d0
                 move.b  (a1,d0.w),d1
                 ext.w   d1
@@ -490,9 +493,9 @@ PStaff_Fire:
                 movea.l a4,a0                   ; back to the P-Staff
                 rts
 Upd_PStaffMissile:
-                lea.l   ($70A87).l,a3           ; up speeds, by y index ($7F ends)
-                lea.l   ($70A29).l,a1           ; side speeds, by x index ($7F ends)
-                lea.l   ($70AE5).l,a2           ; frame per y index (the arc's angle)
+                lea.l   (Tbl_70A87).l,a3           ; up speeds, by y index ($7F ends)
+                lea.l   (Tbl_70A29).l,a1           ; side speeds, by x index ($7F ends)
+                lea.l   (Tbl_70AE5).l,a2           ; frame per y index (the arc's angle)
                 movem.w $32(a0),d0-d2           ; d0 y index, d1 x index, d2 direction
                 move.b  (a3,d0.w),d3
                 cmp.b   #$7F,d3                 ; end of the arc:
@@ -1123,7 +1126,7 @@ PrepareCollapses:
                 beq.b   .4B3EA
                 cmpi.l  #Def_Collapse,$E(a0)    ; a Collapse?
                 bne.b   .4B3E2
-                lea.l   ($57300).l,a2           ; the map (level B)
+                lea.l   (LvMap).l,a2           ; the map (level B)
                 adda.w  $6(a0),a2               ; + entry $06: its cells
                 move.w  $8(a0),d0               ; entry $08: which block
                 lsl.w   #$2,d0
@@ -1186,7 +1189,7 @@ Upd_Collapse:
 .4B47C:
                 rts
 .4B47E:
-                lea.l   ($57300).l,a2           ; the map (level B)
+                lea.l   (LvMap).l,a2           ; the map (level B)
                 adda.w  $36(a0),a2              ; + its offset
                 lea.l   (CollapseCells).l,a1    ; the rubble cells
                 move.w  $38(a0),d0
@@ -1490,16 +1493,16 @@ PataPataData5:
                 dc.w    $FFFF
 BugData1:
                 dc.w    $0043                   ; steps
-                dc.l    $00070B4C,$00070B99,$00070BE6 ; dx, dy, frame tables (level B)
+                dc.l    Tbl_70B4C,Tbl_70B99,Tbl_70BE6 ; dx, dy, frame tables (level B)
 BugData2:
                 dc.w    $0053                   ; steps
-                dc.l    $00070C2D,$00070C84,$00070CDB ; dx, dy, frame tables (level B)
+                dc.l    Tbl_70C2D,Tbl_70C84,Tbl_70CDB ; dx, dy, frame tables (level B)
 BugData3:
                 dc.w    $011F                   ; steps
-                dc.l    $00070D2F,$00070E4F,$00070F6F ; dx, dy, frame tables (level B)
+                dc.l    Tbl_70D2F,Tbl_70E4F,Tbl_70F6F ; dx, dy, frame tables (level B)
 BugData4:
                 dc.w    $00D5                   ; steps
-                dc.l    $00070D79,$00070E99,$00070FB9 ; dx, dy, frame tables (level B)
+                dc.l    Tbl_70D79,Tbl_70E99,Tbl_70FB9 ; dx, dy, frame tables (level B)
 CancerData1:
                 dc.w    $0170,$005A             ; x, y
                 dc.w    $0170,$0046             ; x, y
@@ -1533,7 +1536,9 @@ CancerData7:
 ; (32x19, 8 frames, gfx $5BCD6, 1 hit point, fires every ~45 frames, score 200, update Upd_PataPata, spawn Spawn_PataPata)
 Def_PataPata:
                 dc.w    $1303,$002E,$0260
-                dc.w    $0001,$0001,$002D,$0005,$BCD6,$0000,$0130,$0004
+                dc.w    $0001,$0001,$002D
+                dc.l    Gfx_PataPata
+                dc.w    $0000,$0130,$0004
                 dc.w    $B8AC,$0004,$B8B6
                 dc.l    Upd_PataPata
                 dc.l    Spawn_PataPata
@@ -1546,7 +1551,9 @@ Def_PataPata:
 ; (32x21, 8 frames, gfx $5CFD6, 1 hit point, fires every ~95 frames, score 200, update Upd_Bug, spawn Spawn_Bug)
 Def_Bug:
                 dc.w    $1503
-                dc.w    $002E,$02A0,$0002,$0001,$005F,$0005,$CFD6,$0000
+                dc.w    $002E,$02A0,$0002,$0001,$005F
+                dc.l    Gfx_Bug
+                dc.w    $0000
                 dc.w    $0150,$0004,$B91E,$0004,$B928
                 dc.l    Upd_Bug
                 dc.l    Spawn_Bug
@@ -1559,7 +1566,9 @@ Def_Bug:
 ; (32x26, 6 frames, gfx $60546, 6 hit points, score 500, update Upd_PStaff, spawn Spawn_PStaff)
 Def_PStaff:
                 dc.w    $1A03
-                dc.w    $002E,$0340,$0002,$0006,$0000,$0006,$0546,$0000
+                dc.w    $002E,$0340,$0002,$0006,$0000
+                dc.l    Gfx_PStaff
+                dc.w    $0000
                 dc.w    $01A0,$0004,$B990,$0004,$B9AC
                 dc.l    Upd_PStaff
                 dc.l    Spawn_PStaff
@@ -1582,7 +1591,8 @@ PStaffFireAnimEnd:
 ; PStaffMissile: as in level 1 (the same code)
 ; (16x13, 16 frames, gfx $63606, update Upd_PStaffMissile)
 Def_PStaffMissile:
-                dc.w    $0D02,$0030,$00D0,$0000,$0000,$0000,$0006,$3606
+                dc.w    $0D02,$0030,$00D0,$0000,$0000,$0000
+                dc.l    Gfx_PStaffMissile
                 dc.w    $0000,$0068,$0004,$BA4C,$0004,$BA60
                 dc.l    Upd_PStaffMissile
                 dc.w    $0000,$0000,$0000,$0000,$0001,$0203,$0405,$0607
@@ -1599,7 +1609,9 @@ Def_PStaffMissile:
 ; (48x47, 3 frames, gfx $5E4D6, 30 hit points, score 500, update Upd_Scant, spawn Spawn_Scant)
 Def_Scant:
                 dc.w    $2F04,$002C
-                dc.w    $08D0,$0000,$001E,$0000,$0005,$E4D6,$0000,$0468
+                dc.w    $08D0,$0000,$001E,$0000
+                dc.l    Gfx_Scant
+                dc.w    $0000,$0468
                 dc.w    $0004,$BB08,$0004,$BB0C
                 dc.l    Upd_Scant
                 dc.l    Spawn_Scant
@@ -1608,7 +1620,8 @@ Def_Scant:
 ; ScantBeam: as in level 1 (the same code)
 ; (48x16, 2 frames, gfx $5FF46)
 Def_ScantBeam:
-                dc.w    $1004,$002C,$0300,$0000,$0000,$0000,$0005,$FF46
+                dc.w    $1004,$002C,$0300,$0000,$0000,$0000
+                dc.l    Gfx_ScantBeam
                 dc.w    $0000,$0180,$0004,$BB4C,$0004,$BB50,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000
 ScantBeamAnim:
@@ -1618,7 +1631,8 @@ ScantBeamAnim:
 ; (32x26, 4 frames, gfx $64306, 1 hit point, fires every ~30 frames, score 200, update Upd_Bink, spawn Spawn_Bink)
 Def_Bink:
                 dc.w    $1A03,$002E,$0340,$0003,$0001,$001E
-                dc.w    $0006,$4306,$0000,$01A0,$0004,$BB88,$0004,$BB9C
+                dc.l    Gfx_Bink
+                dc.w    $0000,$01A0,$0004,$BB88,$0004,$BB9C
                 dc.l    Upd_Bink
                 dc.l    Spawn_Bink
                 dc.w    $0000,$0200
@@ -1643,7 +1657,8 @@ BinkJumpArc:
 ; (32x26, 6 frames, gfx $66A06, 1 hit point, fires every ~40 frames, score 300, update Upd_Cancer, spawn Spawn_Cancer)
 Def_Cancer:
                 dc.w    $1A03,$002E,$0340,$0005,$0001,$0028
-                dc.w    $0006,$6A06,$0000,$01A0,$0004,$BC38,$0004,$BC40
+                dc.l    Gfx_Cancer
+                dc.w    $0000,$01A0,$0004,$BC38,$0004,$BC40
                 dc.l    Upd_Cancer
                 dc.l    Spawn_Cancer
                 dc.w    $0000,$0300
@@ -1656,7 +1671,8 @@ CancerAnimLeft:
                 dc.w    $0018,$0015
 ; object definition: 48x48, 4 frames, gfx $69BA6, update Upd_Bronco
 Def_Bronco:
-                dc.w    $3004,$002C,$0900,$0003,$0000,$0000,$0006,$9BA6
+                dc.w    $3004,$002C,$0900,$0003,$0000,$0000
+                dc.l    Gfx_Bronco
                 dc.w    $0000,$0480,$0004,$BCB8,$0004,$BC98
                 dc.l    Upd_Bronco
                 dc.w    $0000,$0000,$0000,$0000,$0016,$0001,$001A,$002E
@@ -1679,17 +1695,27 @@ DropList:
 ; object definition: 32x31, 4 frames, gfx $68026, score 100, update Upd_Falling
 Def_Junk:
                 dc.w    $1F03,$002E,$03E0,$0000
-                dc.w    $0000,$0000,$0006,$8026,$0000,$01F0,$0004,$BD1E
+                dc.w    $0000,$0000
+                dc.l    Gfx_Junk
+                dc.w    $0000,$01F0,$0004,$BD1E
                 dc.w    $0004,$BD24
                 dc.l    Upd_Falling
                 dc.w    $0000,$0000,$0000,$0100,$0001,$0203,$FF00,$0002
                 dc.w    $0002,$0015,$001B,$0004,$0002,$0019,$001C,$0002
                 dc.w    $0002,$0017,$001B,$0002,$0001,$001B,$001B
 Chutes:
-                dc.w    $0000,$00FA,$0005,$7420,$0004,$BD80,$0000,$00CB
-                dc.w    $0005,$741A,$0004,$BD80,$0000,$009B,$0005,$7414
-                dc.w    $0004,$BD80,$0000,$0069,$0005,$740E,$0004,$BD80
-                dc.w    $0000,$0037,$0005,$7408,$0004,$BD80
+                dc.w    $0000,$00FA
+                dc.l    LvMap+$120
+                dc.w    $0004,$BD80,$0000,$00CB
+                dc.l    LvMap+$11A
+                dc.w    $0004,$BD80,$0000,$009B
+                dc.l    LvMap+$114
+                dc.w    $0004,$BD80,$0000,$0069
+                dc.l    LvMap+$10E
+                dc.w    $0004,$BD80
+                dc.w    $0000,$0037
+                dc.l    LvMap+$108
+                dc.w    $0004,$BD80
 ChuteBuild:
                 dc.w    $0004,$BD94,$0004,$BDA8,$0004,$BDBC,$0004,$BDD0
                 dc.w    $FFFF,$FFFF
@@ -1734,14 +1760,16 @@ Def_Collapse:
                 dc.w    $0000,$0000,$0000,$8060,$8061,$8084,$8085,$8086
 ; object definition: 32x21, 1 frame, gfx $67D86, score 300, update Upd_Crawler, spawn Spawn_Crawler
 Def_Crawler:
-                dc.w    $1503,$002E,$02A0,$0000,$0000,$0000,$0006,$7D86
+                dc.w    $1503,$002E,$02A0,$0000,$0000,$0000
+                dc.l    Gfx_Crawler
                 dc.w    $0000,$0150,$0004,$BFD0,$0004,$BFD2
                 dc.l    Upd_Crawler
                 dc.l    Spawn_Crawler
                 dc.w    $0000,$0300,$00FF,$0002,$0002,$0014,$0011
 ; object definition: 96x32, 1 frame, gfx $68FA6, score 1500, update Upd_Bold, spawn Spawn_Bold
 Def_Bold:
-                dc.w    $2007,$0026,$0C00,$0000,$0000,$0000,$0006,$8FA6
+                dc.w    $2007,$0026,$0C00,$0000,$0000,$0000
+                dc.l    Gfx_Bold
                 dc.w    $0000,$0600,$0004,$BFD0,$0004,$C002
                 dc.l    Upd_Bold
                 dc.l    Spawn_Bold
@@ -1749,7 +1777,8 @@ Def_Bold:
 ; CheetahBeam: as in level 5 (the same code)
 ; (32x3, 4 frames, gfx $6F486, update Upd_CheetahBeam)
 Def_CheetahBeam:
-                dc.w    $0303,$002E,$0060,$0002,$0000,$0000,$0006,$F486
+                dc.w    $0303,$002E,$0060,$0002,$0000,$0000
+                dc.l    Gfx_CheetahBeam
                 dc.w    $0000,$0030,$0004,$C052,$0004,$C032
                 dc.l    Upd_CheetahBeam
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0020,$0003
@@ -1760,7 +1789,9 @@ Def_CheetahBeam:
 ; (32x20, 8 frames, gfx $6F606, score 400, update Upd_MidCheetah, spawn Spawn_MidCheetah)
 Def_MidCheetah:
                 dc.w    $1403
-                dc.w    $002E,$0280,$0002,$0000,$0000,$0006,$F606,$0000
+                dc.w    $002E,$0280,$0002,$0000,$0000
+                dc.l    Gfx_MidCheetah
+                dc.w    $0000
                 dc.w    $0140,$0004,$C0A0,$0004,$C0AA
                 dc.l    Upd_MidCheetah
                 dc.l    Spawn_MidCheetah
@@ -1773,7 +1804,8 @@ Def_MidCheetah:
                 dc.w    $0006,$000E,$000C,$0001,$0005,$0018,$000D
 ; object definition: 32x47, 9 frames, gfx $6BFA6, score 100, update Upd_Sonar
 Def_Sonar:
-                dc.w    $2F03,$002E,$05E0,$0000,$0000,$0000,$0006,$BFA6
+                dc.w    $2F03,$002E,$05E0,$0000,$0000,$0000
+                dc.l    Gfx_Sonar
                 dc.w    $0000,$02F0,$0004,$C112,$0004,$C124
                 dc.l    Upd_Sonar
                 dc.w    $0000,$0000,$0000,$0100,$0001,$0203,$0404,$0404
@@ -1786,7 +1818,11 @@ Def_Sonar:
 SonarMuzzles:
                 dc.w    $0009,$0004,$000B,$0003,$000E,$0001,$0010,$0003
                 dc.w    $0010,$0005,$0001,$0005,$0002,$0003,$0003,$0001
-                dc.w    $0006,$0003,$0000,$0000,$0000,$0000,$0000,$0000
+                dc.w    $0006,$0003,$0000
+LevelAEnd:                               ; (the end of TEXT and DATA)
+                ifnd    LEVEL_AB                ; on its own: the padding to the end
+                                                ;  of its tracks, byte for byte
+                dc.w    $0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
@@ -2116,3 +2152,4 @@ SonarMuzzles:
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000
+                endc

@@ -15,6 +15,9 @@
 ; its core is an object).  All labels named.
 ;==============================================================================
                 include "engine.i"
+                ifnd    LEVEL_AB
+                include "level2_b.i"           ; level B's labels (tools/verify.py writes it
+                endc                            ;  from level2_b.s)
 
                 org     $4A2E4
 LevelHeader:
@@ -31,14 +34,14 @@ LevelInterface:
                 dc.w    $0301,$1969
                 dc.l    WaveList
                 dc.l    LevelPalette
-                dc.l    $5D700
-                dc.l    $4D300
+                dc.l    LvMap
+                dc.l    LvTiles
                 dc.l    ScrollScript
                 dc.l    $0
                 dc.l    $0
                 dc.l    LevelFrame
                 dc.l    LevelInit
-                dc.l    $5E948               ; LvMusic: player in level B; samples $608D6 (8), data $6096A, periods $60916
+                dc.l    LvMusic          ; LvMusic: player in level B; samples $608D6 (8), data $6096A, periods $60916
 ScrollScript:
                 dc.w    $000B,$0000,$0064,$0000,$0000,$FFFF
 ; Checkpoint list (LV_Waves): scroll x reached, where to resume in the
@@ -370,7 +373,7 @@ Eye_Wait:
 .4A8B4:
                 rts
 Eye_Draw:
-                lea.l   ($5E0C0).l,a1
+                lea.l   (LvMap+$9C0).l,a1
                 move.l  (a0)+,(a1)
                 move.l  (a0)+,$4(a1)
                 adda.l  (MapRowBytes).w,a1
@@ -747,11 +750,11 @@ Upd_Zoid:
                 move.w  $26(a0),d0              ; hit:
                 cmp.w   $3A(a0),d0
                 bne.b   .4ADE8                  ; leave the path
-                lea.l   ($7252F).l,a1           ; path 1: dx table, dy 38 bytes on
+                lea.l   (Tbl_7252F).l,a1           ; path 1: dx table, dy 38 bytes on
                 lea.l   $26(a1),a2
                 tst.b   $33(a0)                 ; path 1?
                 bne.b   .4ADA8
-                lea.l   ($72496).l,a1           ; path 0: dx table, dy 78 bytes on
+                lea.l   (Tbl_72496).l,a1           ; path 0: dx table, dy 78 bytes on
                 lea.l   $4E(a1),a2
 .4ADA8:
                 move.w  $34(a0),d2              ; step
@@ -869,7 +872,8 @@ GougerLeaps:
 ; frame, half speed near the floor and ceiling).  10 hit points.
 ; (48x59, 2 frames, gfx $61C96, 10 hit points, score 500, update Upd_Gouger, spawn Spawn_Gouger)
 Def_Gouger:
-                dc.w    $3B04,$002C,$0B10,$0001,$000A,$0000,$0006,$1C96
+                dc.w    $3B04,$002C,$0B10,$0001,$000A,$0000
+                dc.l    Gfx_Gouger
                 dc.w    $0000,$0588,$0004,$AF4C,$0004,$AF58
                 dc.l    Upd_Gouger
                 dc.l    Spawn_Gouger
@@ -890,7 +894,9 @@ WickSteps:
 ; (16x13, 3 frames, gfx $67516, 1 hit point, score 100, update Upd_Wick, spawn Spawn_Wick)
 Def_Wick:
                 dc.w    $0D02,$0030
-                dc.w    $00D0,$0002,$0001,$0000,$0006,$7516,$0000,$0068
+                dc.w    $00D0,$0002,$0001,$0000
+                dc.l    Gfx_Wick
+                dc.w    $0000,$0068
                 dc.w    $0004,$AFCC,$0004,$AFD8
                 dc.l    Upd_Wick
                 dc.l    Spawn_Wick
@@ -940,18 +946,45 @@ Def_GomanderCore:
                 dc.w    $0008,$0017,$000B,$000C,$0006,$0014,$0011,$0000
                 dc.w    $0000,$0000,$0000,$0000,$0000
 WormFirstPath:
-                dc.w    $0160,$003C,$0236,$0007,$16A6,$0007,$18E8,$0007
-                dc.w    $1B2A
+                dc.w    $0160,$003C,$0236
+                dc.l    Tbl_716A6
+                dc.l    Tbl_718E8
+                dc.l    Tbl_71B2A
 WormPaths:
-                dc.w    $0064,$00B4,$00F2,$0007,$1D6C,$0007,$1E62,$0007
-                dc.w    $1F58,$010E,$00B9,$005E,$0007,$204E,$0007,$20AF
-                dc.w    $0007,$2110,$00EC,$007D,$007C,$0007,$2171,$0007
-                dc.w    $21EE,$0007,$226B,$0085,$007D,$008B,$0007,$22E8
-                dc.w    $0007,$2376,$0007,$2404,$010E,$00B9,$005E,$0007
-                dc.w    $204E,$0007,$20AF,$0007,$2110,$0064,$00B4,$00F2
-                dc.w    $0007,$1D6C,$0007,$1E62,$0007,$1F58,$0085,$007D
-                dc.w    $008B,$0007,$22E8,$0007,$2376,$0007,$2404,$00EC
-                dc.w    $007D,$007C,$0007,$2171,$0007,$21EE,$0007,$226B
+                dc.w    $0064,$00B4,$00F2
+                dc.l    Tbl_71D6C
+                dc.l    Tbl_71E62
+                dc.l    Tbl_71F58
+                dc.w    $010E,$00B9,$005E
+                dc.l    Tbl_7204E
+                dc.l    Tbl_720AF
+                dc.l    Tbl_72110
+                dc.w    $00EC,$007D,$007C
+                dc.l    Tbl_72171
+                dc.l    Tbl_721EE
+                dc.l    Tbl_7226B
+                dc.w    $0085,$007D,$008B
+                dc.l    Tbl_722E8
+                dc.l    Tbl_72376
+                dc.l    Tbl_72404
+                dc.w    $010E,$00B9,$005E
+                dc.l    Tbl_7204E
+                dc.l    Tbl_720AF
+                dc.l    Tbl_72110
+                dc.w    $0064,$00B4,$00F2
+                dc.l    Tbl_71D6C
+                dc.l    Tbl_71E62
+                dc.l    Tbl_71F58
+                dc.w    $0085,$007D
+                dc.w    $008B
+                dc.l    Tbl_722E8
+                dc.l    Tbl_72376
+                dc.l    Tbl_72404
+                dc.w    $00EC
+                dc.w    $007D,$007C
+                dc.l    Tbl_72171
+                dc.l    Tbl_721EE
+                dc.l    Tbl_7226B
 WormPath:
                 dc.w    $0000,$0000
 WormSegments:
@@ -973,7 +1006,9 @@ WormSegments:
 ; (32x29, 16 frames, gfx $699A6, score 1000, update Upd_Worm, spawn Spawn_Worm)
 Def_WormHead:
                 dc.w    $1D03,$002E,$03A0,$0000
-                dc.w    $0000,$0000,$0006,$99A6,$0000,$01D0,$0004,$B1F4
+                dc.w    $0000,$0000
+                dc.l    Gfx_WormHead
+                dc.w    $0000,$01D0,$0004,$B1F4
                 dc.w    $0004,$B216
                 dc.l    Upd_Worm
                 dc.l    Spawn_Worm
@@ -991,7 +1026,9 @@ Def_WormHead:
 ; object definition: 32x27, 16 frames, gfx $6D3A6, score 1000, update Upd_Worm, spawn Spawn_Worm
 Def_WormBody:
                 dc.w    $1B03,$002E,$0360,$0000,$0000
-                dc.w    $0000,$0006,$D3A6,$0000,$01B0,$0004,$B1F4,$0004
+                dc.w    $0000
+                dc.l    Gfx_WormBody
+                dc.w    $0000,$01B0,$0004,$B1F4,$0004
                 dc.w    $B2BE
                 dc.l    Upd_Worm
                 dc.l    Spawn_Worm
@@ -1006,7 +1043,8 @@ Def_WormBody:
                 dc.w    $0014,$0018
 ; object definition: 32x26, 3 frames, gfx $709A6, score 1000, update Upd_Worm, spawn Spawn_Worm
 Def_WormEye:
-                dc.w    $1A03,$002E,$0340,$0003,$0000,$0000,$0007,$09A6
+                dc.w    $1A03,$002E,$0340,$0003,$0000,$0000
+                dc.l    Gfx_WormEye
                 dc.w    $0000,$01A0,$0004,$B386,$0004,$B366
                 dc.l    Upd_Worm
                 dc.l    Spawn_Worm
@@ -1019,10 +1057,14 @@ WormEyeShotAnim:
                 dc.w    $03FF
 Brood1:
                 dc.w    $0000,$0000,$0000,$0000,$02C8,$0331,$0398,$00A9
-                dc.w    $0000,$0000,$0005,$E428,$0004,$B4C8,$0000,$0000
+                dc.w    $0000,$0000
+                dc.l    LvMap+$D28
+                dc.w    $0004,$B4C8,$0000,$0000
 Brood2:
                 dc.w    $0000,$0000,$0000,$0000,$03C8,$0430,$0492,$004D
-                dc.w    $0005,$0000,$0005,$D7A0,$0004,$B558,$0000,$0000
+                dc.w    $0005,$0000
+                dc.l    LvMap+$A0
+                dc.w    $0004,$B558,$0000,$0000
 ; Brood: two of them (Brood1/Brood2: scroll positions, map address, cell
 ; frames) grow out of the cave wall as the screen scrolls: Brood_Wait
 ; waits for the scroll position, creates the invisible Brood target,
@@ -1081,7 +1123,8 @@ ZoidSteps:
 ; towards the floor.
 ; (32x26, 2 frames, gfx $67C66, score 500, update Upd_Zoid)
 Def_Zoid:
-                dc.w    $1A03,$002E,$0340,$0002,$0000,$0000,$0006,$7C66
+                dc.w    $1A03,$002E,$0340,$0002,$0000,$0000
+                dc.l    Gfx_Zoid
                 dc.w    $0000,$01A0,$0004,$B638,$0004,$B646
                 dc.l    Upd_Zoid
                 dc.b    $00,$00,$00,$00,$00,$00,$05,$00,$00,$01,$FF
@@ -1091,7 +1134,11 @@ ZoidAnim:
                 dc.b    $1D,$00,$15,$00,$03,$00,$02,$00,$1A,$00,$16,$00,$08,$00,$04,$00
                 dc.b    $14,$00,$12,$00,$09,$00,$05,$00,$13,$00,$11,$00,$05,$00,$01,$00
                 dc.b    $19,$00,$21,$00,$05,$00,$01,$00,$1A,$00,$16,$00,$05,$00,$01,$00
-                dc.b    $1A,$00,$16,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+                dc.b    $1A,$00,$16,$00,$00
+LevelAEnd:                               ; (the end of TEXT and DATA)
+                ifnd    LEVEL_AB                ; on its own: the padding to the end
+                                                ;  of its tracks, byte for byte
+                dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
                 dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
                 dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
                 dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
@@ -1187,3 +1234,4 @@ ZoidAnim:
                 dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
                 dc.b    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
                 dc.b    $00
+                endc

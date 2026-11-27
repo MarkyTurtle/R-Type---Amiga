@@ -44,7 +44,9 @@ jobs:
       - name: Assemble and verify against the original files
         env:
           VASM: ${{ github.workspace }}/vasm/vasmm68k_mot
-        run: python3 -I original/tools/verify.py
+        run: |
+          python3 -I original/tools/verify.py
+          python3 -I original/tools/check_levelab.py
 
       - name: Build the disk image from the sources
         env:

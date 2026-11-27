@@ -14,6 +14,9 @@
 ; Mid-phase Cheetah, the POW Armor; the boss is Bellmite with its shells.
 ;==============================================================================
                 include "engine.i"
+                ifnd    LEVEL_AB
+                include "level5_b.i"           ; level B's labels (tools/verify.py writes it
+                endc                            ;  from level5_b.s)
 
                 org     $4A2E4
 LevelHeader:
@@ -30,14 +33,14 @@ LevelInterface:
                 dc.w    $0301,$1969
                 dc.l    WaveList
                 dc.l    LevelPalette
-                dc.l    $50500
-                dc.l    $4D300
+                dc.l    LvMap
+                dc.l    LvTiles
                 dc.l    ScrollScript
                 dc.l    $0
                 dc.l    $0
                 dc.l    LevelFrame
                 dc.l    LevelInit
-                dc.l    $51A54               ; LvMusic: player in level B; samples $53A46 (8), data $53ADC, periods $53A86
+                dc.l    LvMusic          ; LvMusic: player in level B; samples $53A46 (8), data $53ADC, periods $53A86
 ScrollScript:
                 dc.w    $000B,$0000,$0064,$0000,$0000,$FFFF
 ; Checkpoint list (LV_Waves): scroll x reached, where to resume in the
@@ -448,7 +451,7 @@ Upd_Slither:
                 lea.l   (a1,d0.w),a1
                 bra.b   .4AAC8
 .4AAEA:
-                lea.l   ($67FC8).l,a1           ; the path: dx, dy, frame bytes (level B)
+                lea.l   (Tbl_67FC8).l,a1           ; the path: dx, dy, frame bytes (level B)
                 move.w  $34(a0),d0
                 lea.l   (a1,d0.w),a1
                 addq.w  #$3,$34(a0)             ; next step
@@ -884,7 +887,9 @@ CancerData4:
 ; object definition: 32x26, 6 frames, gfx $54E08, 1 hit point, fires every ~34 frames, score 300, update Upd_Cancer, spawn Spawn_Cancer
 Def_Cancer:
                 dc.w    $1A03,$002E
-                dc.w    $0340,$0005,$0001,$0022,$0005,$4E08,$0000,$01A0
+                dc.w    $0340,$0005,$0001,$0022
+                dc.l    Gfx_Cancer
+                dc.w    $0000,$01A0
                 dc.w    $0004,$B054,$0004,$B05C
                 dc.l    Upd_Cancer
                 dc.l    Spawn_Cancer
@@ -905,7 +910,8 @@ SlitherHeadFrames:
                 dc.w    $0051,$005D,$0063,$006C,$0072,$0084,$0090,$0099
 ; object definition: 32x29, 16 frames, gfx $5CDC8, score 500, update Upd_Slither, spawn Spawn_Slither
 Def_SlitherHead:
-                dc.w    $1D03,$002E,$03A0,$0000,$0000,$0000,$0005,$CDC8
+                dc.w    $1D03,$002E,$03A0,$0000,$0000,$0000
+                dc.l    Gfx_SlitherHead
                 dc.w    $0000,$01D0,$0004,$B0F8,$0004,$B10A
                 dc.l    Upd_Slither
                 dc.l    Spawn_Slither
@@ -921,7 +927,8 @@ Def_SlitherHead:
                 dc.w    $0002,$0014,$0018
 ; object definition: 32x29, 16 frames, gfx $607C8, score 300, update Upd_Slither, spawn Spawn_Slither
 Def_SlitherBody:
-                dc.w    $1D03,$002E,$03A0,$0000,$0000,$0000,$0006,$07C8
+                dc.w    $1D03,$002E,$03A0,$0000,$0000,$0000
+                dc.l    Gfx_SlitherBody
                 dc.w    $0000,$01D0,$0004,$B0F8,$0004,$B1B2
                 dc.l    Upd_Slither
                 dc.l    Spawn_Slither
@@ -936,7 +943,8 @@ Def_SlitherBody:
                 dc.w    $0015,$0015
 ; object definition: 32x23, 16 frames, gfx $641C8, score 300, update Upd_Slither, spawn Spawn_Slither
 Def_SlitherTail:
-                dc.w    $1703,$002E,$02E0,$0000,$0000,$0000,$0006,$41C8
+                dc.w    $1703,$002E,$02E0,$0000,$0000,$0000
+                dc.l    Gfx_SlitherTail
                 dc.w    $0000,$0170,$0004,$B0F8,$0004,$B25A
                 dc.l    Upd_Slither
                 dc.l    Spawn_Slither
@@ -952,7 +960,8 @@ Def_SlitherTail:
 ; object definition: 32x28, 16 frames, gfx $57708, fires every ~10 frames, score 200, update Upd_Pursuer, spawn Spawn_Pursuer
 Def_Pursuer:
                 dc.w    $1C03,$002E,$0380,$0000,$0000,$000A
-                dc.w    $0005,$7708,$0000,$01C0,$0004,$B302,$0004,$B314
+                dc.l    Gfx_Pursuer
+                dc.w    $0000,$01C0,$0004,$B302,$0004,$B314
                 dc.l    Upd_Pursuer
                 dc.l    Spawn_Pursuer
                 dc.w    $0000,$0200,$0001,$0203,$0405,$0607,$0809,$0A0B
@@ -972,7 +981,8 @@ PursuerSteps:
                 dc.w    $FFFD,$0000,$FFFD,$FFFE,$FFFD,$FFFD,$FFFE,$FFFD
 ; object definition: 32x3, 4 frames, gfx $56188, update Upd_CheetahBeam
 Def_CheetahBeam:
-                dc.w    $0303,$002E,$0060,$0002,$0000,$0000,$0005,$6188
+                dc.w    $0303,$002E,$0060,$0002,$0000,$0000
+                dc.l    Gfx_CheetahBeam
                 dc.w    $0000,$0030,$0004,$B41C,$0004,$B3FC
                 dc.l    Upd_CheetahBeam
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0020,$0003
@@ -981,7 +991,9 @@ Def_CheetahBeam:
 ; object definition: 48x41, 4 frames, gfx $5AF08, score 800, update Upd_Cheetah, spawn Spawn_Cheetah
 Def_Cheetah:
                 dc.w    $2904
-                dc.w    $002C,$07B0,$0003,$0000,$0000,$0005,$AF08,$0000
+                dc.w    $002C,$07B0,$0003,$0000,$0000
+                dc.l    Gfx_Cheetah
+                dc.w    $0000
                 dc.w    $03D8,$0004,$B44A,$0004,$B47A
                 dc.l    Upd_Cheetah
                 dc.l    Spawn_Cheetah
@@ -989,7 +1001,9 @@ Def_Cheetah:
 ; object definition: 32x20, 8 frames, gfx $56308, score 400, update Upd_MidCheetah, spawn Spawn_MidCheetah
 Def_MidCheetah:
                 dc.w    $1403,$002E
-                dc.w    $0280,$0002,$0000,$0000,$0005,$6308,$0000,$0140
+                dc.w    $0280,$0002,$0000,$0000
+                dc.l    Gfx_MidCheetah
+                dc.w    $0000,$0140
                 dc.w    $0004,$B49A,$0004,$B4A4
                 dc.l    Upd_MidCheetah
                 dc.l    Spawn_MidCheetah
@@ -1028,19 +1042,25 @@ ShellLaunchOrder:
                 dc.w    $0704,$0603,$0502,$0100,$0201,$0403,$0700,$0605
 ; object definition: 48x48, 1 frame, gfx $66FC8, score 1000, update Upd_Bellmite, spawn Spawn_Bellmite
 Def_Bellmite:
-                dc.w    $3004,$002C,$0900,$0000,$0000,$0000,$0006,$6FC8
+                dc.w    $3004,$002C,$0900,$0000,$0000,$0000
+                dc.l    Gfx_Bellmite
                 dc.w    $0000,$0480,$0004,$B660,$0004,$B620
                 dc.l    Upd_Bellmite
                 dc.l    Spawn_Bellmite
                 dc.w    $0000,$1000,$0011,$0012,$0010,$0010
 ; object definition: 32x28, 2 frames, gfx $678C8, score 500, update Upd_BellmiteShell, spawn Spawn_Bellmite
 Def_BellmiteShell:
-                dc.w    $1C03,$002E,$0380,$0001,$0000,$0000,$0006,$78C8
+                dc.w    $1C03,$002E,$0380,$0001,$0000,$0000
+                dc.l    Gfx_BellmiteShell
                 dc.w    $0000,$01C0,$0004,$B660,$0004,$B650
                 dc.l    Upd_BellmiteShell
                 dc.l    Spawn_Bellmite
                 dc.w    $0000,$0500,$0001,$0001,$0018,$0019,$0002,$0001
-                dc.w    $0016,$0019,$0001,$FF00,$0000,$0000,$0000,$0000
+                dc.w    $0016,$0019,$0001,$FF00,$0000
+LevelAEnd:                               ; (the end of TEXT and DATA)
+                ifnd    LEVEL_AB                ; on its own: the padding to the end
+                                                ;  of its tracks, byte for byte
+                dc.w    $0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
@@ -1138,3 +1158,4 @@ Def_BellmiteShell:
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
                 dc.w    $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+                endc
